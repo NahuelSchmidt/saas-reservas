@@ -35,7 +35,7 @@ export async function createTenantAction(formData: FormData): Promise<ActionResu
     await tx.tenantMembership.create({ data: { tenantId: t.id, userId: admin.id, role: "ADMIN" } });
 
     await tx.bookingConfig.create({
-      data: { tenantId: t.id, slotDurationMinutes: 90, minAdvanceMinutes: 60, maxAdvanceDays: 14, depositRequired: true, depositIsPercentage: true, depositValue: 30 },
+      data: { tenantId: t.id, slotDurationMinutes: 90, minAdvanceMinutes: 60, maxAdvanceDays: 14, depositRequired: true, depositIsPercentage: true, depositValue: 25 },
     });
     await tx.cancellationPolicy.create({
       data: { tenantId: t.id, hoursBeforeFullRefund: 24, hoursBeforePartialRefund: 6, partialRefundPct: 50 },

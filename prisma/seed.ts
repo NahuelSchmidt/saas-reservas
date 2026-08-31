@@ -69,7 +69,7 @@ async function main() {
       maxAdvanceDays: 14,
       depositRequired: true,
       depositIsPercentage: true,
-      depositValue: 30,
+      depositValue: 25, // 1/4 del turno, ya que un turno se paga entre 4 jugadores
     },
   });
 
