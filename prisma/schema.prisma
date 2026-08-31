@@ -1,0 +1,512 @@
+// Sistema Padel — schema multi-tenant
+// Aislamiento: cada tabla de negocio lleva tenantId. El filtrado principal ocurre en la
+// capa de datos de la app (ver lib/db); las políticas RLS (prisma/migrations/*_rls.sql)
+// son una segunda capa de defensa a nivel de Postgres.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Plataforma / Super Admin
+// ---------------------------------------------------------------------------
+
+enum GlobalRole {
+  SUPER_ADMIN
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  TRIAL
+}
+
+model Tenant {
+  id             String       @id @default(cuid())
+  slug           String       @unique
+  name           String
+  logoUrl        String?
+  primaryColor   String?      @default("#0f172a")
+  secondaryColor String?      @default("#22c55e")
+  status         TenantStatus @default(TRIAL)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  planId       String?
+  plan         SubscriptionPlan?  @relation(fields: [planId], references: [id])
+  subscription TenantSubscription?
+
+  memberships       TenantMembership[]
+  courts             Court[]
+  businessHours      BusinessHours[]
+  pricingRules       PricingRule[]
+  bookingConfig      BookingConfig?
+  cancellationPolicy CancellationPolicy?
+  bookings           Booking[]
+  payments           Payment[]
+  auditLogs          AuditLog[]
+  coupons            Coupon[]
+  waitlistEntries    WaitlistEntry[]
+  products           Product[]
+  sales              Sale[]
+
+  @@map("tenants")
+}
+
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  name        String
+  priceCents  Int
+  maxCourts   Int
+  maxEmployees Int
+  features    Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  tenants       Tenant[]
+  subscriptions TenantSubscription[]
+
+  @@map("subscription_plans")
+}
+
+enum TenantSubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  TRIALING
+}
+
+model TenantSubscription {
+  id                     String                    @id @default(cuid())
+  tenantId               String                    @unique
+  tenant                 Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  planId                 String
+  plan                   SubscriptionPlan          @relation(fields: [planId], references: [id])
+  status                 TenantSubscriptionStatus  @default(TRIALING)
+  currentPeriodEnd       DateTime?
+  providerSubscriptionId String?
+
+  @@map("tenant_subscriptions")
+}
+
+// ---------------------------------------------------------------------------
+// Usuarios y membresías
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  passwordHash String?
+  name         String
+  phone        String?
+  avatarUrl    String?
+  globalRole   GlobalRole?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  memberships      TenantMembership[]
+  bookingsMade     Booking[]          @relation("BookedBy")
+  bookingsCreated  Booking[]          @relation("CreatedBy")
+  auditLogs        AuditLog[]
+  waitlistEntries  WaitlistEntry[]
+  sales            Sale[]
+
+  accounts Account[]
+  sessions Session[]
+
+  @@map("users")
+}
+
+enum TenantRole {
+  ADMIN
+  EMPLOYEE
+}
+
+model TenantMembership {
+  id          String     @id @default(cuid())
+  tenantId    String
+  tenant      Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        TenantRole
+  permissions Json       @default("{}")
+  createdAt   DateTime   @default(now())
+
+  @@unique([tenantId, userId])
+  @@map("tenant_memberships")
+}
+
+// NextAuth (Auth.js) adapter models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires      DateTime
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Canchas, horarios y precios
+// ---------------------------------------------------------------------------
+
+enum CourtType {
+  SINGLES
+  DOUBLES
+}
+
+enum CourtLocation {
+  INDOOR
+  OUTDOOR
+  PANORAMIC
+  COVERED
+}
+
+enum CourtStatus {
+  ACTIVE
+  MAINTENANCE
+  INACTIVE
+}
+
+model Court {
+  id          String        @id @default(cuid())
+  tenantId    String
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  type        CourtType     @default(DOUBLES)
+  surface     String?
+  location    CourtLocation @default(OUTDOOR)
+  hasLighting Boolean       @default(false)
+  capacity    Int           @default(4)
+  photos      String[]      @default([])
+  status      CourtStatus   @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  pricingRules PricingRule[]
+  bookings     Booking[]
+  waitlist     WaitlistEntry[]
+
+  @@index([tenantId])
+  @@map("courts")
+}
+
+model BusinessHours {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  dayOfWeek Int // 0=domingo .. 6=sábado
+  openTime  String // "08:00"
+  closeTime String // "23:00"
+
+  @@unique([tenantId, dayOfWeek])
+  @@map("business_hours")
+}
+
+enum ClientType {
+  MEMBER
+  NON_MEMBER
+  ANY
+}
+
+model PricingRule {
+  id           String      @id @default(cuid())
+  tenantId     String
+  tenant       Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  courtId      String? // null = aplica a todas las canchas del tenant
+  court        Court?      @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  dayOfWeek    Int? // null = todos los días
+  startTime    String // "18:00"
+  endTime      String // "22:00"
+  seasonStart  DateTime?
+  seasonEnd    DateTime?
+  clientType   ClientType  @default(ANY)
+  priceCents   Int
+  createdAt    DateTime    @default(now())
+
+  @@index([tenantId, courtId])
+  @@map("pricing_rules")
+}
+
+model BookingConfig {
+  id                  String   @id @default(cuid())
+  tenantId            String   @unique
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  slotDurationMinutes Int      @default(90)
+  minAdvanceMinutes   Int      @default(60)
+  maxAdvanceDays      Int      @default(14)
+  depositRequired     Boolean  @default(true)
+  depositIsPercentage Boolean  @default(true)
+  depositValue        Int      @default(30) // 30% o monto fijo en centavos si depositIsPercentage=false
+
+  @@map("booking_configs")
+}
+
+model CancellationPolicy {
+  id                     String @id @default(cuid())
+  tenantId               String @unique
+  tenant                 Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  hoursBeforeFullRefund  Int    @default(24)
+  hoursBeforePartialRefund Int  @default(6)
+  partialRefundPct       Int   @default(50)
+
+  @@map("cancellation_policies")
+}
+
+// ---------------------------------------------------------------------------
+// Reservas y pagos
+// ---------------------------------------------------------------------------
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum DepositStatus {
+  NOT_REQUIRED
+  PENDING
+  PAID
+  REFUNDED
+  PARTIAL_REFUND
+}
+
+enum BookingSource {
+  ONLINE
+  MANUAL
+}
+
+model Booking {
+  id             String        @id @default(cuid())
+  tenantId       String
+  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  courtId        String
+  court          Court         @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  bookedByUserId String
+  bookedBy       User          @relation("BookedBy", fields: [bookedByUserId], references: [id])
+  createdByUserId String?
+  createdBy       User?        @relation("CreatedBy", fields: [createdByUserId], references: [id])
+  startTime      DateTime
+  endTime        DateTime
+  status         BookingStatus @default(PENDING_PAYMENT)
+  source         BookingSource @default(ONLINE)
+  totalPriceCents   Int
+  depositAmountCents Int       @default(0)
+  depositStatus  DepositStatus @default(NOT_REQUIRED)
+  isBlock        Boolean       @default(false) // bloqueo manual (mantenimiento/evento), no es una reserva de jugador
+  checkedIn      Boolean       @default(false)
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  payments    Payment[]
+  participants BookingParticipant[]
+
+  // Nota: la protección real anti doble-reserva es un EXCLUDE CONSTRAINT de Postgres
+  // agregado vía SQL migration (ver prisma/migrations/*_booking_exclusion.sql), ya que
+  // Prisma no puede expresar EXCLUDE USING gist nativamente.
+  @@index([tenantId, courtId, startTime])
+  @@map("bookings")
+}
+
+// Modelado desde el día 1 para Fase 2 (split payment), sin UI/lógica activa en el MVP.
+model BookingParticipant {
+  id           String  @id @default(cuid())
+  bookingId    String
+  booking      Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  userId       String?
+  guestName    String?
+  guestPhone   String?
+  shareCents   Int?
+
+  @@map("booking_participants")
+}
+
+enum PaymentMethod {
+  MERCADOPAGO
+  CASH
+  TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REFUNDED
+}
+
+enum PaymentType {
+  DEPOSIT
+  FULL
+  REFUND
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  tenantId          String
+  tenant            Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bookingId         String
+  booking           Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amountCents       Int
+  method            PaymentMethod
+  providerPaymentId String?
+  status            PaymentStatus @default(PENDING)
+  type              PaymentType
+  note              String? // ej: "Jugador 2 - Fede", para diferenciar pagos parciales de distintas personas
+  createdAt         DateTime      @default(now())
+
+  @@index([tenantId, bookingId])
+  @@map("payments")
+}
+
+// Modelado desde el día 1 para Fase 2 (lista de espera), sin lógica activa en el MVP.
+model WaitlistEntry {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  courtId         String
+  court           Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  desiredStart    DateTime
+  desiredEnd      DateTime
+  notified        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  @@map("waitlist_entries")
+}
+
+// Modelado desde el día 1 para Fase 2 (cupones), sin lógica activa en el MVP.
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+model Coupon {
+  id            String       @id @default(cuid())
+  tenantId      String
+  tenant        Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code          String
+  discountType  DiscountType
+  discountValue Int
+  validFrom     DateTime?
+  validTo       DateTime?
+  maxUses       Int?
+  usedCount     Int          @default(0)
+
+  @@unique([tenantId, code])
+  @@map("coupons")
+}
+
+// ---------------------------------------------------------------------------
+// Auditoría
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actorUserId  String?
+  actor        User?    @relation(fields: [actorUserId], references: [id])
+  action       String // "booking.created" | "booking.cancelled" | "court.updated" | ...
+  entityType   String
+  entityId     String
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, entityType, entityId])
+  @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Mini stock / kiosco (venta de pelotas, bebidas, etc.)
+// ---------------------------------------------------------------------------
+
+model Product {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name       String
+  priceCents Int
+  stock      Int      @default(0)
+  category   String?
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  saleItems SaleItem[]
+
+  @@index([tenantId])
+  @@map("products")
+}
+
+enum SaleMethod {
+  CASH
+  MERCADOPAGO
+}
+
+model Sale {
+  id              String     @id @default(cuid())
+  tenantId        String
+  tenant          Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdByUserId String
+  createdBy       User       @relation(fields: [createdByUserId], references: [id])
+  totalCents      Int
+  method          SaleMethod @default(CASH)
+  createdAt       DateTime   @default(now())
+
+  items SaleItem[]
+
+  @@index([tenantId, createdAt])
+  @@map("sales")
+}
+
+model SaleItem {
+  id             String  @id @default(cuid())
+  saleId         String
+  sale           Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product @relation(fields: [productId], references: [id])
+  productName    String // snapshot: si el producto cambia de nombre después, la venta histórica no se altera
+  unitPriceCents Int // snapshot del precio al momento de la venta
+  quantity       Int
+  subtotalCents  Int
+
+  @@map("sale_items")
+}

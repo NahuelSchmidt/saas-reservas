@@ -1,0 +1,234 @@
+import { withTenant } from "@/lib/db/tenant-context";
+import { isExclusionViolation, SlotUnavailableError } from "./errors";
+
+export async function getAdminDaySchedule(tenantId: string, date: Date) {
+  const dayStart = new Date(date);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart.getTime() + 86_400_000);
+
+  return withTenant(tenantId, async (tx) => {
+    const [courts, bookings, businessHours, config, pricingRules] = await Promise.all([
+      tx.court.findMany({ where: { tenantId, status: { not: "INACTIVE" } }, orderBy: { name: "asc" } }),
+      tx.booking.findMany({
+        where: {
+          tenantId,
+          startTime: { gte: dayStart, lt: dayEnd },
+          status: { in: ["PENDING_PAYMENT", "CONFIRMED", "COMPLETED"] },
+        },
+        include: {
+          bookedBy: { select: { name: true, email: true } },
+          payments: {
+            select: { amountCents: true, status: true, type: true, method: true, note: true, createdAt: true },
+            orderBy: { createdAt: "asc" },
+          },
+        },
+        orderBy: { startTime: "asc" },
+      }),
+      tx.businessHours.findUnique({ where: { tenantId_dayOfWeek: { tenantId, dayOfWeek: date.getDay() } } }),
+      tx.bookingConfig.findUnique({ where: { tenantId } }),
+      tx.pricingRule.findMany({ where: { tenantId } }),
+    ]);
+
+    return { courts, bookings, businessHours, config, pricingRules };
+  });
+}
+
+/** Reserva manual cargada por un empleado/admin (walk-in, teléfono, etc.). Queda CONFIRMED directo, sin pasar por Mercado Pago. */
+export async function createManualBooking(params: {
+  tenantId: string;
+  courtId: string;
+  startTime: Date;
+  endTime: Date;
+  totalPriceCents: number;
+  playerEmail: string;
+  playerName: string;
+  markDepositPaid: boolean;
+  depositAmountCents: number;
+  createdByUserId: string;
+  notes?: string;
+}) {
+  return withTenant(params.tenantId, async (tx) => {
+    const player = await tx.user.upsert({
+      where: { email: params.playerEmail },
+      update: {},
+      create: { email: params.playerEmail, name: params.playerName },
+    });
+
+    try {
+      const booking = await tx.booking.create({
+        data: {
+          tenantId: params.tenantId,
+          courtId: params.courtId,
+          bookedByUserId: player.id,
+          createdByUserId: params.createdByUserId,
+          startTime: params.startTime,
+          endTime: params.endTime,
+          status: "CONFIRMED",
+          source: "MANUAL",
+          totalPriceCents: params.totalPriceCents,
+          depositAmountCents: params.depositAmountCents,
+          depositStatus: params.markDepositPaid ? "PAID" : "PENDING",
+          notes: params.notes,
+        },
+      });
+
+      if (params.markDepositPaid && params.depositAmountCents > 0) {
+        await tx.payment.create({
+          data: {
+            tenantId: params.tenantId,
+            bookingId: booking.id,
+            amountCents: params.depositAmountCents,
+            method: "CASH",
+            status: "APPROVED",
+            type: "DEPOSIT",
+          },
+        });
+      }
+
+      await tx.auditLog.create({
+        data: {
+          tenantId: params.tenantId,
+          actorUserId: params.createdByUserId,
+          action: "booking.created_manual",
+          entityType: "Booking",
+          entityId: booking.id,
+          metadata: {},
+        },
+      });
+
+      return booking;
+    } catch (err) {
+      if (isExclusionViolation(err)) throw new SlotUnavailableError();
+      throw err;
+    }
+  });
+}
+
+/** Bloquea un horario (mantenimiento, evento privado, clase) sin asociarlo a un jugador. */
+export async function createBlock(params: {
+  tenantId: string;
+  courtId: string;
+  startTime: Date;
+  endTime: Date;
+  createdByUserId: string;
+  notes: string;
+}) {
+  return withTenant(params.tenantId, async (tx) => {
+    try {
+      const booking = await tx.booking.create({
+        data: {
+          tenantId: params.tenantId,
+          courtId: params.courtId,
+          bookedByUserId: params.createdByUserId,
+          createdByUserId: params.createdByUserId,
+          startTime: params.startTime,
+          endTime: params.endTime,
+          status: "CONFIRMED",
+          source: "MANUAL",
+          isBlock: true,
+          totalPriceCents: 0,
+          depositAmountCents: 0,
+          depositStatus: "NOT_REQUIRED",
+          notes: params.notes,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          tenantId: params.tenantId,
+          actorUserId: params.createdByUserId,
+          action: "booking.blocked",
+          entityType: "Booking",
+          entityId: booking.id,
+          metadata: { notes: params.notes },
+        },
+      });
+
+      return booking;
+    } catch (err) {
+      if (isExclusionViolation(err)) throw new SlotUnavailableError();
+      throw err;
+    }
+  });
+}
+
+export async function toggleCheckIn(tenantId: string, bookingId: string, checkedIn: boolean) {
+  return withTenant(tenantId, (tx) => tx.booking.update({ where: { id: bookingId }, data: { checkedIn } }));
+}
+
+/** Registra un cobro en efectivo (seña o pago completo) desde la caja del día. */
+export async function registerCashPayment(params: {
+  tenantId: string;
+  bookingId: string;
+  amountCents: number;
+  actorUserId: string;
+  note?: string;
+}) {
+  return withTenant(params.tenantId, async (tx) => {
+    const booking = await tx.booking.findUniqueOrThrow({ where: { id: params.bookingId } });
+
+    await tx.payment.create({
+      data: {
+        tenantId: params.tenantId,
+        bookingId: booking.id,
+        amountCents: params.amountCents,
+        method: "CASH",
+        status: "APPROVED",
+        type: booking.depositStatus === "PAID" ? "FULL" : "DEPOSIT",
+        note: params.note || null,
+      },
+    });
+
+    const updated = await tx.booking.update({
+      where: { id: booking.id },
+      data: {
+        depositStatus: booking.depositStatus === "PENDING" ? "PAID" : booking.depositStatus,
+        status: booking.status === "PENDING_PAYMENT" ? "CONFIRMED" : booking.status,
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        tenantId: params.tenantId,
+        actorUserId: params.actorUserId,
+        action: "payment.cash_registered",
+        entityType: "Booking",
+        entityId: booking.id,
+        metadata: { amountCents: params.amountCents },
+      },
+    });
+
+    return updated;
+  });
+}
+
+/** Caja diaria: efectivo vs online cobrado en el día. */
+export async function getDailyCashRegister(tenantId: string, date: Date) {
+  const dayStart = new Date(date);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart.getTime() + 86_400_000);
+
+  return withTenant(tenantId, async (tx) => {
+    const [payments, sales] = await Promise.all([
+      tx.payment.findMany({
+        where: { tenantId, createdAt: { gte: dayStart, lt: dayEnd }, status: "APPROVED", type: { not: "REFUND" } },
+      }),
+      tx.sale.findMany({ where: { tenantId, createdAt: { gte: dayStart, lt: dayEnd } } }),
+    ]);
+
+    const bookingsCashCents = payments.filter((p) => p.method === "CASH").reduce((s, p) => s + p.amountCents, 0);
+    const bookingsOnlineCents = payments.filter((p) => p.method === "MERCADOPAGO").reduce((s, p) => s + p.amountCents, 0);
+    const productsCashCents = sales.filter((s) => s.method === "CASH").reduce((s, sale) => s + sale.totalCents, 0);
+    const productsOnlineCents = sales.filter((s) => s.method === "MERCADOPAGO").reduce((s, sale) => s + sale.totalCents, 0);
+
+    const cashCents = bookingsCashCents + productsCashCents;
+    const onlineCents = bookingsOnlineCents + productsOnlineCents;
+
+    return {
+      cashCents,
+      onlineCents,
+      totalCents: cashCents + onlineCents,
+      productsCents: productsCashCents + productsOnlineCents,
+    };
+  });
+}
