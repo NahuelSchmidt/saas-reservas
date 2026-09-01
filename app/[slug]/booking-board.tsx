@@ -152,6 +152,7 @@ export function BookingBoard({
                             onClick={() => setSelected(slot)}
                             className="w-full rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-center transition-colors hover:border-primary/50 hover:bg-primary/10"
                           >
+                            <div className="text-[10px] font-medium tracking-wide text-primary/70 uppercase">Libre</div>
                             <div className="font-semibold text-primary">{formatCentsARS(slot.priceCents)}</div>
                           </button>
                         ) : (
