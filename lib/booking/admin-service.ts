@@ -222,10 +222,11 @@ export async function getDailyCashRegister(tenantId: string, date: Date) {
     const bookingsTransferCents = payments.filter((p) => p.method === "TRANSFER").reduce((s, p) => s + p.amountCents, 0);
     const bookingsOnlineCents = payments.filter((p) => p.method === "MERCADOPAGO").reduce((s, p) => s + p.amountCents, 0);
     const productsCashCents = sales.filter((s) => s.method === "CASH").reduce((s, sale) => s + sale.totalCents, 0);
+    const productsTransferCents = sales.filter((s) => s.method === "TRANSFER").reduce((s, sale) => s + sale.totalCents, 0);
     const productsOnlineCents = sales.filter((s) => s.method === "MERCADOPAGO").reduce((s, sale) => s + sale.totalCents, 0);
 
     const cashCents = bookingsCashCents + productsCashCents;
-    const transferCents = bookingsTransferCents;
+    const transferCents = bookingsTransferCents + productsTransferCents;
     const onlineCents = bookingsOnlineCents + productsOnlineCents;
 
     return {
@@ -233,7 +234,7 @@ export async function getDailyCashRegister(tenantId: string, date: Date) {
       transferCents,
       onlineCents,
       totalCents: cashCents + transferCents + onlineCents,
-      productsCents: productsCashCents + productsOnlineCents,
+      productsCents: productsCashCents + productsTransferCents + productsOnlineCents,
     };
   });
 }

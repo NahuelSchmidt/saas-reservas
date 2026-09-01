@@ -53,6 +53,7 @@ export async function toggleProductActiveAction(
 export async function createSaleAction(
   tenantSlug: string,
   items: { productId: string; quantity: number }[],
+  method: "CASH" | "TRANSFER",
 ): Promise<ActionResult<{ id: string }>> {
   const tenant = await resolveTenantBySlug(tenantSlug);
   const actor = await requireTenantRole(tenant.id, ["ADMIN", "EMPLOYEE"]);
@@ -60,7 +61,7 @@ export async function createSaleAction(
   if (items.length === 0) return { ok: false, error: "Agregá al menos un producto." };
 
   try {
-    const sale = await createSale({ tenantId: tenant.id, createdByUserId: actor.id, method: "CASH", items });
+    const sale = await createSale({ tenantId: tenant.id, createdByUserId: actor.id, method, items });
     revalidatePath(`/${tenantSlug}/admin/products`);
     revalidatePath(`/${tenantSlug}/admin/calendar`);
     return { ok: true, data: { id: sale.id } };

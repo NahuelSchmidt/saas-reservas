@@ -52,7 +52,7 @@ export async function updateProduct(
 export async function createSale(params: {
   tenantId: string;
   createdByUserId: string;
-  method: "CASH" | "MERCADOPAGO";
+  method: "CASH" | "TRANSFER" | "MERCADOPAGO";
   items: { productId: string; quantity: number }[];
 }) {
   return withTenant(params.tenantId, async (tx) => {

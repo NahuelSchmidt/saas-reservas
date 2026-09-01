@@ -6,13 +6,16 @@ import { Minus, Plus, ShoppingCart } from "lucide-react";
 import { createSaleAction } from "./actions";
 import { formatCentsARS } from "@/lib/availability/engine";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Product = { id: string; name: string; priceCents: number; stock: number };
 
 export function NewSaleDialog({ tenantSlug, products }: { tenantSlug: string; products: Product[] }) {
   const [open, setOpen] = useState(false);
   const [cart, setCart] = useState<Record<string, number>>({});
+  const [method, setMethod] = useState<"CASH" | "TRANSFER">("CASH");
   const [isPending, startTransition] = useTransition();
 
   const totalCents = useMemo(
@@ -32,7 +35,7 @@ export function NewSaleDialog({ tenantSlug, products }: { tenantSlug: string; pr
       .map(([productId, quantity]) => ({ productId, quantity }));
 
     startTransition(async () => {
-      const result = await createSaleAction(tenantSlug, items);
+      const result = await createSaleAction(tenantSlug, items, method);
       if (result.ok) {
         toast.success("Venta registrada.");
         setCart({});
@@ -92,9 +95,22 @@ export function NewSaleDialog({ tenantSlug, products }: { tenantSlug: string; pr
           <span className="font-heading text-xl font-bold">{formatCentsARS(totalCents)}</span>
         </div>
 
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="saleMethod" className="text-xs text-muted-foreground">Método de pago</Label>
+          <Select value={method} onValueChange={(v) => v && setMethod(v as "CASH" | "TRANSFER")}>
+            <SelectTrigger id="saleMethod">
+              <SelectValue>{method === "CASH" ? "Efectivo" : "Transferencia"}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="CASH">Efectivo</SelectItem>
+              <SelectItem value="TRANSFER">Transferencia</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <DialogFooter>
           <Button onClick={submit} disabled={isPending || itemCount === 0}>
-            {isPending ? "Registrando..." : "Cobrar en efectivo"}
+            {isPending ? "Registrando..." : "Cobrar"}
           </Button>
         </DialogFooter>
       </DialogContent>
