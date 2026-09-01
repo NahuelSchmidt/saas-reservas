@@ -41,7 +41,10 @@ export default async function PricingPage({ params }: { params: Promise<{ slug: 
               <CardContent className="flex flex-col gap-4">
                 <div className="flex items-start justify-between">
                   <div className="font-heading text-2xl font-bold">{formatCentsARS(rule.priceCents)}</div>
-                  <DeleteRuleButton tenantSlug={tenant.slug} ruleId={rule.id} />
+                  <div className="flex items-center gap-1">
+                    <PricingRuleForm tenantSlug={tenant.slug} courts={courts} rule={rule} />
+                    <DeleteRuleButton tenantSlug={tenant.slug} ruleId={rule.id} />
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-2 text-sm text-muted-foreground">
