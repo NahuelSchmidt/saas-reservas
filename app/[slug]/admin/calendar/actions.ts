@@ -11,7 +11,7 @@ import {
   registerCashPayment,
 } from "@/lib/booking/admin-service";
 import { cancelBooking, SlotUnavailableError } from "@/lib/booking/service";
-import { manualBookingSchema } from "@/lib/validation/schemas";
+import { manualBookingSchema, registerPaymentSchema } from "@/lib/validation/schemas";
 import type { ActionResult } from "@/app/actions/booking";
 
 export async function createManualBookingAction(
@@ -29,6 +29,7 @@ export async function createManualBookingAction(
     playerName: formData.get("playerName"),
     totalPriceCents: Number(formData.get("totalPriceARS")) * 100,
     markDepositPaid: formData.get("markDepositPaid") === "on",
+    depositMethod: formData.get("depositMethod") || "CASH",
   });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 
@@ -49,6 +50,7 @@ export async function createManualBookingAction(
       endTime: parsed.data.endTime,
       totalPriceCents: parsed.data.totalPriceCents,
       depositAmountCents,
+      depositMethod: parsed.data.depositMethod,
       playerEmail: parsed.data.playerEmail,
       playerName: parsed.data.playerName,
       markDepositPaid: parsed.data.markDepositPaid,
@@ -120,17 +122,22 @@ export async function registerCashPaymentAction(
   tenantSlug: string,
   bookingId: string,
   amountARS: number,
+  method: "CASH" | "TRANSFER",
   note?: string,
 ): Promise<ActionResult<{ ok: true }>> {
   const tenant = await resolveTenantBySlug(tenantSlug);
   const actor = await requireTenantRole(tenant.id, ["ADMIN", "EMPLOYEE"]);
 
+  const parsed = registerPaymentSchema.safeParse({ bookingId, amountCents: Math.round(amountARS * 100), method, note });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
+
   await registerCashPayment({
     tenantId: tenant.id,
-    bookingId,
-    amountCents: Math.round(amountARS * 100),
+    bookingId: parsed.data.bookingId,
+    amountCents: parsed.data.amountCents,
+    method: parsed.data.method,
     actorUserId: actor.id,
-    note,
+    note: parsed.data.note,
   });
   revalidatePath(`/${tenantSlug}/admin/calendar`);
   return { ok: true, data: { ok: true } };

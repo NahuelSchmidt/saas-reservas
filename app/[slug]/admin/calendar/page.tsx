@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Banknote, CreditCard, Wallet } from "lucide-react";
+import { ChevronLeft, ChevronRight, Banknote, Landmark, CreditCard, Wallet } from "lucide-react";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { getAdminDaySchedule } from "@/lib/booking/admin-service";
 import { getDailyCashRegister } from "@/lib/booking/admin-service";
@@ -52,7 +52,7 @@ export default async function CalendarPage({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="gap-2 border-border/60 py-5 shadow-sm">
           <CardContent className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
@@ -61,6 +61,17 @@ export default async function CalendarPage({
             <div>
               <div className="font-heading text-xl font-bold">{formatCentsARS(cash.cashCents)}</div>
               <div className="text-xs text-muted-foreground">Efectivo</div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="gap-2 border-border/60 py-5 shadow-sm">
+          <CardContent className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600">
+              <Landmark className="size-5" />
+            </div>
+            <div>
+              <div className="font-heading text-xl font-bold">{formatCentsARS(cash.transferCents)}</div>
+              <div className="text-xs text-muted-foreground">Transferencia</div>
             </div>
           </CardContent>
         </Card>

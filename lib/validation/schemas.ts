@@ -55,8 +55,17 @@ export const manualBookingSchema = createBookingSchema.extend({
   playerName: z.string().min(1),
   totalPriceCents: z.coerce.number().int().nonnegative(),
   markDepositPaid: z.boolean().default(false),
+  depositMethod: z.enum(["CASH", "TRANSFER"]).default("CASH"),
 });
 export type ManualBookingInput = z.infer<typeof manualBookingSchema>;
+
+export const registerPaymentSchema = z.object({
+  bookingId: z.string().min(1),
+  amountCents: z.coerce.number().int().positive(),
+  method: z.enum(["CASH", "TRANSFER"]),
+  note: z.string().max(200).optional(),
+});
+export type RegisterPaymentInput = z.infer<typeof registerPaymentSchema>;
 
 export const cancelBookingSchema = z.object({
   bookingId: z.string().min(1),

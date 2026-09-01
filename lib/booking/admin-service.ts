@@ -44,6 +44,7 @@ export async function createManualBooking(params: {
   playerName: string;
   markDepositPaid: boolean;
   depositAmountCents: number;
+  depositMethod: "CASH" | "TRANSFER";
   createdByUserId: string;
   notes?: string;
 }) {
@@ -78,7 +79,7 @@ export async function createManualBooking(params: {
             tenantId: params.tenantId,
             bookingId: booking.id,
             amountCents: params.depositAmountCents,
-            method: "CASH",
+            method: params.depositMethod,
             status: "APPROVED",
             type: "DEPOSIT",
           },
@@ -156,11 +157,12 @@ export async function toggleCheckIn(tenantId: string, bookingId: string, checked
   return withTenant(tenantId, (tx) => tx.booking.update({ where: { id: bookingId }, data: { checkedIn } }));
 }
 
-/** Registra un cobro en efectivo (seña o pago completo) desde la caja del día. */
+/** Registra un cobro (seña o saldo restante, en efectivo o transferencia) desde la caja del día. */
 export async function registerCashPayment(params: {
   tenantId: string;
   bookingId: string;
   amountCents: number;
+  method: "CASH" | "TRANSFER";
   actorUserId: string;
   note?: string;
 }) {
@@ -172,7 +174,7 @@ export async function registerCashPayment(params: {
         tenantId: params.tenantId,
         bookingId: booking.id,
         amountCents: params.amountCents,
-        method: "CASH",
+        method: params.method,
         status: "APPROVED",
         type: booking.depositStatus === "PAID" ? "FULL" : "DEPOSIT",
         note: params.note || null,
@@ -217,17 +219,20 @@ export async function getDailyCashRegister(tenantId: string, date: Date) {
     ]);
 
     const bookingsCashCents = payments.filter((p) => p.method === "CASH").reduce((s, p) => s + p.amountCents, 0);
+    const bookingsTransferCents = payments.filter((p) => p.method === "TRANSFER").reduce((s, p) => s + p.amountCents, 0);
     const bookingsOnlineCents = payments.filter((p) => p.method === "MERCADOPAGO").reduce((s, p) => s + p.amountCents, 0);
     const productsCashCents = sales.filter((s) => s.method === "CASH").reduce((s, sale) => s + sale.totalCents, 0);
     const productsOnlineCents = sales.filter((s) => s.method === "MERCADOPAGO").reduce((s, sale) => s + sale.totalCents, 0);
 
     const cashCents = bookingsCashCents + productsCashCents;
+    const transferCents = bookingsTransferCents;
     const onlineCents = bookingsOnlineCents + productsOnlineCents;
 
     return {
       cashCents,
+      transferCents,
       onlineCents,
-      totalCents: cashCents + onlineCents,
+      totalCents: cashCents + transferCents + onlineCents,
       productsCents: productsCashCents + productsOnlineCents,
     };
   });

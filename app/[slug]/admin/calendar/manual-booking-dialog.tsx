@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type DepositConfig = { depositRequired: boolean; depositIsPercentage: boolean; depositValue: number };
 
@@ -33,6 +34,8 @@ export function ManualBookingDialog({
 }) {
   const [isPending, startTransition] = useTransition();
   const [priceARS, setPriceARS] = useState(defaultPriceCents != null ? String(defaultPriceCents / 100) : "");
+  const [depositPaid, setDepositPaid] = useState(false);
+  const [depositMethod, setDepositMethod] = useState<"CASH" | "TRANSFER">("CASH");
   const label = `${new Date(startTime).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })} – ${new Date(endTime).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}`;
 
   const depositCents = useMemo(() => {
@@ -48,6 +51,8 @@ export function ManualBookingDialog({
     formData.set("startTime", startTime);
     formData.set("endTime", endTime);
     formData.set("totalPriceARS", priceARS);
+    formData.set("markDepositPaid", depositPaid ? "on" : "");
+    formData.set("depositMethod", depositMethod);
     startTransition(async () => {
       const result = await createManualBookingAction(tenantSlug, formData);
       if (result.ok) {
@@ -112,23 +117,42 @@ export function ManualBookingDialog({
                 )}
               </div>
 
-              {depositConfig.depositRequired ? (
-                <label className="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-sm">
-                  <input type="checkbox" name="markDepositPaid" className="mt-0.5 h-4 w-4" />
-                  <span>
-                    Ya cobré la seña de <strong>{formatCentsARS(depositCents)}</strong>
-                    <span className="block text-xs text-muted-foreground">
-                      ({depositConfig.depositIsPercentage ? `${depositConfig.depositValue}% del turno` : "monto fijo"}) — el resto
-                      lo vas a poder cargar por jugador desde la reserva.
+              <div className="flex flex-col gap-2 rounded-lg bg-muted/50 p-3">
+                <label className="flex items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={depositPaid}
+                    onChange={(e) => setDepositPaid(e.target.checked)}
+                    className="mt-0.5 h-4 w-4"
+                  />
+                  {depositConfig.depositRequired ? (
+                    <span>
+                      Ya cobré la seña de <strong>{formatCentsARS(depositCents)}</strong>
+                      <span className="block text-xs text-muted-foreground">
+                        ({depositConfig.depositIsPercentage ? `${depositConfig.depositValue}% del turno` : "monto fijo"}) — el resto
+                        lo vas a poder cargar por jugador desde la reserva.
+                      </span>
                     </span>
-                  </span>
+                  ) : (
+                    <span>Ya cobré el turno completo</span>
+                  )}
                 </label>
-              ) : (
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="markDepositPaid" className="h-4 w-4" />
-                  Ya cobré el turno completo en efectivo
-                </label>
-              )}
+
+                {depositPaid && (
+                  <div className="flex flex-col gap-1.5 pl-6">
+                    <Label htmlFor="depositMethod" className="text-xs">Método de pago</Label>
+                    <Select value={depositMethod} onValueChange={(v) => v && setDepositMethod(v as "CASH" | "TRANSFER")}>
+                      <SelectTrigger id="depositMethod" className="h-8">
+                        <SelectValue>{depositMethod === "CASH" ? "Efectivo" : "Transferencia"}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="CASH">Efectivo</SelectItem>
+                        <SelectItem value="TRANSFER">Transferencia</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
 
               <DialogFooter>
                 <Button type="submit" disabled={isPending}>{isPending ? "Guardando..." : "Crear reserva"}</Button>

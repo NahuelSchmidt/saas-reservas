@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Payment = { amountCents: number; status: string; type: string; method: string; note: string | null; createdAt: Date };
 type Booking = {
@@ -35,6 +36,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 const METHOD_LABEL: Record<string, string> = {
   CASH: "Efectivo",
+  TRANSFER: "Transferencia",
   MERCADOPAGO: "Online",
 };
 
@@ -52,6 +54,7 @@ export function BookingDetailsDialog({
   const paidCents = sumPaidCents(booking.payments);
   const balanceCents = balanceDueCents(booking.totalPriceCents, booking.payments);
   const [cashAmount, setCashAmount] = useState(String(balanceCents / 100));
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "TRANSFER">("CASH");
   const [note, setNote] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -80,7 +83,7 @@ export function BookingDetailsDialog({
 
   function registerCash() {
     startTransition(async () => {
-      const result = await registerCashPaymentAction(tenantSlug, booking.id, Number(cashAmount), note || undefined);
+      const result = await registerCashPaymentAction(tenantSlug, booking.id, Number(cashAmount), paymentMethod, note || undefined);
       if (result.ok) {
         toast.success("Cobro registrado.");
         onOpenChange(false);
@@ -149,8 +152,20 @@ export function BookingDetailsDialog({
           <div className="flex flex-col gap-2 rounded-lg bg-orange-500/5 p-3">
             <div className="flex items-end gap-2">
               <div className="flex flex-1 flex-col gap-1.5">
-                <label className="text-xs text-muted-foreground">Cobrar en efectivo (ARS)</label>
+                <label className="text-xs text-muted-foreground">Monto a cobrar (ARS)</label>
                 <Input value={cashAmount} onChange={(e) => setCashAmount(e.target.value)} type="number" min={0} />
+              </div>
+              <div className="flex w-36 flex-col gap-1.5">
+                <label className="text-xs text-muted-foreground">Método</label>
+                <Select value={paymentMethod} onValueChange={(v) => v && setPaymentMethod(v as "CASH" | "TRANSFER")}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue>{paymentMethod === "CASH" ? "Efectivo" : "Transferencia"}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CASH">Efectivo</SelectItem>
+                    <SelectItem value="TRANSFER">Transferencia</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <Button onClick={registerCash} disabled={isPending}>Cobrar</Button>
             </div>
