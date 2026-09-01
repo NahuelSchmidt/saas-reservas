@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateBookingConfigAction } from "./actions";
 import { Button } from "@/components/ui/button";
@@ -18,13 +19,16 @@ type Config = {
 } | null;
 
 export function BookingConfigForm({ tenantSlug, config }: { tenantSlug: string; config: Config }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
       const result = await updateBookingConfigAction(tenantSlug, formData);
-      if (result.ok) toast.success("Configuración guardada.");
-      else toast.error(result.error);
+      if (result.ok) {
+        toast.success("Configuración guardada.");
+        router.refresh();
+      } else toast.error(result.error);
     });
   }
 

@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateStockAction } from "./actions";
 import { Input } from "@/components/ui/input";
 
 export function StockInput({ tenantSlug, productId, stock }: { tenantSlug: string; productId: string; stock: number }) {
+  const router = useRouter();
   const [value, setValue] = useState(String(stock));
   const [isPending, startTransition] = useTransition();
 
@@ -17,7 +19,9 @@ export function StockInput({ tenantSlug, productId, stock }: { tenantSlug: strin
     }
     startTransition(async () => {
       const result = await updateStockAction(tenantSlug, productId, next);
-      if (!result.ok) {
+      if (result.ok) {
+        router.refresh();
+      } else {
         toast.error(result.error);
         setValue(String(stock));
       }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
 import { createSaleAction } from "./actions";
@@ -13,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 type Product = { id: string; name: string; priceCents: number; stock: number };
 
 export function NewSaleDialog({ tenantSlug, products }: { tenantSlug: string; products: Product[] }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [method, setMethod] = useState<"CASH" | "TRANSFER">("CASH");
@@ -40,6 +42,7 @@ export function NewSaleDialog({ tenantSlug, products }: { tenantSlug: string; pr
         toast.success("Venta registrada.");
         setCart({});
         setOpen(false);
+        router.refresh();
       } else {
         toast.error(result.error);
       }

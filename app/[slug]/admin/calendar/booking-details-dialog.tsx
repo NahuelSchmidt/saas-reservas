@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Receipt } from "lucide-react";
 import { cancelBookingAdminAction, toggleCheckInAction, registerCashPaymentAction } from "./actions";
@@ -51,6 +52,7 @@ export function BookingDetailsDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const router = useRouter();
   const paidCents = sumPaidCents(booking.payments);
   const balanceCents = balanceDueCents(booking.totalPriceCents, booking.payments);
   const [cashAmount, setCashAmount] = useState(String(balanceCents / 100));
@@ -67,6 +69,7 @@ export function BookingDetailsDialog({
       if (result.ok) {
         toast.success("Reserva cancelada.");
         onOpenChange(false);
+        router.refresh();
       } else toast.error(result.error);
     });
   }
@@ -77,6 +80,7 @@ export function BookingDetailsDialog({
       if (result.ok) {
         toast.success(booking.checkedIn ? "Check-in deshecho." : "Check-in registrado.");
         onOpenChange(false);
+        router.refresh();
       } else toast.error(result.error);
     });
   }
@@ -87,6 +91,7 @@ export function BookingDetailsDialog({
       if (result.ok) {
         toast.success("Cobro registrado.");
         onOpenChange(false);
+        router.refresh();
       } else toast.error(result.error);
     });
   }

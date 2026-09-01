@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createProductAction } from "./actions";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export function ProductFormDialog({ tenantSlug }: { tenantSlug: string }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -18,6 +20,7 @@ export function ProductFormDialog({ tenantSlug }: { tenantSlug: string }) {
       if (result.ok) {
         toast.success("Producto creado.");
         setOpen(false);
+        router.refresh();
       } else {
         toast.error(result.error);
       }

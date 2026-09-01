@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateCancellationPolicyAction } from "./actions";
 import { Button } from "@/components/ui/button";
@@ -14,13 +15,16 @@ type Policy = {
 } | null;
 
 export function CancellationPolicyForm({ tenantSlug, policy }: { tenantSlug: string; policy: Policy }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
       const result = await updateCancellationPolicyAction(tenantSlug, formData);
-      if (result.ok) toast.success("Política guardada.");
-      else toast.error(result.error);
+      if (result.ok) {
+        toast.success("Política guardada.");
+        router.refresh();
+      } else toast.error(result.error);
     });
   }
 

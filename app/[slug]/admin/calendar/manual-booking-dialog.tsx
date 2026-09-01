@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createManualBookingAction, createBlockAction } from "./actions";
 import { formatCentsARS } from "@/lib/availability/engine";
@@ -32,6 +33,7 @@ export function ManualBookingDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [priceARS, setPriceARS] = useState(defaultPriceCents != null ? String(defaultPriceCents / 100) : "");
   const [depositPaid, setDepositPaid] = useState(false);
@@ -58,6 +60,7 @@ export function ManualBookingDialog({
       if (result.ok) {
         toast.success("Reserva creada.");
         onOpenChange(false);
+        router.refresh();
       } else {
         toast.error(result.error);
       }
@@ -73,6 +76,7 @@ export function ManualBookingDialog({
       if (result.ok) {
         toast.success("Horario bloqueado.");
         onOpenChange(false);
+        router.refresh();
       } else {
         toast.error(result.error);
       }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Pencil } from "lucide-react";
 import { createPricingRuleAction, updatePricingRuleAction } from "./actions";
@@ -45,6 +46,7 @@ export function PricingRuleForm({
   /** Si se pasa, el diálogo edita esta regla existente en vez de crear una nueva. */
   rule?: ExistingRule;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const isEdit = Boolean(rule);
@@ -65,6 +67,7 @@ export function PricingRuleForm({
       if (result.ok) {
         toast.success(isEdit ? "Regla actualizada." : "Regla de precio creada.");
         setOpen(false);
+        router.refresh();
       } else {
         toast.error(result.error);
       }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateBusinessHoursAction } from "./actions";
 import { Button } from "@/components/ui/button";
@@ -11,14 +12,17 @@ const DAY_LABEL = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Vierne
 type Hours = { dayOfWeek: number; openTime: string; closeTime: string }[];
 
 export function BusinessHoursForm({ tenantSlug, hours }: { tenantSlug: string; hours: Hours }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const byDay = new Map(hours.map((h) => [h.dayOfWeek, h]));
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
       const result = await updateBusinessHoursAction(tenantSlug, formData);
-      if (result.ok) toast.success("Horarios guardados.");
-      else toast.error(result.error);
+      if (result.ok) {
+        toast.success("Horarios guardados.");
+        router.refresh();
+      } else toast.error(result.error);
     });
   }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateCourtAction } from "./actions";
 import {
@@ -26,6 +27,7 @@ export function CourtStatusSelect({
   courtId: string;
   status: string;
 }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   function handleChange(value: string | null) {
@@ -34,7 +36,8 @@ export function CourtStatusSelect({
       const formData = new FormData();
       formData.set("status", value);
       const result = await updateCourtAction(tenantSlug, courtId, formData);
-      if (!result.ok) toast.error(result.error);
+      if (result.ok) router.refresh();
+      else toast.error(result.error);
     });
   }
 

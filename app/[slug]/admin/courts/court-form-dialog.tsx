@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createCourtAction } from "./actions";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/select";
 
 export function CourtFormDialog({ tenantSlug }: { tenantSlug: string }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -32,6 +34,7 @@ export function CourtFormDialog({ tenantSlug }: { tenantSlug: string }) {
       if (result.ok) {
         toast.success("Cancha creada.");
         setOpen(false);
+        router.refresh();
       } else {
         toast.error(result.error);
       }

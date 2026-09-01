@@ -1,17 +1,20 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { deletePricingRuleAction } from "./actions";
 
 export function DeleteRuleButton({ tenantSlug, ruleId }: { tenantSlug: string; ruleId: string }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
     startTransition(async () => {
       const result = await deletePricingRuleAction(tenantSlug, ruleId);
-      if (!result.ok) toast.error(result.error);
+      if (result.ok) router.refresh();
+      else toast.error(result.error);
     });
   }
 
