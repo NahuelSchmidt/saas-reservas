@@ -67,6 +67,13 @@ export const registerPaymentSchema = z.object({
 });
 export type RegisterPaymentInput = z.infer<typeof registerPaymentSchema>;
 
+export const registerSchema = z.object({
+  name: z.string().min(1, "Requerido").max(80),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Mínimo 6 caracteres"),
+});
+export type RegisterInput = z.infer<typeof registerSchema>;
+
 export const cancelBookingSchema = z.object({
   bookingId: z.string().min(1),
   reason: z.string().max(500).optional(),

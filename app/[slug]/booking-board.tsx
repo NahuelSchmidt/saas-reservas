@@ -28,10 +28,12 @@ function formatDuration(startTime: Date, endTime: Date) {
 
 export function BookingBoard({
   tenantSlug,
+  tenantName,
   initialDateISO,
   initialSlots,
 }: {
   tenantSlug: string;
+  tenantName: string;
   initialDateISO: string;
   initialSlots: Slot[];
 }) {
@@ -173,6 +175,7 @@ export function BookingBoard({
           {selected && (
             <>
               <DialogHeader>
+                <p className="text-xs font-medium text-muted-foreground uppercase">{tenantName}</p>
                 <DialogTitle>{selected.courtName}</DialogTitle>
               </DialogHeader>
               <div className="flex flex-col gap-3">

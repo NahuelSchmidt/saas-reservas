@@ -39,7 +39,12 @@ export default async function TenantBookingPage({
           <CalendarDays className="size-4" />
           Disponibilidad
         </div>
-        <BookingBoard tenantSlug={tenant.slug} initialDateISO={toLocalISODate(today)} initialSlots={initialSlots} />
+        <BookingBoard
+          tenantSlug={tenant.slug}
+          tenantName={tenant.name}
+          initialDateISO={toLocalISODate(today)}
+          initialSlots={initialSlots}
+        />
       </div>
     </div>
   );

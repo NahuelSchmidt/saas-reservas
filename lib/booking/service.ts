@@ -218,14 +218,19 @@ export async function confirmBookingPayment(params: {
 
   if (!result || result.alreadyConfirmed) return result?.booking ?? null;
 
-  await sendBookingConfirmedEmail({
-    to: result.booking.bookedBy.email,
-    tenantName: result.booking.tenant.name,
-    courtName: result.booking.court.name,
-    startTime: result.booking.startTime,
-    totalPriceCents: result.booking.totalPriceCents,
-    depositAmountCents: result.booking.depositAmountCents,
-  });
+  try {
+    await sendBookingConfirmedEmail({
+      to: result.booking.bookedBy.email,
+      tenantName: result.booking.tenant.name,
+      courtName: result.booking.court.name,
+      startTime: result.booking.startTime,
+      totalPriceCents: result.booking.totalPriceCents,
+      depositAmountCents: result.booking.depositAmountCents,
+    });
+  } catch (err) {
+    // El pago ya quedó confirmado; no fallar la conciliación por un error de email.
+    console.error("No se pudo enviar el email de confirmación", err);
+  }
 
   return result.booking;
 }
@@ -300,13 +305,18 @@ export async function cancelBooking(params: {
 
   if (result.alreadyCancelled) return result.booking;
 
-  await sendBookingCancelledEmail({
-    to: result.booking.bookedBy.email,
-    tenantName: result.booking.tenant.name,
-    courtName: result.booking.court.name,
-    startTime: result.booking.startTime,
-    refundAmountCents: result.refundAmountCents,
-  });
+  try {
+    await sendBookingCancelledEmail({
+      to: result.booking.bookedBy.email,
+      tenantName: result.booking.tenant.name,
+      courtName: result.booking.court.name,
+      startTime: result.booking.startTime,
+      refundAmountCents: result.refundAmountCents,
+    });
+  } catch (err) {
+    // La cancelación ya se aplicó; no fallarla por un error de email.
+    console.error("No se pudo enviar el email de cancelación", err);
+  }
 
   return result.booking;
 }
