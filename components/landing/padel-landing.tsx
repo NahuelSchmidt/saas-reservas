@@ -525,7 +525,7 @@ export function PadelLanding() {
           <div style={css("position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; margin-left: -0.5px; background: repeating-linear-gradient(180deg, var(--land-sideline-soft) 0 16px, transparent 16px 32px);")} />
         </div>
 
-        <nav style={css("position: sticky; top: 0; z-index: 50; backdrop-filter: blur(14px); background: var(--land-nav-bg); border-bottom: 1px solid var(--land-line);")}>
+        <nav style={css("position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: transparent;")}>
           <div style={css("max-width: 1240px; margin: 0 auto; padding: 16px 28px; display: flex; align-items: center; gap: 28px;")}>
             <div style={css("display: flex; align-items: center; gap: 10px; margin-right: auto;")}>
               <div style={css("width: 34px; height: 34px; border-radius: 11px; background: linear-gradient(140deg, #CCFF33, #17C964); display: grid; place-items: center; font-weight: 900; color: #071008; font-size: 17px;")} className="sp-heading">
@@ -550,6 +550,7 @@ export function PadelLanding() {
             </Link>
           </div>
         </nav>
+        <div aria-hidden="true" style={css("height: 66px;")} />
 
         <section data-screen-label="Hero" style={css("position: relative; z-index: 2; padding: 92px 28px 110px; overflow: hidden;")}>
           <div style={css("position: absolute; inset: 0; background: radial-gradient(900px 520px at 78% 8%, var(--land-green-soft), transparent 70%), radial-gradient(700px 460px at 8% 90%, var(--land-accent-soft), transparent 70%);")} />
