@@ -35,6 +35,23 @@ export async function createProduct(params: {
   );
 }
 
+export async function bulkCreateProducts(
+  tenantId: string,
+  products: { name: string; priceCents: number; stock: number; category?: string }[],
+) {
+  return withTenant(tenantId, (tx) =>
+    tx.product.createMany({
+      data: products.map((p) => ({
+        tenantId,
+        name: p.name,
+        priceCents: p.priceCents,
+        stock: p.stock,
+        category: p.category,
+      })),
+    }),
+  );
+}
+
 export async function updateProduct(
   tenantId: string,
   productId: string,

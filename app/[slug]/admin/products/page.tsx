@@ -5,6 +5,7 @@ import { formatCentsARS } from "@/lib/availability/engine";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductFormDialog } from "./product-form-dialog";
 import { NewSaleDialog } from "./new-sale-dialog";
+import { BulkProductsDialog } from "./bulk-products-dialog";
 import { ProductsGrid } from "./products-grid";
 
 export default async function ProductsPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -27,6 +28,7 @@ export default async function ProductsPage({ params }: { params: Promise<{ slug:
         </div>
         <div className="flex gap-2">
           <NewSaleDialog tenantSlug={tenant.slug} products={products.filter((p) => p.active)} />
+          <BulkProductsDialog tenantSlug={tenant.slug} />
           <ProductFormDialog tenantSlug={tenant.slug} />
         </div>
       </div>

@@ -3,9 +3,31 @@
 import { revalidatePath } from "next/cache";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { requireTenantRole } from "@/lib/auth/guards";
-import { createProduct, updateProduct, createSale, InsufficientStockError } from "@/lib/products/service";
-import { productSchema } from "@/lib/validation/schemas";
+import { createProduct, updateProduct, createSale, bulkCreateProducts, InsufficientStockError } from "@/lib/products/service";
+import { productSchema, type ProductInput } from "@/lib/validation/schemas";
 import type { ActionResult } from "@/app/actions/booking";
+
+export async function bulkCreateProductsAction(
+  tenantSlug: string,
+  products: { name: string; priceCents: number; stock: number; category?: string }[],
+): Promise<ActionResult<{ count: number }>> {
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  await requireTenantRole(tenant.id, ["ADMIN"]);
+
+  if (products.length === 0) return { ok: false, error: "No hay productos para importar." };
+  if (products.length > 500) return { ok: false, error: "Máximo 500 productos por carga." };
+
+  const parsed = products.map((p, i) => ({ i, result: productSchema.safeParse(p) }));
+  const invalid = parsed.find((p) => !p.result.success);
+  if (invalid) {
+    return { ok: false, error: `Fila ${invalid.i + 1}: ${invalid.result.error?.issues[0]?.message ?? "datos inválidos"}` };
+  }
+
+  const validated = parsed.map((p) => (p.result as { success: true; data: ProductInput }).data);
+  const result = await bulkCreateProducts(tenant.id, validated);
+  revalidatePath(`/${tenantSlug}/admin/products`);
+  return { ok: true, data: { count: result.count } };
+}
 
 export async function createProductAction(tenantSlug: string, formData: FormData): Promise<ActionResult<{ id: string }>> {
   const tenant = await resolveTenantBySlug(tenantSlug);
