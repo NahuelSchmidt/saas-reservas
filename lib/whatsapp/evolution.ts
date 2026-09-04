@@ -58,9 +58,7 @@ export async function sendBookingConfirmedWhatsApp(params: {
   startTime: Date;
   endTime: Date;
 }) {
-  const { phone, playerName, tenantName, tenantSlug, bookingId, courtName, startTime, endTime } = params;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const bookingUrl = `${baseUrl}/${tenantSlug}/reservas/${bookingId}`;
+  const { phone, playerName, tenantName, courtName, startTime, endTime } = params;
 
   const text = [
     `Hola ${playerName}, te compartimos los datos de tu reserva:`,
@@ -70,8 +68,6 @@ export async function sendBookingConfirmedWhatsApp(params: {
     `Cancha: ${courtName}`,
     `Club: ${tenantName}`,
     `¡Te esperamos!`,
-    "",
-    `Ver o cancelar tu reserva: ${bookingUrl}`,
   ].join("\n");
 
   await sendText(phone, text);

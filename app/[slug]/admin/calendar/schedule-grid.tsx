@@ -22,7 +22,7 @@ type Booking = {
   depositAmountCents: number;
   notes: string | null;
   recurringBookingId: string | null;
-  bookedBy: { name: string; email: string };
+  bookedBy: { name: string; phone: string | null };
   payments: Payment[];
 };
 type BusinessHours = { openTime: string; closeTime: string };
@@ -70,9 +70,15 @@ export function ScheduleGrid({
         priceCents: number | null;
         cashQuarterPriceCents: number | null;
       }
-    | { type: "booking"; booking: Booking }
+    | { type: "booking"; bookingId: string }
     | null
   >(null);
+
+  // Se guarda solo el id y se busca en `bookings` en cada render (en vez de
+  // guardar el objeto entero) para que, después de un router.refresh() por
+  // registrar un pago, el diálogo siempre muestre los datos frescos del
+  // turno sin tener que sincronizar estado con un efecto.
+  const selectedBooking = selected?.type === "booking" ? bookings.find((b) => b.id === selected.bookingId) : undefined;
 
   const openMin = timeToMinutes(businessHours.openTime);
   const closeMin = timeToMinutes(businessHours.closeTime);
@@ -165,7 +171,7 @@ export function ScheduleGrid({
                     <td key={court.id} className="border-b p-1.5">
                       <button
                         className={`flex w-full flex-col items-center rounded-lg border px-2.5 py-2 text-center text-xs ${color}`}
-                        onClick={() => setSelected({ type: "booking", booking })}
+                        onClick={() => setSelected({ type: "booking", bookingId: booking.id })}
                       >
                         {booking.isBlock ? (
                           <span>Bloqueado{booking.notes ? ` — ${booking.notes}` : ""}</span>
@@ -206,10 +212,10 @@ export function ScheduleGrid({
           onOpenChange={(open) => !open && setSelected(null)}
         />
       )}
-      {selected?.type === "booking" && (
+      {selectedBooking && (
         <BookingDetailsDialog
           tenantSlug={tenantSlug}
-          booking={selected.booking}
+          booking={selectedBooking}
           open
           onOpenChange={(open) => !open && setSelected(null)}
         />

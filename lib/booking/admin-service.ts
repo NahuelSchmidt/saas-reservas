@@ -32,7 +32,7 @@ export async function getAdminDaySchedule(tenantId: string, date: Date) {
           depositAmountCents: true,
           notes: true,
           recurringBookingId: true,
-          bookedBy: { select: { name: true, email: true } },
+          bookedBy: { select: { name: true, phone: true } },
           payments: {
             select: { amountCents: true, status: true, type: true, method: true, note: true, createdAt: true },
             orderBy: { createdAt: "asc" },

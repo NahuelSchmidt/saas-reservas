@@ -25,7 +25,7 @@ type Booking = {
   depositAmountCents: number;
   notes: string | null;
   recurringBookingId: string | null;
-  bookedBy: { name: string; email: string };
+  bookedBy: { name: string; phone: string | null };
   payments: Payment[];
 };
 
@@ -57,30 +57,7 @@ export function BookingDetailsDialog({
   const router = useRouter();
   const paidCents = sumPaidCents(booking.payments);
   const balanceCents = balanceDueCents(booking.totalPriceCents, booking.payments);
-
-  // El turno se juega entre 4 y cada jugador paga su cuarta parte por
-  // separado, algunas veces por transferencia y otras en efectivo (que puede
-  // tener un precio distinto). El monto sugerido es el de UN cuarto, no el
-  // saldo completo — hay que ir registrando cada pago a medida que cada
-  // jugador se acerca a pagar el suyo.
-  const quarterCents = Math.round(booking.totalPriceCents / 4);
-  const cashQuarterCents = booking.cashQuarterPriceCents ?? quarterCents;
-  function suggestedAmountCents(method: "CASH" | "TRANSFER") {
-    return Math.min(balanceCents, method === "CASH" ? cashQuarterCents : quarterCents);
-  }
-
-  const [cashAmount, setCashAmount] = useState(String(suggestedAmountCents("CASH") / 100));
-  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "TRANSFER">("CASH");
-  const [note, setNote] = useState("");
-  const [closeAccount, setCloseAccount] = useState(false);
   const [isPending, startTransition] = useTransition();
-
-  // Al cambiar de método se repropone el monto sugerido para ese método (el
-  // admin puede seguir editándolo a mano después).
-  function handleMethodChange(method: "CASH" | "TRANSFER") {
-    setPaymentMethod(method);
-    setCashAmount(String(suggestedAmountCents(method) / 100));
-  }
 
   const registeredPayments = booking.payments.filter((p) => p.status === "APPROVED" && p.type !== "REFUND");
 
@@ -101,24 +78,6 @@ export function BookingDetailsDialog({
       const result = await toggleCheckInAction(tenantSlug, booking.id, !booking.checkedIn);
       if (result.ok) {
         toast.success(booking.checkedIn ? "Check-in deshecho." : "Check-in registrado.");
-        onOpenChange(false);
-        router.refresh();
-      } else toast.error(result.error);
-    });
-  }
-
-  function registerCash() {
-    startTransition(async () => {
-      const result = await registerCashPaymentAction(
-        tenantSlug,
-        booking.id,
-        Number(cashAmount),
-        paymentMethod,
-        note || undefined,
-        closeAccount,
-      );
-      if (result.ok) {
-        toast.success("Cobro registrado.");
         onOpenChange(false);
         router.refresh();
       } else toast.error(result.error);
@@ -156,7 +115,7 @@ export function BookingDetailsDialog({
           </p>
         )}
         <div className="flex flex-col gap-2 text-sm">
-          <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span>{booking.bookedBy.email}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">Teléfono</span><span>{booking.bookedBy.phone ?? "—"}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">Estado</span><Badge>{STATUS_LABEL[booking.status]}</Badge></div>
           <div className="flex justify-between"><span className="text-muted-foreground">Total del turno</span><span className="font-medium">{formatCentsARS(booking.totalPriceCents)}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">Pagado</span><span>{formatCentsARS(paidCents)}</span></div>
@@ -189,46 +148,19 @@ export function BookingDetailsDialog({
         )}
 
         {balanceCents > 0 && (
-          <div className="flex flex-col gap-2 rounded-lg bg-orange-500/5 p-3">
-            <div className="flex items-end gap-2">
-              <div className="flex flex-1 flex-col gap-1.5">
-                <label className="text-xs text-muted-foreground">Monto a cobrar (ARS)</label>
-                <Input value={cashAmount} onChange={(e) => setCashAmount(e.target.value)} type="number" min={0} />
-              </div>
-              <div className="flex w-36 flex-col gap-1.5">
-                <label className="text-xs text-muted-foreground">Método</label>
-                <Select value={paymentMethod} onValueChange={(v) => v && handleMethodChange(v as "CASH" | "TRANSFER")}>
-                  <SelectTrigger className="h-9">
-                    <SelectValue>{paymentMethod === "CASH" ? "Efectivo" : "Transferencia"}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="CASH">Efectivo</SelectItem>
-                    <SelectItem value="TRANSFER">Transferencia</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={registerCash} disabled={isPending}>Cobrar</Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              1/4 del turno: {formatCentsARS(quarterCents)} por transferencia
-              {cashQuarterCents !== quarterCents ? ` · ${formatCentsARS(cashQuarterCents)} en efectivo` : ""}.
-            </p>
-            <Input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Nota opcional (ej: Jugador 2 - Fede)"
-              className="text-xs"
-            />
-            <label className="flex items-start gap-2 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={closeAccount}
-                onChange={(e) => setCloseAccount(e.target.checked)}
-                className="mt-0.5 h-3.5 w-3.5"
-              />
-              Es el último pago de este turno — si queda un resto por los descuentos en efectivo, no lo sigas mostrando como pendiente.
-            </label>
-          </div>
+          <PaymentCollector
+            // Al registrar un pago el diálogo NO se cierra (se sigue usando
+            // para cargar el pago del próximo jugador), así que reseteamos
+            // este bloque con un `key` que cambia cuando entra un pago nuevo
+            // — más simple y sin efectos que ir sincronizando cada input.
+            key={registeredPayments.length}
+            tenantSlug={tenantSlug}
+            bookingId={booking.id}
+            totalPriceCents={booking.totalPriceCents}
+            cashQuarterPriceCents={booking.cashQuarterPriceCents}
+            balanceCents={balanceCents}
+            onRegistered={() => router.refresh()}
+          />
         )}
 
         <DialogFooter className="flex-row justify-between sm:justify-between">
@@ -241,5 +173,104 @@ export function BookingDetailsDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * El turno se juega entre 4 y cada jugador paga su cuarta parte por separado,
+ * algunas veces por transferencia y otras en efectivo (que puede tener un
+ * precio distinto). Sugiere el monto de UN cuarto (no el saldo completo) y
+ * cambia entre precio de efectivo/transferencia según el método elegido.
+ */
+function PaymentCollector({
+  tenantSlug,
+  bookingId,
+  totalPriceCents,
+  cashQuarterPriceCents,
+  balanceCents,
+  onRegistered,
+}: {
+  tenantSlug: string;
+  bookingId: string;
+  totalPriceCents: number;
+  cashQuarterPriceCents: number | null;
+  balanceCents: number;
+  onRegistered: () => void;
+}) {
+  const quarterCents = Math.round(totalPriceCents / 4);
+  const cashQuarterCents = cashQuarterPriceCents ?? quarterCents;
+  function suggestedAmountCents(method: "CASH" | "TRANSFER") {
+    return Math.min(balanceCents, method === "CASH" ? cashQuarterCents : quarterCents);
+  }
+
+  const [cashAmount, setCashAmount] = useState(String(suggestedAmountCents("CASH") / 100));
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "TRANSFER">("CASH");
+  const [note, setNote] = useState("");
+  const [closeAccount, setCloseAccount] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  function handleMethodChange(method: "CASH" | "TRANSFER") {
+    setPaymentMethod(method);
+    setCashAmount(String(suggestedAmountCents(method) / 100));
+  }
+
+  function registerCash() {
+    startTransition(async () => {
+      const result = await registerCashPaymentAction(
+        tenantSlug,
+        bookingId,
+        Number(cashAmount),
+        paymentMethod,
+        note || undefined,
+        closeAccount,
+      );
+      if (result.ok) {
+        toast.success("Cobro registrado.");
+        onRegistered();
+      } else toast.error(result.error);
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg bg-orange-500/5 p-3">
+      <div className="flex items-end gap-2">
+        <div className="flex flex-1 flex-col gap-1.5">
+          <label className="text-xs text-muted-foreground">Monto a cobrar (ARS)</label>
+          <Input value={cashAmount} onChange={(e) => setCashAmount(e.target.value)} type="number" min={0} />
+        </div>
+        <div className="flex w-36 flex-col gap-1.5">
+          <label className="text-xs text-muted-foreground">Método</label>
+          <Select value={paymentMethod} onValueChange={(v) => v && handleMethodChange(v as "CASH" | "TRANSFER")}>
+            <SelectTrigger className="h-9">
+              <SelectValue>{paymentMethod === "CASH" ? "Efectivo" : "Transferencia"}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="CASH">Efectivo</SelectItem>
+              <SelectItem value="TRANSFER">Transferencia</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={registerCash} disabled={isPending}>Cobrar</Button>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        1/4 del turno: {formatCentsARS(quarterCents)} por transferencia
+        {cashQuarterCents !== quarterCents ? ` · ${formatCentsARS(cashQuarterCents)} en efectivo` : ""}.
+      </p>
+      <Input
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="Nota opcional (ej: Jugador 2 - Fede)"
+        className="text-xs"
+      />
+      <label className="flex items-start gap-2 text-xs text-muted-foreground">
+        <input
+          type="checkbox"
+          checked={closeAccount}
+          onChange={(e) => setCloseAccount(e.target.checked)}
+          className="mt-0.5 h-3.5 w-3.5"
+        />
+        Es el último pago de este turno — si queda un resto por los descuentos en efectivo, no lo sigas mostrando como pendiente.
+      </label>
+    </div>
   );
 }
