@@ -130,6 +130,8 @@ export async function createBooking(params: {
       await sendBookingConfirmedEmail({
         to: playerEmail,
         tenantName,
+        tenantSlug,
+        bookingId: booking.id,
         courtName: court.name,
         startTime,
         totalPriceCents: priceCents,
@@ -222,6 +224,8 @@ export async function confirmBookingPayment(params: {
     await sendBookingConfirmedEmail({
       to: result.booking.bookedBy.email,
       tenantName: result.booking.tenant.name,
+      tenantSlug: result.booking.tenant.slug,
+      bookingId: result.booking.id,
       courtName: result.booking.court.name,
       startTime: result.booking.startTime,
       totalPriceCents: result.booking.totalPriceCents,

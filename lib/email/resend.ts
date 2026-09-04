@@ -11,15 +11,19 @@ const from = () => process.env.EMAIL_FROM ?? "Sistema Padel <no-reply@sistema-pa
 export async function sendBookingConfirmedEmail(params: {
   to: string;
   tenantName: string;
+  tenantSlug: string;
+  bookingId: string;
   courtName: string;
   startTime: Date;
   totalPriceCents: number;
   depositAmountCents: number;
 }) {
-  const { to, tenantName, courtName, startTime, totalPriceCents, depositAmountCents } = params;
+  const { to, tenantName, tenantSlug, bookingId, courtName, startTime, totalPriceCents, depositAmountCents } = params;
   const fecha = startTime.toLocaleString("es-AR", { dateStyle: "full", timeStyle: "short" });
   const total = (totalPriceCents / 100).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
   const seña = (depositAmountCents / 100).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const bookingUrl = `${baseUrl}/${tenantSlug}/reservas/${bookingId}`;
 
   await client().emails.send({
     from: from(),
@@ -31,6 +35,7 @@ export async function sendBookingConfirmedEmail(params: {
       <p>${fecha}</p>
       <p>Seña pagada: ${seña}</p>
       <p>Total del turno: ${total}</p>
+      <p><a href="${bookingUrl}">Ver tu reserva o cancelarla</a></p>
     `,
   });
 }
