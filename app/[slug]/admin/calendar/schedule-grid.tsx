@@ -100,7 +100,7 @@ export function ScheduleGrid({
             <tr className="bg-muted/50">
               <th className="w-24 border-b px-4 py-3 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">Hora</th>
               {courts.map((c) => (
-                <th key={c.id} className="truncate border-b px-3 py-3 text-left font-heading font-bold">{c.name}</th>
+                <th key={c.id} className="truncate border-b px-3 py-3 text-center font-heading font-bold">{c.name}</th>
               ))}
             </tr>
           </thead>
