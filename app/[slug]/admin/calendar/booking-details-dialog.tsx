@@ -3,9 +3,10 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Receipt } from "lucide-react";
+import { Receipt, MessageCircle } from "lucide-react";
 import { cancelBookingAdminAction, toggleCheckInAction, registerCashPaymentAction } from "./actions";
 import { formatCentsARS } from "@/lib/availability/engine";
+import { normalizeArgentinePhone } from "@/lib/whatsapp/evolution";
 import { sumPaidCents, balanceDueCents } from "@/lib/booking/balance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -115,7 +116,23 @@ export function BookingDetailsDialog({
           </p>
         )}
         <div className="flex flex-col gap-2 text-sm">
-          <div className="flex justify-between"><span className="text-muted-foreground">Teléfono</span><span>{booking.bookedBy.phone ?? "—"}</span></div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Teléfono</span>
+            <span className="flex items-center gap-2">
+              {booking.bookedBy.phone ?? "—"}
+              {booking.bookedBy.phone && (
+                <a
+                  href={`https://wa.me/${normalizeArgentinePhone(booking.bookedBy.phone)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Mandar WhatsApp"
+                  className="text-emerald-600 hover:text-emerald-700"
+                >
+                  <MessageCircle className="size-4" />
+                </a>
+              )}
+            </span>
+          </div>
           <div className="flex justify-between"><span className="text-muted-foreground">Estado</span><Badge>{STATUS_LABEL[booking.status]}</Badge></div>
           <div className="flex justify-between"><span className="text-muted-foreground">Total del turno</span><span className="font-medium">{formatCentsARS(booking.totalPriceCents)}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">Pagado</span><span>{formatCentsARS(paidCents)}</span></div>

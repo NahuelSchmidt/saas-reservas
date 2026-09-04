@@ -20,7 +20,7 @@ function config() {
  * intercalado); si ves envíos fallando por número mal armado, avisá para
  * ajustar esto con ejemplos reales.
  */
-function normalizeArgentinePhone(raw: string): string {
+export function normalizeArgentinePhone(raw: string): string {
   let digits = raw.replace(/\D/g, "");
   if (digits.startsWith("0")) digits = digits.slice(1);
   if (!digits.startsWith("54")) digits = `54${digits}`;
