@@ -9,10 +9,28 @@ import { SlotUnavailableError, MercadoPagoNotConnectedError, isExclusionViolatio
 
 export { SlotUnavailableError, MercadoPagoNotConnectedError };
 
+/**
+ * Minutos que una reserva con seña pendiente bloquea el horario sin que
+ * nadie haya pagado todavía. Sin este límite, alguien que abre el link de
+ * pago y nunca paga dejaría ese turno bloqueado para siempre. Se expira acá
+ * (lazy, sin cron) porque este helper corre en todo camino que consulta
+ * disponibilidad o intenta crear una reserva nueva.
+ */
+export const BOOKING_HOLD_MINUTES = 20;
+
 async function computeAvailabilityWithTx(
   tx: Prisma.TransactionClient,
   params: { tenantId: string; date: Date; courtId?: string },
 ) {
+  await tx.booking.updateMany({
+    where: {
+      tenantId: params.tenantId,
+      status: "PENDING_PAYMENT",
+      createdAt: { lt: new Date(Date.now() - BOOKING_HOLD_MINUTES * 60_000) },
+    },
+    data: { status: "CANCELLED" },
+  });
+
   const [config, businessHours, pricingRules, courts, bookings] = await Promise.all([
     tx.bookingConfig.findUnique({ where: { tenantId: params.tenantId } }),
     tx.businessHours.findMany({ where: { tenantId: params.tenantId } }),
@@ -173,6 +191,7 @@ export async function createBooking(params: {
       tenantSlug,
       courtName: court.name,
       startTime,
+      expiresAt: new Date(Date.now() + BOOKING_HOLD_MINUTES * 60_000),
       amountCents: depositAmountCents,
       payerEmail: playerEmail,
       accessToken,

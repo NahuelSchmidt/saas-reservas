@@ -2,6 +2,20 @@ import { MercadoPagoConfig, Preference, Payment as MPPayment } from "mercadopago
 import crypto from "node:crypto";
 
 /**
+ * Formatea un Date como fecha/hora local con offset fijo -03:00, que es el
+ * formato que exige Mercado Pago para expiration_date_from/to. Usa los
+ * getters locales del Date (no toISOString, que convierte a UTC) porque
+ * instrumentation.ts ya fuerza el proceso a horario de Argentina.
+ */
+function toMpLocalDateTime(date: Date): string {
+  const pad = (n: number, len = 2) => String(n).padStart(len, "0");
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${pad(date.getMilliseconds(), 3)}-03:00`
+  );
+}
+
+/**
  * Crea una preferencia de Checkout Pro para cobrar la seña de una reserva,
  * usando el access_token propio del complejo (Mercado Pago Connect) — la
  * plata le llega directo a su cuenta, no a una cuenta central de la
@@ -17,6 +31,8 @@ export async function createDepositPreference(params: {
   amountCents: number;
   payerEmail?: string;
   accessToken: string;
+  /** Cuándo deja de poder pagarse este link — debe coincidir con el hold de la reserva (ver BOOKING_HOLD_MINUTES). */
+  expiresAt: Date;
 }) {
   const preference = new Preference(new MercadoPagoConfig({ accessToken: params.accessToken }));
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -41,6 +57,9 @@ export async function createDepositPreference(params: {
         failure: `${baseUrl}/${params.tenantSlug}/reservas/${params.bookingId}?status=failure`,
       },
       auto_return: "approved",
+      expires: true,
+      expiration_date_from: toMpLocalDateTime(new Date()),
+      expiration_date_to: toMpLocalDateTime(params.expiresAt),
     },
   });
 
