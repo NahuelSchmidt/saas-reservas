@@ -146,23 +146,23 @@ export function ScheduleGrid({
                   return (
                     <td key={court.id} className="border-b p-1.5">
                       <button
-                        className={`w-full rounded-lg border px-2.5 py-2 text-center text-xs ${color}`}
+                        className={`flex w-full flex-col items-center rounded-lg border px-2.5 py-2 text-center text-xs ${color}`}
                         onClick={() => setSelected({ type: "booking", booking })}
                       >
                         {booking.isBlock ? (
                           <span>Bloqueado{booking.notes ? ` — ${booking.notes}` : ""}</span>
                         ) : (
                           <>
-                            <div className="font-semibold">
+                            <span className="font-semibold">
                               {booking.bookedBy.name}
                               {booking.recurringBookingId && " 🔁"}
-                            </div>
-                            <div>
+                            </span>
+                            <span>
                               {balance > 0 && booking.status !== "PENDING_PAYMENT"
                                 ? `Falta ${formatCentsARS(balance)}`
                                 : formatCentsARS(booking.totalPriceCents)}
                               {booking.checkedIn ? " · Check-in ✓" : ""}
-                            </div>
+                            </span>
                           </>
                         )}
                       </button>
