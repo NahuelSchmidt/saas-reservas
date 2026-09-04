@@ -95,12 +95,12 @@ export function ScheduleGrid({
       </div>
 
       <div className="overflow-x-auto rounded-2xl border shadow-sm">
-        <table className="w-full border-collapse text-sm">
+        <table className="w-full table-fixed border-collapse text-sm">
           <thead>
             <tr className="bg-muted/50">
-              <th className="border-b px-4 py-3 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">Hora</th>
+              <th className="w-24 border-b px-4 py-3 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">Hora</th>
               {courts.map((c) => (
-                <th key={c.id} className="border-b px-3 py-3 text-left font-heading font-bold">{c.name}</th>
+                <th key={c.id} className="truncate border-b px-3 py-3 text-left font-heading font-bold">{c.name}</th>
               ))}
             </tr>
           </thead>
@@ -153,11 +153,11 @@ export function ScheduleGrid({
                           <span>Bloqueado{booking.notes ? ` — ${booking.notes}` : ""}</span>
                         ) : (
                           <>
-                            <span className="font-semibold">
+                            <span className="w-full truncate font-semibold">
                               {booking.bookedBy.name}
                               {booking.recurringBookingId && " 🔁"}
                             </span>
-                            <span>
+                            <span className="w-full truncate">
                               {balance > 0 && booking.status !== "PENDING_PAYMENT"
                                 ? `Falta ${formatCentsARS(balance)}`
                                 : formatCentsARS(booking.totalPriceCents)}
