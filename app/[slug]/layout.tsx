@@ -13,7 +13,6 @@ export default async function TenantLayout({
   const { slug } = await params;
   const tenant = await resolveTenantBySlug(slug);
   const session = await auth();
-  const isStaff = session?.user?.memberships.some((m) => m.tenantId === tenant.id);
 
   return (
     <div
@@ -39,14 +38,6 @@ export default async function TenantLayout({
             <span className="font-heading text-lg font-bold tracking-tight">{tenant.name}</span>
           </Link>
           <nav className="flex items-center gap-2">
-            {isStaff && (
-              <Link
-                href={`/${tenant.slug}/admin`}
-                className="rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-white/20"
-              >
-                Panel del complejo
-              </Link>
-            )}
             {session?.user ? (
               <>
                 <span className="hidden text-sm text-white/80 sm:inline">{session.user.email}</span>

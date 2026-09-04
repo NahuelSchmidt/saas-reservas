@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LayoutDashboard, CalendarDays, LandPlot, Tags, Package, Settings } from "lucide-react";
+import { LayoutDashboard, CalendarDays, LandPlot, Tags, Package, Settings, ExternalLink } from "lucide-react";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { requireTenantRole, ForbiddenError, UnauthorizedError } from "@/lib/auth/guards";
 
@@ -45,6 +45,15 @@ export default async function TenantAdminLayout({
               {item.label}
             </Link>
           ))}
+          <Link
+            href={`/${slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 flex items-center gap-2.5 rounded-lg border-t px-3 pt-4 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ExternalLink className="size-4" />
+            Ver reservas
+          </Link>
         </nav>
       </aside>
       <div className="flex flex-1 flex-col px-6 py-6 sm:px-10">{children}</div>
