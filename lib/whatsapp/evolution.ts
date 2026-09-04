@@ -41,48 +41,63 @@ async function sendText(phone: string, text: string) {
   if (!res.ok) throw new Error(`Evolution API respondió ${res.status}: ${await res.text()}`);
 }
 
+function formatDate(d: Date) {
+  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+function formatHour(d: Date) {
+  return d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+}
+
 export async function sendBookingConfirmedWhatsApp(params: {
   phone: string;
+  playerName: string;
   tenantName: string;
   tenantSlug: string;
   bookingId: string;
   courtName: string;
   startTime: Date;
-  totalPriceCents: number;
-  depositAmountCents: number;
+  endTime: Date;
 }) {
-  const { phone, tenantName, tenantSlug, bookingId, courtName, startTime, totalPriceCents, depositAmountCents } = params;
-  const fecha = startTime.toLocaleString("es-AR", { dateStyle: "full", timeStyle: "short" });
-  const total = (totalPriceCents / 100).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+  const { phone, playerName, tenantName, tenantSlug, bookingId, courtName, startTime, endTime } = params;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const bookingUrl = `${baseUrl}/${tenantSlug}/reservas/${bookingId}`;
 
-  const lines = [
-    `✅ *Reserva confirmada en ${tenantName}*`,
-    `${courtName} — ${fecha}`,
-  ];
-  if (depositAmountCents > 0) {
-    lines.push(`Seña pagada: ${(depositAmountCents / 100).toLocaleString("es-AR", { style: "currency", currency: "ARS" })}`);
-  }
-  lines.push(`Total del turno: ${total}`, "", `Ver o cancelar tu reserva: ${bookingUrl}`);
+  const text = [
+    `Hola ${playerName}, te compartimos los datos de tu reserva:`,
+    `Deporte: Pádel`,
+    `Fecha: ${formatDate(startTime)}`,
+    `Horario: ${formatHour(startTime)}–${formatHour(endTime)}`,
+    `Cancha: ${courtName}`,
+    `Club: ${tenantName}`,
+    `¡Te esperamos!`,
+    "",
+    `Ver o cancelar tu reserva: ${bookingUrl}`,
+  ].join("\n");
 
-  await sendText(phone, lines.join("\n"));
+  await sendText(phone, text);
 }
 
 export async function sendBookingCancelledWhatsApp(params: {
   phone: string;
+  playerName: string;
   tenantName: string;
   courtName: string;
   startTime: Date;
   refundAmountCents: number;
 }) {
-  const { phone, tenantName, courtName, startTime, refundAmountCents } = params;
-  const fecha = startTime.toLocaleString("es-AR", { dateStyle: "full", timeStyle: "short" });
+  const { phone, playerName, tenantName, courtName, startTime, refundAmountCents } = params;
   const reembolso =
     refundAmountCents > 0
       ? (refundAmountCents / 100).toLocaleString("es-AR", { style: "currency", currency: "ARS" })
       : "No corresponde reembolso según la política de cancelación.";
 
-  const text = [`❌ *Reserva cancelada en ${tenantName}*`, `${courtName} — ${fecha}`, `Reembolso: ${reembolso}`].join("\n");
+  const text = [
+    `Hola ${playerName}, tu reserva fue cancelada:`,
+    `Deporte: Pádel`,
+    `Fecha: ${formatDate(startTime)}`,
+    `Cancha: ${courtName}`,
+    `Club: ${tenantName}`,
+    `Reembolso: ${reembolso}`,
+  ].join("\n");
   await sendText(phone, text);
 }

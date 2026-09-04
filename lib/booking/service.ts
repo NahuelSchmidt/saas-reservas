@@ -66,9 +66,10 @@ export async function createBooking(params: {
   bookedByUserId: string;
   playerEmail: string;
   playerPhone?: string;
+  playerName?: string;
   notes?: string;
 }) {
-  const { tenantId, tenantSlug, tenantName, courtId, startTime, bookedByUserId, playerEmail, playerPhone, notes } = params;
+  const { tenantId, tenantSlug, tenantName, courtId, startTime, bookedByUserId, playerEmail, playerPhone, playerName, notes } = params;
 
   const result = await withTenant(tenantId, async (tx) => {
     const [config, court] = await Promise.all([
@@ -147,13 +148,13 @@ export async function createBooking(params: {
       try {
         await sendBookingConfirmedWhatsApp({
           phone: playerPhone,
+          playerName: playerName ?? "",
           tenantName,
           tenantSlug,
           bookingId: booking.id,
           courtName: court.name,
           startTime,
-          totalPriceCents: priceCents,
-          depositAmountCents: 0,
+          endTime: booking.endTime,
         });
       } catch (err) {
         console.error("No se pudo enviar el WhatsApp de confirmación", err);
@@ -257,13 +258,13 @@ export async function confirmBookingPayment(params: {
     try {
       await sendBookingConfirmedWhatsApp({
         phone: result.booking.bookedBy.phone,
+        playerName: result.booking.bookedBy.name,
         tenantName: result.booking.tenant.name,
         tenantSlug: result.booking.tenant.slug,
         bookingId: result.booking.id,
         courtName: result.booking.court.name,
         startTime: result.booking.startTime,
-        totalPriceCents: result.booking.totalPriceCents,
-        depositAmountCents: result.booking.depositAmountCents,
+        endTime: result.booking.endTime,
       });
     } catch (err) {
       console.error("No se pudo enviar el WhatsApp de confirmación", err);
@@ -359,6 +360,7 @@ export async function cancelBooking(params: {
     try {
       await sendBookingCancelledWhatsApp({
         phone: result.booking.bookedBy.phone,
+        playerName: result.booking.bookedBy.name,
         tenantName: result.booking.tenant.name,
         courtName: result.booking.court.name,
         startTime: result.booking.startTime,
