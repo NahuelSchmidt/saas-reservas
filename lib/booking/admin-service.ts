@@ -1,5 +1,6 @@
 import { withTenant } from "@/lib/db/tenant-context";
 import { guestEmailFromPhone } from "./guest";
+import { sumPaidCents } from "./balance";
 import { sendBookingConfirmedWhatsApp } from "@/lib/whatsapp/evolution";
 import { isExclusionViolation, SlotUnavailableError } from "./errors";
 
@@ -205,9 +206,20 @@ export async function registerCashPayment(params: {
   method: "CASH" | "TRANSFER";
   actorUserId: string;
   note?: string;
+  /**
+   * El admin marca esto en el ÚLTIMO pago de un turno (ej. el cuarto
+   * jugador). Si algunas cuartas partes se pagaron en efectivo con
+   * descuento, la suma real cobrada queda por debajo de totalPriceCents
+   * aunque ya no falte nada más — sin esto, el saldo pendiente quedaría
+   * mostrando plata que en realidad nunca se debió cobrar.
+   */
+  closeAccount?: boolean;
 }) {
   return withTenant(params.tenantId, async (tx) => {
-    const booking = await tx.booking.findUniqueOrThrow({ where: { id: params.bookingId } });
+    const booking = await tx.booking.findUniqueOrThrow({
+      where: { id: params.bookingId },
+      include: { payments: true },
+    });
 
     await tx.payment.create({
       data: {
@@ -221,9 +233,12 @@ export async function registerCashPayment(params: {
       },
     });
 
+    const totalCollectedCents = sumPaidCents(booking.payments) + params.amountCents;
+
     const updated = await tx.booking.update({
       where: { id: booking.id },
       data: {
+        ...(params.closeAccount ? { totalPriceCents: Math.min(booking.totalPriceCents, totalCollectedCents) } : {}),
         depositStatus: booking.depositStatus === "PENDING" ? "PAID" : booking.depositStatus,
         status: booking.status === "PENDING_PAYMENT" ? "CONFIRMED" : booking.status,
       },

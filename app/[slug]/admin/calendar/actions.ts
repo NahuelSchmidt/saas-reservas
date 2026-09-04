@@ -137,6 +137,7 @@ export async function registerCashPaymentAction(
   amountARS: number,
   method: "CASH" | "TRANSFER",
   note?: string,
+  closeAccount?: boolean,
 ): Promise<ActionResult<{ ok: true }>> {
   const tenant = await resolveTenantBySlug(tenantSlug);
   const actor = await requireTenantRole(tenant.id, ["ADMIN", "EMPLOYEE"]);
@@ -151,6 +152,7 @@ export async function registerCashPaymentAction(
     method: parsed.data.method,
     actorUserId: actor.id,
     note: parsed.data.note,
+    closeAccount,
   });
   revalidatePath(`/${tenantSlug}/admin/calendar`);
   return { ok: true, data: { ok: true } };

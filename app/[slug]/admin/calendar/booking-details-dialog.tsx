@@ -72,6 +72,7 @@ export function BookingDetailsDialog({
   const [cashAmount, setCashAmount] = useState(String(suggestedAmountCents("CASH") / 100));
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "TRANSFER">("CASH");
   const [note, setNote] = useState("");
+  const [closeAccount, setCloseAccount] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   // Al cambiar de método se repropone el monto sugerido para ese método (el
@@ -108,7 +109,14 @@ export function BookingDetailsDialog({
 
   function registerCash() {
     startTransition(async () => {
-      const result = await registerCashPaymentAction(tenantSlug, booking.id, Number(cashAmount), paymentMethod, note || undefined);
+      const result = await registerCashPaymentAction(
+        tenantSlug,
+        booking.id,
+        Number(cashAmount),
+        paymentMethod,
+        note || undefined,
+        closeAccount,
+      );
       if (result.ok) {
         toast.success("Cobro registrado.");
         onOpenChange(false);
@@ -211,6 +219,15 @@ export function BookingDetailsDialog({
               placeholder="Nota opcional (ej: Jugador 2 - Fede)"
               className="text-xs"
             />
+            <label className="flex items-start gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={closeAccount}
+                onChange={(e) => setCloseAccount(e.target.checked)}
+                className="mt-0.5 h-3.5 w-3.5"
+              />
+              Es el último pago de este turno — si queda un resto por los descuentos en efectivo, no lo sigas mostrando como pendiente.
+            </label>
           </div>
         )}
 
