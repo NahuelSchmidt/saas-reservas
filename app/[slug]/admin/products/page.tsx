@@ -28,7 +28,7 @@ export default async function ProductsPage({ params }: { params: Promise<{ slug:
         </div>
         <div className="flex gap-2">
           <NewSaleDialog tenantSlug={tenant.slug} products={products.filter((p) => p.active)} />
-          <BulkProductsDialog tenantSlug={tenant.slug} />
+          <BulkProductsDialog tenantSlug={tenant.slug} products={products} />
           <ProductFormDialog tenantSlug={tenant.slug} />
         </div>
       </div>

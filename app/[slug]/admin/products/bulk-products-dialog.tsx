@@ -4,23 +4,25 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Upload, Download, AlertTriangle } from "lucide-react";
-import { bulkCreateProductsAction } from "./actions";
-import { parseProductsCsv, PRODUCTS_CSV_TEMPLATE, type ParsedProductRow } from "@/lib/products/csv";
+import { bulkUpsertProductsAction } from "./actions";
+import { parseProductsCsv, productsToCsv, PRODUCTS_CSV_TEMPLATE, type ParsedProductRow } from "@/lib/products/csv";
 import { formatCentsARS } from "@/lib/availability/engine";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-function downloadTemplate() {
-  const blob = new Blob([PRODUCTS_CSV_TEMPLATE], { type: "text/csv;charset=utf-8;" });
+type Product = { name: string; priceCents: number; stock: number; category: string | null };
+
+function downloadCsv(text: string, filename: string) {
+  const blob = new Blob([text], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "plantilla-productos.csv";
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
 }
 
-export function BulkProductsDialog({ tenantSlug }: { tenantSlug: string }) {
+export function BulkProductsDialog({ tenantSlug, products }: { tenantSlug: string; products: Product[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<ParsedProductRow[]>([]);
@@ -30,6 +32,14 @@ export function BulkProductsDialog({ tenantSlug }: { tenantSlug: string }) {
 
   const errorRows = rows.filter((r) => r.error);
   const validRows = rows.filter((r) => !r.error);
+
+  function handleDownload() {
+    if (products.length > 0) {
+      downloadCsv(productsToCsv(products), "mis-productos.csv");
+    } else {
+      downloadCsv(PRODUCTS_CSV_TEMPLATE, "plantilla-productos.csv");
+    }
+  }
 
   function handleFile(file: File) {
     setFileName(file.name);
@@ -47,12 +57,17 @@ export function BulkProductsDialog({ tenantSlug }: { tenantSlug: string }) {
       return;
     }
     startTransition(async () => {
-      const result = await bulkCreateProductsAction(
+      const result = await bulkUpsertProductsAction(
         tenantSlug,
         validRows.map((r) => ({ name: r.name!, priceCents: r.priceCents!, stock: r.stock!, category: r.category })),
       );
       if (result.ok) {
-        toast.success(`${result.data.count} producto(s) importado(s).`);
+        const { created, updated } = result.data;
+        toast.success(
+          [created > 0 ? `${created} nuevo(s)` : null, updated > 0 ? `${updated} actualizado(s)` : null]
+            .filter(Boolean)
+            .join(" · ") || "Listo.",
+        );
         setOpen(false);
         setRows([]);
         setFileName("");
@@ -80,7 +95,7 @@ export function BulkProductsDialog({ tenantSlug }: { tenantSlug: string }) {
       <DialogTrigger
         render={
           <Button variant="outline" className="gap-1.5">
-            <Upload className="size-3.5" /> Cargar productos
+            <Upload className="size-3.5" /> Carga masiva
           </Button>
         }
       />
@@ -90,13 +105,21 @@ export function BulkProductsDialog({ tenantSlug }: { tenantSlug: string }) {
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
-          <button
-            type="button"
-            onClick={downloadTemplate}
-            className="flex w-fit items-center gap-1.5 text-sm text-primary underline underline-offset-2"
-          >
-            <Download className="size-3.5" /> Descargar plantilla CSV
-          </button>
+          <div className="flex flex-col gap-1.5 rounded-lg bg-muted/50 p-3">
+            <button
+              type="button"
+              onClick={handleDownload}
+              className="flex w-fit items-center gap-1.5 text-sm font-medium text-primary underline underline-offset-2"
+            >
+              <Download className="size-3.5" />
+              {products.length > 0 ? "Descargar mi lista actual" : "Descargar plantilla CSV"}
+            </button>
+            <p className="text-xs text-muted-foreground">
+              {products.length > 0
+                ? "Editala en Excel/Sheets (precios, stock, agregá filas nuevas) y volvé a subirla acá abajo."
+                : "Todavía no tenés productos cargados — bajate el ejemplo, completalo y subilo."}
+            </p>
+          </div>
 
           <div className="flex flex-col gap-1.5">
             <input
@@ -110,7 +133,8 @@ export function BulkProductsDialog({ tenantSlug }: { tenantSlug: string }) {
               className="text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              Columnas: <code>nombre,precio,stock,categoria</code> — precio en pesos (sin $), categoría opcional.
+              Columnas: <code>nombre,precio,stock,categoria</code> — precio en pesos (sin $). Un producto con el mismo{" "}
+              <strong>nombre</strong> que ya tenés se actualiza; si es nuevo, se crea.
             </p>
           </div>
 
@@ -161,7 +185,7 @@ export function BulkProductsDialog({ tenantSlug }: { tenantSlug: string }) {
 
         <DialogFooter>
           <Button onClick={handleImport} disabled={isPending || rows.length === 0 || errorRows.length > 0}>
-            {isPending ? "Importando..." : `Importar ${validRows.length} producto(s)`}
+            {isPending ? "Guardando..." : `Guardar ${validRows.length} producto(s)`}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -35,21 +35,41 @@ export async function createProduct(params: {
   );
 }
 
-export async function bulkCreateProducts(
+/**
+ * Crea o actualiza productos en lote, matcheando por nombre (sin
+ * mayúsculas/espacios) dentro del tenant. Pensado para el flujo
+ * exportar-editar-en-Excel-reimportar: si el nombre ya existe se
+ * actualiza precio/stock/categoría, si no, se crea.
+ */
+export async function bulkUpsertProducts(
   tenantId: string,
   products: { name: string; priceCents: number; stock: number; category?: string }[],
 ) {
-  return withTenant(tenantId, (tx) =>
-    tx.product.createMany({
-      data: products.map((p) => ({
-        tenantId,
-        name: p.name,
-        priceCents: p.priceCents,
-        stock: p.stock,
-        category: p.category,
-      })),
-    }),
-  );
+  return withTenant(tenantId, async (tx) => {
+    const existing = await tx.product.findMany({ where: { tenantId }, select: { id: true, name: true } });
+    const idByName = new Map(existing.map((p) => [p.name.trim().toLowerCase(), p.id]));
+
+    let created = 0;
+    let updated = 0;
+    for (const p of products) {
+      const key = p.name.trim().toLowerCase();
+      const existingId = idByName.get(key);
+      if (existingId) {
+        await tx.product.update({
+          where: { id: existingId },
+          data: { priceCents: p.priceCents, stock: p.stock, category: p.category },
+        });
+        updated++;
+      } else {
+        const row = await tx.product.create({
+          data: { tenantId, name: p.name, priceCents: p.priceCents, stock: p.stock, category: p.category },
+        });
+        idByName.set(key, row.id); // por si el mismo nombre aparece dos veces en el mismo archivo
+        created++;
+      }
+    }
+    return { created, updated };
+  });
 }
 
 export async function updateProduct(

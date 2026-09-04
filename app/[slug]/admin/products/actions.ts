@@ -3,14 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { requireTenantRole } from "@/lib/auth/guards";
-import { createProduct, updateProduct, createSale, bulkCreateProducts, InsufficientStockError } from "@/lib/products/service";
+import { createProduct, updateProduct, createSale, bulkUpsertProducts, InsufficientStockError } from "@/lib/products/service";
 import { productSchema, type ProductInput } from "@/lib/validation/schemas";
 import type { ActionResult } from "@/app/actions/booking";
 
-export async function bulkCreateProductsAction(
+export async function bulkUpsertProductsAction(
   tenantSlug: string,
   products: { name: string; priceCents: number; stock: number; category?: string }[],
-): Promise<ActionResult<{ count: number }>> {
+): Promise<ActionResult<{ created: number; updated: number }>> {
   const tenant = await resolveTenantBySlug(tenantSlug);
   await requireTenantRole(tenant.id, ["ADMIN"]);
 
@@ -24,9 +24,9 @@ export async function bulkCreateProductsAction(
   }
 
   const validated = parsed.map((p) => (p.result as { success: true; data: ProductInput }).data);
-  const result = await bulkCreateProducts(tenant.id, validated);
+  const result = await bulkUpsertProducts(tenant.id, validated);
   revalidatePath(`/${tenantSlug}/admin/products`);
-  return { ok: true, data: { count: result.count } };
+  return { ok: true, data: result };
 }
 
 export async function createProductAction(tenantSlug: string, formData: FormData): Promise<ActionResult<{ id: string }>> {

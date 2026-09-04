@@ -85,3 +85,16 @@ Pelotas Head x3,10000,20,pelotas
 Gatorade 500ml,4000,50,bebidas
 Grip Head,6000,15,accesorios
 `;
+
+function csvCell(value: string) {
+  return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+}
+
+/** Exporta el inventario actual a CSV, mismo formato que el template — para editar en Excel y reimportar. */
+export function productsToCsv(products: { name: string; priceCents: number; stock: number; category: string | null }[]) {
+  const lines = ["nombre,precio,stock,categoria"];
+  for (const p of products) {
+    lines.push([csvCell(p.name), String(p.priceCents / 100), String(p.stock), csvCell(p.category ?? "")].join(","));
+  }
+  return lines.join("\n") + "\n";
+}
