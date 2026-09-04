@@ -34,6 +34,7 @@ type ExistingRule = {
   endTime: string;
   clientType: string;
   priceCents: number;
+  cashQuarterPriceCents: number | null;
 };
 
 export function PricingRuleForm({
@@ -150,6 +151,21 @@ export function PricingRuleForm({
               required
               defaultValue={rule ? rule.priceCents / 100 : undefined}
             />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="cashQuarterARS">Precio de 1/4 en efectivo (opcional)</Label>
+            <Input
+              id="cashQuarterARS"
+              name="cashQuarterARS"
+              type="number"
+              min={0}
+              step={50}
+              placeholder="Dejar vacío = sin precio especial"
+              defaultValue={rule?.cashQuarterPriceCents != null ? rule.cashQuarterPriceCents / 100 : undefined}
+            />
+            <p className="text-xs text-muted-foreground">
+              Cuánto sale la cuarta parte del turno (una &quot;cabeza&quot;) si ese jugador paga en efectivo. Si lo dejás vacío, se usa 1/4 del precio de arriba para cualquier método.
+            </p>
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isPending}>

@@ -20,6 +20,7 @@ export function ManualBookingDialog({
   startTime,
   endTime,
   defaultPriceCents,
+  defaultCashQuarterPriceCents,
   depositConfig,
   open,
   onOpenChange,
@@ -29,6 +30,7 @@ export function ManualBookingDialog({
   startTime: string;
   endTime: string;
   defaultPriceCents: number | null;
+  defaultCashQuarterPriceCents: number | null;
   depositConfig: DepositConfig;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -57,6 +59,9 @@ export function ManualBookingDialog({
     formData.set("totalPriceARS", priceARS);
     formData.set("markDepositPaid", depositPaid ? "on" : "");
     formData.set("depositMethod", depositMethod);
+    if (defaultCashQuarterPriceCents != null) {
+      formData.set("cashQuarterPriceCents", String(defaultCashQuarterPriceCents));
+    }
     startTransition(async () => {
       const result = await createManualBookingAction(tenantSlug, formData);
       if (result.ok) {

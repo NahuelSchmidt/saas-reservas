@@ -120,6 +120,7 @@ export async function createBooking(params: {
           status: config.depositRequired ? "PENDING_PAYMENT" : "CONFIRMED",
           source: "ONLINE",
           totalPriceCents: slot.priceCents,
+          cashQuarterPriceCents: slot.cashQuarterPriceCents,
           depositAmountCents,
           depositStatus: config.depositRequired ? "PENDING" : "NOT_REQUIRED",
           notes,

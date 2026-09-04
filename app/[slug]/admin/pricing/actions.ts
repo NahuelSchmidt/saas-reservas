@@ -24,6 +24,7 @@ export async function createPricingRuleAction(
     endTime: formData.get("endTime"),
     clientType: formData.get("clientType") ?? "ANY",
     priceCents: Number(formData.get("priceARS")) * 100,
+    cashQuarterPriceCents: formData.get("cashQuarterARS") ? Number(formData.get("cashQuarterARS")) * 100 : undefined,
   });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 
@@ -42,6 +43,7 @@ export async function updatePricingRuleAction(
 
   const courtIdRaw = formData.get("courtId");
   const dayOfWeekRaw = formData.get("dayOfWeek");
+  const cashQuarterARS = formData.get("cashQuarterARS");
 
   const parsed = pricingRuleSchema.safeParse({
     courtId: courtIdRaw === "ALL" || !courtIdRaw ? null : courtIdRaw,
@@ -50,10 +52,16 @@ export async function updatePricingRuleAction(
     endTime: formData.get("endTime"),
     clientType: formData.get("clientType") ?? "ANY",
     priceCents: Number(formData.get("priceARS")) * 100,
+    cashQuarterPriceCents: cashQuarterARS ? Number(cashQuarterARS) * 100 : undefined,
   });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 
-  await withTenant(tenant.id, (tx) => tx.pricingRule.update({ where: { id: ruleId }, data: parsed.data }));
+  // Prisma ignora los campos `undefined` en un update (no los toca); si el
+  // admin vació el campo a propósito para sacar el precio en efectivo
+  // especial, hay que mandar `null` explícito para que se borre de verdad.
+  const data = { ...parsed.data, cashQuarterPriceCents: cashQuarterARS ? parsed.data.cashQuarterPriceCents : null };
+
+  await withTenant(tenant.id, (tx) => tx.pricingRule.update({ where: { id: ruleId }, data }));
   revalidatePath(`/${tenantSlug}/admin/pricing`);
   return { ok: true, data: { id: ruleId } };
 }

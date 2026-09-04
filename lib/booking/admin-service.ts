@@ -1,6 +1,5 @@
 import { withTenant } from "@/lib/db/tenant-context";
 import { guestEmailFromPhone } from "./guest";
-import { sumPaidCents } from "./balance";
 import { sendBookingConfirmedWhatsApp } from "@/lib/whatsapp/evolution";
 import { isExclusionViolation, SlotUnavailableError } from "./errors";
 
@@ -28,6 +27,7 @@ export async function getAdminDaySchedule(tenantId: string, date: Date) {
           checkedIn: true,
           depositStatus: true,
           totalPriceCents: true,
+          cashQuarterPriceCents: true,
           depositAmountCents: true,
           notes: true,
           recurringBookingId: true,
@@ -57,6 +57,7 @@ export async function createManualBooking(params: {
   startTime: Date;
   endTime: Date;
   totalPriceCents: number;
+  cashQuarterPriceCents?: number | null;
   playerPhone: string;
   playerName: string;
   markDepositPaid: boolean;
@@ -86,6 +87,7 @@ export async function createManualBooking(params: {
           status: "CONFIRMED",
           source: "MANUAL",
           totalPriceCents: params.totalPriceCents,
+          cashQuarterPriceCents: params.cashQuarterPriceCents ?? null,
           depositAmountCents: params.depositAmountCents,
           depositStatus: params.markDepositPaid ? "PAID" : "PENDING",
           notes: params.notes,
@@ -205,10 +207,7 @@ export async function registerCashPayment(params: {
   note?: string;
 }) {
   return withTenant(params.tenantId, async (tx) => {
-    const booking = await tx.booking.findUniqueOrThrow({
-      where: { id: params.bookingId },
-      include: { payments: true },
-    });
+    const booking = await tx.booking.findUniqueOrThrow({ where: { id: params.bookingId } });
 
     await tx.payment.create({
       data: {
@@ -222,17 +221,9 @@ export async function registerCashPayment(params: {
       },
     });
 
-    // "Cobrar" cierra la cuenta con lo que efectivamente se cobró: si el
-    // admin registra menos que el saldo calculado (por el descuento en
-    // efectivo, o una decisión puntual), el total del turno se ajusta a lo
-    // realmente cobrado en vez de dejar un saldo fantasma pendiente para
-    // siempre. Nunca sube el total, solo lo baja si hizo falta.
-    const totalCollectedCents = sumPaidCents(booking.payments) + params.amountCents;
-
     const updated = await tx.booking.update({
       where: { id: booking.id },
       data: {
-        totalPriceCents: Math.min(booking.totalPriceCents, totalCollectedCents),
         depositStatus: booking.depositStatus === "PENDING" ? "PAID" : booking.depositStatus,
         status: booking.status === "PENDING_PAYMENT" ? "CONFIRMED" : booking.status,
       },

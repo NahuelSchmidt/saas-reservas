@@ -18,6 +18,7 @@ type Booking = {
   checkedIn: boolean;
   depositStatus: string;
   totalPriceCents: number;
+  cashQuarterPriceCents: number | null;
   depositAmountCents: number;
   notes: string | null;
   recurringBookingId: string | null;
@@ -25,8 +26,16 @@ type Booking = {
   payments: Payment[];
 };
 type BusinessHours = { openTime: string; closeTime: string };
-type PricingRule = { courtId: string | null; dayOfWeek: number | null; startTime: string; endTime: string; clientType: string; priceCents: number };
-type DepositConfig = { depositRequired: boolean; depositIsPercentage: boolean; depositValue: number; cashDiscountPct: number };
+type PricingRule = {
+  courtId: string | null;
+  dayOfWeek: number | null;
+  startTime: string;
+  endTime: string;
+  clientType: string;
+  priceCents: number;
+  cashQuarterPriceCents: number | null;
+};
+type DepositConfig = { depositRequired: boolean; depositIsPercentage: boolean; depositValue: number };
 
 function timeToMinutes(t: string) {
   const [h, m] = t.split(":").map(Number);
@@ -53,7 +62,14 @@ export function ScheduleGrid({
   depositConfig: DepositConfig;
 }) {
   const [selected, setSelected] = useState<
-    | { type: "free"; courtId: string; startTime: string; endTime: string; priceCents: number | null }
+    | {
+        type: "free";
+        courtId: string;
+        startTime: string;
+        endTime: string;
+        priceCents: number | null;
+        cashQuarterPriceCents: number | null;
+      }
     | { type: "booking"; booking: Booking }
     | null
   >(null);
@@ -111,7 +127,8 @@ export function ScheduleGrid({
                 {courts.map((court) => {
                   const booking = findBooking(court.id, m);
                   if (!booking) {
-                    const priceCents = resolvePrice({ courtId: court.id, dayOfWeek, startMinutes: m, pricingRules });
+                    const resolved = resolvePrice({ courtId: court.id, dayOfWeek, startMinutes: m, pricingRules });
+                    const priceCents = resolved?.priceCents ?? null;
                     return (
                       <td key={court.id} className="border-b p-1.5">
                         <button
@@ -123,6 +140,7 @@ export function ScheduleGrid({
                               startTime: slotDate(m).toISOString(),
                               endTime: slotDate(m + slotDurationMinutes).toISOString(),
                               priceCents,
+                              cashQuarterPriceCents: resolved?.cashQuarterPriceCents ?? null,
                             })
                           }
                         >
@@ -182,6 +200,7 @@ export function ScheduleGrid({
           startTime={selected.startTime}
           endTime={selected.endTime}
           defaultPriceCents={selected.priceCents}
+          defaultCashQuarterPriceCents={selected.cashQuarterPriceCents}
           depositConfig={depositConfig}
           open
           onOpenChange={(open) => !open && setSelected(null)}
@@ -191,7 +210,6 @@ export function ScheduleGrid({
         <BookingDetailsDialog
           tenantSlug={tenantSlug}
           booking={selected.booking}
-          cashDiscountPct={depositConfig.cashDiscountPct}
           open
           onOpenChange={(open) => !open && setSelected(null)}
         />

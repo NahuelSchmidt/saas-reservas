@@ -25,7 +25,6 @@ export async function updateBookingConfigAction(tenantSlug: string, formData: Fo
     depositRequired: formData.get("depositRequired") === "on",
     depositIsPercentage: formData.get("depositIsPercentage") === "true",
     depositValue: formData.get("depositValue"),
-    cashDiscountPct: formData.get("cashDiscountPct"),
   });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 

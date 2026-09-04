@@ -7,6 +7,7 @@ export type Slot = {
   startTime: Date;
   endTime: Date;
   priceCents: number;
+  cashQuarterPriceCents: number | null;
 };
 
 type CourtForAvailability = {
@@ -25,6 +26,7 @@ type PricingRuleRow = {
   endTime: string;
   clientType: string;
   priceCents: number;
+  cashQuarterPriceCents: number | null;
 };
 type BookingRow = { courtId: string; startTime: Date; endTime: Date };
 
@@ -110,7 +112,8 @@ export function computeAvailableSlots(params: {
         courtHasLighting: court.hasLighting,
         startTime,
         endTime,
-        priceCents: price,
+        priceCents: price.priceCents,
+        cashQuarterPriceCents: price.cashQuarterPriceCents,
       });
     }
   }
@@ -124,7 +127,7 @@ export function resolvePrice(params: {
   dayOfWeek: number;
   startMinutes: number;
   pricingRules: PricingRuleRow[];
-}): number | null {
+}): { priceCents: number; cashQuarterPriceCents: number | null } | null {
   const { courtId, dayOfWeek, startMinutes, pricingRules } = params;
 
   // Preferir reglas más específicas: cancha+día > cancha > día > genérica.
@@ -138,7 +141,9 @@ export function resolvePrice(params: {
     })
     .sort((a, b) => specificity(b) - specificity(a));
 
-  return candidates[0]?.priceCents ?? null;
+  const rule = candidates[0];
+  if (!rule) return null;
+  return { priceCents: rule.priceCents, cashQuarterPriceCents: rule.cashQuarterPriceCents };
 }
 
 function specificity(r: PricingRuleRow) {

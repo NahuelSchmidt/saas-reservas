@@ -262,6 +262,10 @@ model PricingRule {
   seasonEnd    DateTime?
   clientType   ClientType  @default(ANY)
   priceCents   Int
+  // Precio en efectivo de 1/4 del turno (una "cabeza"), si el club cobra
+  // distinto al pagar en efectivo. null = no hay precio especial, se usa
+  // priceCents/4 tanto para efectivo como para transferencia.
+  cashQuarterPriceCents Int?
   createdAt    DateTime    @default(now())
 
   @@index([tenantId, courtId])
@@ -278,7 +282,6 @@ model BookingConfig {
   depositRequired     Boolean  @default(true)
   depositIsPercentage Boolean  @default(true)
   depositValue        Int      @default(30) // 30% o monto fijo en centavos si depositIsPercentage=false
-  cashDiscountPct     Int      @default(0) // % de descuento sobre el saldo si se paga en efectivo (0 = sin descuento). La seña siempre se paga online/transferencia y no se descuenta.
 
   @@map("booking_configs")
 }
@@ -334,6 +337,10 @@ model Booking {
   status         BookingStatus @default(PENDING_PAYMENT)
   source         BookingSource @default(ONLINE)
   totalPriceCents   Int
+  // Snapshot de PricingRule.cashQuarterPriceCents al momento de reservar (no
+  // cambia si luego se edita la regla de precios). null = sin precio
+  // especial en efectivo, usar totalPriceCents/4 para cualquier método.
+  cashQuarterPriceCents Int?
   depositAmountCents Int       @default(0)
   depositStatus  DepositStatus @default(NOT_REQUIRED)
   isBlock        Boolean       @default(false) // bloqueo manual (mantenimiento/evento), no es una reserva de jugador

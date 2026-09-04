@@ -21,6 +21,7 @@ type Booking = {
   checkedIn: boolean;
   depositStatus: string;
   totalPriceCents: number;
+  cashQuarterPriceCents: number | null;
   depositAmountCents: number;
   notes: string | null;
   recurringBookingId: string | null;
@@ -45,31 +46,39 @@ const METHOD_LABEL: Record<string, string> = {
 export function BookingDetailsDialog({
   tenantSlug,
   booking,
-  cashDiscountPct,
   open,
   onOpenChange,
 }: {
   tenantSlug: string;
   booking: Booking;
-  cashDiscountPct: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
   const paidCents = sumPaidCents(booking.payments);
   const balanceCents = balanceDueCents(booking.totalPriceCents, booking.payments);
-  const cashBalanceCents = Math.round((balanceCents * (100 - cashDiscountPct)) / 100);
-  const [cashAmount, setCashAmount] = useState(String(cashBalanceCents / 100));
+
+  // El turno se juega entre 4 y cada jugador paga su cuarta parte por
+  // separado, algunas veces por transferencia y otras en efectivo (que puede
+  // tener un precio distinto). El monto sugerido es el de UN cuarto, no el
+  // saldo completo — hay que ir registrando cada pago a medida que cada
+  // jugador se acerca a pagar el suyo.
+  const quarterCents = Math.round(booking.totalPriceCents / 4);
+  const cashQuarterCents = booking.cashQuarterPriceCents ?? quarterCents;
+  function suggestedAmountCents(method: "CASH" | "TRANSFER") {
+    return Math.min(balanceCents, method === "CASH" ? cashQuarterCents : quarterCents);
+  }
+
+  const [cashAmount, setCashAmount] = useState(String(suggestedAmountCents("CASH") / 100));
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "TRANSFER">("CASH");
   const [note, setNote] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  // La seña (online/transferencia) nunca lleva descuento — solo el saldo que
-  // se cobra en persona. Al cambiar de método se repropone el monto sugerido
-  // para ese método (el admin puede seguir editándolo a mano después).
+  // Al cambiar de método se repropone el monto sugerido para ese método (el
+  // admin puede seguir editándolo a mano después).
   function handleMethodChange(method: "CASH" | "TRANSFER") {
     setPaymentMethod(method);
-    setCashAmount(String((method === "CASH" ? cashBalanceCents : balanceCents) / 100));
+    setCashAmount(String(suggestedAmountCents(method) / 100));
   }
 
   const registeredPayments = booking.payments.filter((p) => p.status === "APPROVED" && p.type !== "REFUND");
@@ -192,11 +201,10 @@ export function BookingDetailsDialog({
               </div>
               <Button onClick={registerCash} disabled={isPending}>Cobrar</Button>
             </div>
-            {paymentMethod === "CASH" && cashDiscountPct > 0 && (
-              <p className="text-xs text-muted-foreground">
-                Incluye {cashDiscountPct}% de descuento por pagar en efectivo ({formatCentsARS(balanceCents)} sin descuento).
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">
+              1/4 del turno: {formatCentsARS(quarterCents)} por transferencia
+              {cashQuarterCents !== quarterCents ? ` · ${formatCentsARS(cashQuarterCents)} en efectivo` : ""}.
+            </p>
             <Input
               value={note}
               onChange={(e) => setNote(e.target.value)}

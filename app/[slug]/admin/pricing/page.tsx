@@ -60,6 +60,9 @@ export default async function PricingPage({ params }: { params: Promise<{ slug: 
                     <Users className="size-3.5 text-primary" />
                     {CLIENT_TYPE_LABEL[rule.clientType]}
                   </span>
+                  {rule.cashQuarterPriceCents != null && (
+                    <span className="text-xs">1/4 en efectivo: {formatCentsARS(rule.cashQuarterPriceCents)}</span>
+                  )}
                 </div>
               </CardContent>
             </Card>

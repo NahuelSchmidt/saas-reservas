@@ -39,6 +39,7 @@ export async function createManualBookingAction(
     totalPriceCents: Number(formData.get("totalPriceARS")) * 100,
     markDepositPaid: formData.get("markDepositPaid") === "on",
     depositMethod: formData.get("depositMethod") || "CASH",
+    cashQuarterPriceCents: formData.get("cashQuarterPriceCents"),
   });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 
@@ -60,6 +61,7 @@ export async function createManualBookingAction(
       startTime: parsed.data.startTime,
       endTime: parsed.data.endTime,
       totalPriceCents: parsed.data.totalPriceCents,
+      cashQuarterPriceCents: parsed.data.cashQuarterPriceCents ?? null,
       depositAmountCents,
       depositMethod: parsed.data.depositMethod,
       playerPhone: parsed.data.playerPhone,

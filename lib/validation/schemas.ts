@@ -27,6 +27,14 @@ export const businessHoursSchema = z.object({
 });
 export type BusinessHoursInput = z.infer<typeof businessHoursSchema>;
 
+// FormData manda "" o no manda la clave cuando un campo numérico opcional
+// queda vacío; z.coerce.number() convertiría eso en 0 (y rompería
+// .positive()), así que primero lo normalizamos a undefined.
+const optionalPositiveCents = z.preprocess(
+  (v) => (v === null || v === "" || v === undefined ? undefined : v),
+  z.coerce.number().int().positive().optional(),
+);
+
 export const pricingRuleSchema = z
   .object({
     courtId: z.string().nullable(),
@@ -35,6 +43,7 @@ export const pricingRuleSchema = z
     endTime: z.string().regex(/^\d{2}:\d{2}$/),
     clientType: z.enum(["MEMBER", "NON_MEMBER", "ANY"]).default("ANY"),
     priceCents: z.coerce.number().int().positive(),
+    cashQuarterPriceCents: optionalPositiveCents,
   })
   .refine((r) => r.startTime < r.endTime, {
     message: "El horario de inicio debe ser anterior al de fin",
@@ -63,6 +72,7 @@ export const manualBookingSchema = createBookingSchema.extend({
   totalPriceCents: z.coerce.number().int().nonnegative(),
   markDepositPaid: z.boolean().default(false),
   depositMethod: z.enum(["CASH", "TRANSFER"]).default("CASH"),
+  cashQuarterPriceCents: optionalPositiveCents,
 });
 export type ManualBookingInput = z.infer<typeof manualBookingSchema>;
 
@@ -133,6 +143,5 @@ export const bookingConfigSchema = z.object({
   depositRequired: z.boolean(),
   depositIsPercentage: z.boolean(),
   depositValue: z.coerce.number().int().positive(),
-  cashDiscountPct: z.coerce.number().int().min(0).max(100).default(0),
 });
 export type BookingConfigInput = z.infer<typeof bookingConfigSchema>;
