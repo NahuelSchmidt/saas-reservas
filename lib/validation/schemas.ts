@@ -106,6 +106,7 @@ export const tenantOnboardingSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Solo minúsculas, números y guiones"),
   adminEmail: z.string().email(),
   adminName: z.string().min(1),
+  adminPassword: z.string().min(6, "Mínimo 6 caracteres"),
 });
 export type TenantOnboardingInput = z.infer<typeof tenantOnboardingSchema>;
 

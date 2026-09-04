@@ -51,6 +51,11 @@ export function CreateTenantDialog() {
             <Label htmlFor="adminEmail">Email del admin del complejo</Label>
             <Input id="adminEmail" name="adminEmail" type="email" required />
           </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="adminPassword">Contraseña para el admin</Label>
+            <Input id="adminPassword" name="adminPassword" type="text" required minLength={6} placeholder="Mínimo 6 caracteres" />
+            <p className="text-xs text-muted-foreground">Se la pasás vos por fuera (WhatsApp, email). Puede cambiarla después.</p>
+          </div>
           <DialogFooter>
             <Button type="submit" disabled={isPending}>{isPending ? "Creando..." : "Crear complejo"}</Button>
           </DialogFooter>

@@ -1,12 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import bcrypt from "bcryptjs";
 import { requireSuperAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { tenantOnboardingSchema } from "@/lib/validation/schemas";
 import type { ActionResult } from "@/app/actions/booking";
 
-/** Crea un complejo nuevo con configuración por defecto y su usuario Admin (invitado por email). */
+/** Crea un complejo nuevo con configuración por defecto y su usuario Admin, con la contraseña que le vas a pasar vos. */
 export async function createTenantAction(formData: FormData): Promise<ActionResult<{ slug: string }>> {
   await requireSuperAdmin();
 
@@ -15,21 +16,26 @@ export async function createTenantAction(formData: FormData): Promise<ActionResu
     slug: formData.get("slug"),
     adminEmail: formData.get("adminEmail"),
     adminName: formData.get("adminName"),
+    adminPassword: formData.get("adminPassword"),
   });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 
   const existing = await prisma.tenant.findUnique({ where: { slug: parsed.data.slug } });
   if (existing) return { ok: false, error: "Ese slug ya está en uso." };
 
+  const passwordHash = await bcrypt.hash(parsed.data.adminPassword, 10);
+
   const tenant = await prisma.$transaction(async (tx) => {
     const t = await tx.tenant.create({
       data: { name: parsed.data.name, slug: parsed.data.slug, status: "TRIAL" },
     });
 
+    // Si el email ya existía (ej. era jugador), le seteamos esta contraseña
+    // igual — es la que le vas a pasar a mano, tiene que quedar funcionando.
     const admin = await tx.user.upsert({
       where: { email: parsed.data.adminEmail },
-      update: {},
-      create: { email: parsed.data.adminEmail, name: parsed.data.adminName },
+      update: { passwordHash },
+      create: { email: parsed.data.adminEmail, name: parsed.data.adminName, passwordHash },
     });
 
     await tx.tenantMembership.create({ data: { tenantId: t.id, userId: admin.id, role: "ADMIN" } });
