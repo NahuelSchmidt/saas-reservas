@@ -55,6 +55,8 @@ model Tenant {
   waitlistEntries    WaitlistEntry[]
   products           Product[]
   sales              Sale[]
+  recurringBookings  RecurringBooking[]
+  cashRegisterCloses CashRegisterClose[]
 
   @@map("tenants")
 }
@@ -115,6 +117,8 @@ model User {
   auditLogs        AuditLog[]
   waitlistEntries  WaitlistEntry[]
   sales            Sale[]
+  recurringBookingsCreated RecurringBooking[]
+  cashRegisterCloses       CashRegisterClose[]
 
   accounts Account[]
   sessions Session[]
@@ -220,6 +224,7 @@ model Court {
   pricingRules PricingRule[]
   bookings     Booking[]
   waitlist     WaitlistEntry[]
+  recurringBookings RecurringBooking[]
 
   @@index([tenantId])
   @@map("courts")
@@ -334,6 +339,9 @@ model Booking {
   notes          String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+
+  recurringBookingId String?
+  recurringBooking   RecurringBooking? @relation(fields: [recurringBookingId], references: [id], onDelete: SetNull)
 
   payments    Payment[]
   participants BookingParticipant[]
@@ -455,6 +463,34 @@ model AuditLog {
 }
 
 // ---------------------------------------------------------------------------
+// Turnos fijos (recurrentes semanales)
+// ---------------------------------------------------------------------------
+
+model RecurringBooking {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  courtId         String
+  court           Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  dayOfWeek       Int // 0=domingo .. 6=sábado
+  startTime       String // "20:00"
+  endTime         String // "21:30"
+  playerName      String
+  playerEmail     String
+  priceCents      Int // snapshot del precio al crear la regla (no cambia si luego cambian las pricing rules)
+  active          Boolean  @default(true)
+  generatedUntil  DateTime // hasta qué fecha ya se generaron instancias de Booking (cursor para "extender")
+  createdByUserId String
+  createdBy       User     @relation(fields: [createdByUserId], references: [id])
+  createdAt       DateTime @default(now())
+
+  bookings Booking[]
+
+  @@index([tenantId, courtId])
+  @@map("recurring_bookings")
+}
+
+// ---------------------------------------------------------------------------
 // Mini stock / kiosco (venta de pelotas, bebidas, etc.)
 // ---------------------------------------------------------------------------
 
@@ -510,4 +546,27 @@ model SaleItem {
   subtotalCents  Int
 
   @@map("sale_items")
+}
+
+// ---------------------------------------------------------------------------
+// Cierre de caja diario
+// ---------------------------------------------------------------------------
+
+model CashRegisterClose {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  date              DateTime // medianoche local del día cerrado (mismo criterio que getDailyCashRegister)
+  expectedCashCents Int
+  countedCashCents  Int
+  differenceCents   Int
+  transferCents     Int // snapshot informativo del resto de medios de pago del día
+  onlineCents       Int
+  notes             String?
+  closedByUserId    String
+  closedBy          User     @relation(fields: [closedByUserId], references: [id])
+  createdAt         DateTime @default(now())
+
+  @@unique([tenantId, date])
+  @@map("cash_register_closes")
 }

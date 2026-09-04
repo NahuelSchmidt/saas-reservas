@@ -20,6 +20,7 @@ type Booking = {
   totalPriceCents: number;
   depositAmountCents: number;
   notes: string | null;
+  recurringBookingId: string | null;
   bookedBy: { name: string; email: string };
   payments: Payment[];
 };
@@ -152,7 +153,10 @@ export function ScheduleGrid({
                           <span>Bloqueado{booking.notes ? ` — ${booking.notes}` : ""}</span>
                         ) : (
                           <>
-                            <div className="font-semibold">{booking.bookedBy.name}</div>
+                            <div className="font-semibold">
+                              {booking.bookedBy.name}
+                              {booking.recurringBookingId && " 🔁"}
+                            </div>
                             <div>
                               {balance > 0 && booking.status !== "PENDING_PAYMENT"
                                 ? `Falta ${formatCentsARS(balance)}`

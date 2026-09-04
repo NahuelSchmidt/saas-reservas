@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { withTenant } from "@/lib/db/tenant-context";
 
 function startOfDay(d: Date) {
@@ -17,6 +18,38 @@ function startOfMonth(d: Date) {
   return x;
 }
 
+/**
+ * Plata efectivamente cobrada en un rango de fechas: pagos aprobados de
+ * reservas (seña + saldo, sin reembolsos) + ventas de kiosco. Mismo criterio
+ * que `getDailyCashRegister` (lib/booking/admin-service.ts), generalizado a
+ * un rango en vez de un solo día — antes el dashboard sumaba el valor total
+ * de las reservas confirmadas, que no es lo mismo que la plata que entró
+ * (una reserva con seña del 30% "vale" el 100% pero solo cobrás el 30%), y
+ * ni siquiera contaba el kiosco.
+ */
+async function getRevenueBreakdown(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  range: { from: Date; to?: Date },
+) {
+  const createdAt = range.to ? { gte: range.from, lt: range.to } : { gte: range.from };
+
+  const [payments, sales] = await Promise.all([
+    tx.payment.aggregate({
+      where: { tenantId, createdAt, status: "APPROVED", type: { not: "REFUND" } },
+      _sum: { amountCents: true },
+    }),
+    tx.sale.aggregate({
+      where: { tenantId, createdAt },
+      _sum: { totalCents: true },
+    }),
+  ]);
+
+  const bookingsCents = payments._sum.amountCents ?? 0;
+  const productsCents = sales._sum.totalCents ?? 0;
+  return { bookingsCents, productsCents, totalCents: bookingsCents + productsCents };
+}
+
 export async function getDashboardStats(tenantId: string) {
   const now = new Date();
   const todayStart = startOfDay(now);
@@ -27,6 +60,7 @@ export async function getDashboardStats(tenantId: string) {
   return withTenant(tenantId, async (tx) => {
     const [
       todayBookings,
+      todayRevenue,
       weekRevenue,
       monthRevenue,
       statusCounts,
@@ -38,22 +72,9 @@ export async function getDashboardStats(tenantId: string) {
         where: { tenantId, startTime: { gte: todayStart, lt: tomorrowStart } },
         select: { status: true, totalPriceCents: true, courtId: true },
       }),
-      tx.booking.aggregate({
-        where: {
-          tenantId,
-          status: { in: ["CONFIRMED", "COMPLETED"] },
-          startTime: { gte: weekStart },
-        },
-        _sum: { totalPriceCents: true },
-      }),
-      tx.booking.aggregate({
-        where: {
-          tenantId,
-          status: { in: ["CONFIRMED", "COMPLETED"] },
-          startTime: { gte: monthStart },
-        },
-        _sum: { totalPriceCents: true },
-      }),
+      getRevenueBreakdown(tx, tenantId, { from: todayStart, to: tomorrowStart }),
+      getRevenueBreakdown(tx, tenantId, { from: weekStart }),
+      getRevenueBreakdown(tx, tenantId, { from: monthStart }),
       tx.booking.groupBy({
         by: ["status"],
         where: { tenantId, startTime: { gte: monthStart } },
@@ -80,11 +101,11 @@ export async function getDashboardStats(tenantId: string) {
       todayTotal: todayBookings.length,
       todayConfirmed: todayBookings.filter((b) => b.status === "CONFIRMED").length,
       todayPending: todayBookings.filter((b) => b.status === "PENDING_PAYMENT").length,
-      todayRevenueCents: todayBookings
-        .filter((b) => b.status === "CONFIRMED" || b.status === "COMPLETED")
-        .reduce((sum, b) => sum + b.totalPriceCents, 0),
-      weekRevenueCents: weekRevenue._sum.totalPriceCents ?? 0,
-      monthRevenueCents: monthRevenue._sum.totalPriceCents ?? 0,
+      todayRevenueCents: todayRevenue.totalCents,
+      todayRevenueBookingsCents: todayRevenue.bookingsCents,
+      todayRevenueProductsCents: todayRevenue.productsCents,
+      weekRevenueCents: weekRevenue.totalCents,
+      monthRevenueCents: monthRevenue.totalCents,
       occupancyPct,
       statusCounts: Object.fromEntries(statusCounts.map((s) => [s.status, s._count])) as Record<string, number>,
     };

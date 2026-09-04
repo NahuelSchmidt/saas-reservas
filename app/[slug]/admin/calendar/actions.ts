@@ -9,9 +9,18 @@ import {
   createBlock,
   toggleCheckIn,
   registerCashPayment,
+  closeCashRegister,
+  CashRegisterAlreadyClosedError,
 } from "@/lib/booking/admin-service";
+import { createRecurringBooking, cancelRecurringBooking, extendRecurringBooking } from "@/lib/booking/recurring-service";
 import { cancelBooking, SlotUnavailableError } from "@/lib/booking/service";
-import { manualBookingSchema, registerPaymentSchema } from "@/lib/validation/schemas";
+import { parseLocalISODate } from "@/lib/availability/date-utils";
+import {
+  manualBookingSchema,
+  registerPaymentSchema,
+  recurringBookingSchema,
+  closeCashRegisterSchema,
+} from "@/lib/validation/schemas";
 import type { ActionResult } from "@/app/actions/booking";
 
 export async function createManualBookingAction(
@@ -141,4 +150,108 @@ export async function registerCashPaymentAction(
   });
   revalidatePath(`/${tenantSlug}/admin/calendar`);
   return { ok: true, data: { ok: true } };
+}
+
+export async function createRecurringBookingAction(
+  tenantSlug: string,
+  formData: FormData,
+): Promise<ActionResult<{ id: string; conflicts: number }>> {
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  const actor = await requireTenantRole(tenant.id, ["ADMIN", "EMPLOYEE"]);
+
+  const parsed = recurringBookingSchema.safeParse({
+    courtId: formData.get("courtId"),
+    startTime: formData.get("startTime"),
+    endTime: formData.get("endTime"),
+    playerEmail: formData.get("playerEmail"),
+    playerName: formData.get("playerName"),
+    priceCents: Number(formData.get("totalPriceARS")) * 100,
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
+
+  try {
+    const { rule, conflicts } = await createRecurringBooking({
+      tenantId: tenant.id,
+      courtId: parsed.data.courtId,
+      startTime: parsed.data.startTime,
+      endTime: parsed.data.endTime,
+      playerName: parsed.data.playerName,
+      playerEmail: parsed.data.playerEmail,
+      priceCents: parsed.data.priceCents,
+      createdByUserId: actor.id,
+    });
+    revalidatePath(`/${tenantSlug}/admin/calendar`);
+    revalidatePath(`/${tenantSlug}/admin/calendar/recurring`);
+    return { ok: true, data: { id: rule.id, conflicts: conflicts.length } };
+  } catch (err) {
+    console.error(err);
+    return { ok: false, error: "No pudimos crear el turno fijo." };
+  }
+}
+
+export async function cancelRecurringBookingAction(
+  tenantSlug: string,
+  ruleId: string,
+  cancelFutureInstances: boolean,
+): Promise<ActionResult<{ ok: true }>> {
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  const actor = await requireTenantRole(tenant.id, ["ADMIN", "EMPLOYEE"]);
+
+  await cancelRecurringBooking({ tenantId: tenant.id, ruleId, cancelFutureInstances, actorUserId: actor.id });
+  revalidatePath(`/${tenantSlug}/admin/calendar`);
+  revalidatePath(`/${tenantSlug}/admin/calendar/recurring`);
+  return { ok: true, data: { ok: true } };
+}
+
+export async function extendRecurringBookingAction(
+  tenantSlug: string,
+  ruleId: string,
+): Promise<ActionResult<{ conflicts: number }>> {
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  const actor = await requireTenantRole(tenant.id, ["ADMIN", "EMPLOYEE"]);
+
+  try {
+    const { conflicts } = await extendRecurringBooking({ tenantId: tenant.id, ruleId, actorUserId: actor.id });
+    revalidatePath(`/${tenantSlug}/admin/calendar/recurring`);
+    return { ok: true, data: { conflicts: conflicts.length } };
+  } catch (err) {
+    console.error(err);
+    return { ok: false, error: "No pudimos extender el turno fijo." };
+  }
+}
+
+export async function closeCashRegisterAction(
+  tenantSlug: string,
+  formData: FormData,
+): Promise<ActionResult<{ differenceCents: number }>> {
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  const actor = await requireTenantRole(tenant.id, ["ADMIN", "EMPLOYEE"]);
+
+  const parsed = closeCashRegisterSchema.safeParse({
+    date: formData.get("date"),
+    countedCashCents: Number(formData.get("countedCashARS")) * 100,
+    notes: formData.get("notes") || undefined,
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
+
+  const date = parseLocalISODate(parsed.data.date);
+  if (date.getTime() > Date.now()) {
+    return { ok: false, error: "No podés cerrar la caja de una fecha futura." };
+  }
+
+  try {
+    const close = await closeCashRegister({
+      tenantId: tenant.id,
+      date,
+      countedCashCents: parsed.data.countedCashCents,
+      notes: parsed.data.notes,
+      actorUserId: actor.id,
+    });
+    revalidatePath(`/${tenantSlug}/admin/calendar`);
+    return { ok: true, data: { differenceCents: close.differenceCents } };
+  } catch (err) {
+    if (err instanceof CashRegisterAlreadyClosedError) return { ok: false, error: err.message };
+    console.error(err);
+    return { ok: false, error: "No pudimos cerrar la caja." };
+  }
 }

@@ -59,6 +59,23 @@ export const manualBookingSchema = createBookingSchema.extend({
 });
 export type ManualBookingInput = z.infer<typeof manualBookingSchema>;
 
+export const recurringBookingSchema = z.object({
+  courtId: z.string().min(1),
+  startTime: z.coerce.date(),
+  endTime: z.coerce.date(),
+  playerEmail: z.string().email(),
+  playerName: z.string().min(1),
+  priceCents: z.coerce.number().int().nonnegative(),
+});
+export type RecurringBookingInput = z.infer<typeof recurringBookingSchema>;
+
+export const closeCashRegisterSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  countedCashCents: z.coerce.number().int().nonnegative(),
+  notes: z.string().max(500).optional(),
+});
+export type CloseCashRegisterInput = z.infer<typeof closeCashRegisterSchema>;
+
 export const registerPaymentSchema = z.object({
   bookingId: z.string().min(1),
   amountCents: z.coerce.number().int().positive(),

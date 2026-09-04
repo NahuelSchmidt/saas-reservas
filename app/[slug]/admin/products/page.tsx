@@ -1,11 +1,11 @@
-import { Package, AlertTriangle } from "lucide-react";
+import { Package } from "lucide-react";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { listProducts, getTodaySales } from "@/lib/products/service";
 import { formatCentsARS } from "@/lib/availability/engine";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductFormDialog } from "./product-form-dialog";
 import { NewSaleDialog } from "./new-sale-dialog";
-import { StockInput } from "./stock-input";
+import { ProductsGrid } from "./products-grid";
 
 export default async function ProductsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -43,36 +43,7 @@ export default async function ProductsPage({ params }: { params: Promise<{ slug:
         </CardContent>
       </Card>
 
-      {products.length === 0 ? (
-        <p className="rounded-lg border border-dashed py-12 text-center text-sm text-muted-foreground">
-          Todavía no cargaste productos.
-        </p>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
-            <Card key={product.id} className={`gap-3 border-border/60 py-6 shadow-sm ${!product.active ? "opacity-50" : ""}`}>
-              <CardContent className="flex flex-col gap-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <span className="font-heading text-lg font-bold">{product.name}</span>
-                    {product.category && <p className="text-xs text-muted-foreground">{product.category}</p>}
-                  </div>
-                  <span className="font-heading text-lg font-bold">{formatCentsARS(product.priceCents)}</span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <StockInput key={product.stock} tenantSlug={tenant.slug} productId={product.id} stock={product.stock} />
-                  {product.stock === 0 && (
-                    <span className="flex items-center gap-1 text-xs font-medium text-orange-600">
-                      <AlertTriangle className="size-3.5" /> Sin stock
-                    </span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      <ProductsGrid tenantSlug={tenant.slug} products={products} />
     </div>
   );
 }

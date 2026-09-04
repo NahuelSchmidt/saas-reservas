@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Banknote, Landmark, CreditCard, Wallet } from "lucide-react";
+import { ChevronLeft, ChevronRight, Banknote, Landmark, CreditCard, Wallet, Repeat } from "lucide-react";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
-import { getAdminDaySchedule } from "@/lib/booking/admin-service";
-import { getDailyCashRegister } from "@/lib/booking/admin-service";
+import { getAdminDaySchedule, getDailyCashRegister, getCashRegisterClose } from "@/lib/booking/admin-service";
 import { formatCentsARS } from "@/lib/availability/engine";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScheduleGrid } from "./schedule-grid";
+import { CashRegisterDialog } from "./cash-register-dialog";
 import { toLocalISODate, parseLocalISODate, addLocalDays } from "@/lib/availability/date-utils";
 
 export default async function CalendarPage({
@@ -22,15 +22,21 @@ export default async function CalendarPage({
   const dateISO = dateParam ?? toLocalISODate(new Date());
   const date = parseLocalISODate(dateISO);
 
-  const [schedule, cash] = await Promise.all([
+  const [schedule, cash, cashClose] = await Promise.all([
     getAdminDaySchedule(tenant.id, date),
     getDailyCashRegister(tenant.id, date),
+    getCashRegisterClose(tenant.id, date),
   ]);
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Calendario</h1>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Calendario</h1>
+          <Link href={`/${slug}/admin/calendar/recurring`} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+            <Repeat className="size-3.5" /> Ver turnos fijos
+          </Link>
+        </div>
         <div className="flex items-center gap-3">
           <Link
             href={`?date=${addLocalDays(dateISO, -1)}`}
@@ -100,6 +106,8 @@ export default async function CalendarPage({
           </CardContent>
         </Card>
       </div>
+
+      <CashRegisterDialog tenantSlug={tenant.slug} dateISO={dateISO} expectedCashCents={cash.cashCents} close={cashClose} />
 
       {!schedule.businessHours || !schedule.config ? (
         <p className="text-muted-foreground">

@@ -15,7 +15,19 @@ export async function getAdminDaySchedule(tenantId: string, date: Date) {
           startTime: { gte: dayStart, lt: dayEnd },
           status: { in: ["PENDING_PAYMENT", "CONFIRMED", "COMPLETED"] },
         },
-        include: {
+        select: {
+          id: true,
+          courtId: true,
+          startTime: true,
+          endTime: true,
+          status: true,
+          isBlock: true,
+          checkedIn: true,
+          depositStatus: true,
+          totalPriceCents: true,
+          depositAmountCents: true,
+          notes: true,
+          recurringBookingId: true,
           bookedBy: { select: { name: true, email: true } },
           payments: {
             select: { amountCents: true, status: true, type: true, method: true, note: true, createdAt: true },
@@ -237,4 +249,79 @@ export async function getDailyCashRegister(tenantId: string, date: Date) {
       productsCents: productsCashCents + productsTransferCents + productsOnlineCents,
     };
   });
+}
+
+/** Cierre de caja ya registrado para ese día, si existe. */
+export async function getCashRegisterClose(tenantId: string, date: Date) {
+  const dayStart = new Date(date);
+  dayStart.setHours(0, 0, 0, 0);
+
+  return withTenant(tenantId, (tx) =>
+    tx.cashRegisterClose.findUnique({
+      where: { tenantId_date: { tenantId, date: dayStart } },
+      include: { closedBy: { select: { name: true } } },
+    }),
+  );
+}
+
+export class CashRegisterAlreadyClosedError extends Error {
+  constructor() {
+    super("La caja de este día ya fue cerrada.");
+  }
+}
+
+/**
+ * Cierra la caja del día: recalcula lo esperado (mismo criterio que
+ * getDailyCashRegister) y lo compara contra el efectivo contado a mano. El
+ * `@@unique([tenantId, date])` de CashRegisterClose es la última palabra
+ * contra un doble cierre concurrente, igual que el exclusion constraint de
+ * bookings.
+ */
+export async function closeCashRegister(params: {
+  tenantId: string;
+  date: Date;
+  countedCashCents: number;
+  notes?: string;
+  actorUserId: string;
+}) {
+  const dayStart = new Date(params.date);
+  dayStart.setHours(0, 0, 0, 0);
+
+  const cash = await getDailyCashRegister(params.tenantId, dayStart);
+  const differenceCents = params.countedCashCents - cash.cashCents;
+
+  try {
+    return await withTenant(params.tenantId, async (tx) => {
+      const close = await tx.cashRegisterClose.create({
+        data: {
+          tenantId: params.tenantId,
+          date: dayStart,
+          expectedCashCents: cash.cashCents,
+          countedCashCents: params.countedCashCents,
+          differenceCents,
+          transferCents: cash.transferCents,
+          onlineCents: cash.onlineCents,
+          notes: params.notes,
+          closedByUserId: params.actorUserId,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          tenantId: params.tenantId,
+          actorUserId: params.actorUserId,
+          action: "cash_register.closed",
+          entityType: "CashRegisterClose",
+          entityId: close.id,
+          metadata: { differenceCents },
+        },
+      });
+
+      return close;
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes("cash_register_closes_tenantId_date_key")) throw new CashRegisterAlreadyClosedError();
+    throw err;
+  }
 }

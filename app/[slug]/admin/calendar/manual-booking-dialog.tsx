@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createManualBookingAction, createBlockAction } from "./actions";
+import { createManualBookingAction, createBlockAction, createRecurringBookingAction } from "./actions";
 import { formatCentsARS } from "@/lib/availability/engine";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,9 @@ export function ManualBookingDialog({
   const [priceARS, setPriceARS] = useState(defaultPriceCents != null ? String(defaultPriceCents / 100) : "");
   const [depositPaid, setDepositPaid] = useState(false);
   const [depositMethod, setDepositMethod] = useState<"CASH" | "TRANSFER">("CASH");
+  const [recurringPriceARS, setRecurringPriceARS] = useState(defaultPriceCents != null ? String(defaultPriceCents / 100) : "");
   const label = `${new Date(startTime).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })} – ${new Date(endTime).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}`;
+  const weekdayLabel = new Date(startTime).toLocaleDateString("es-AR", { weekday: "long" });
 
   const depositCents = useMemo(() => {
     const totalCents = Math.round((Number(priceARS) || 0) * 100);
@@ -59,6 +61,27 @@ export function ManualBookingDialog({
       const result = await createManualBookingAction(tenantSlug, formData);
       if (result.ok) {
         toast.success("Reserva creada.");
+        onOpenChange(false);
+        router.refresh();
+      } else {
+        toast.error(result.error);
+      }
+    });
+  }
+
+  function handleRecurring(formData: FormData) {
+    formData.set("courtId", courtId);
+    formData.set("startTime", startTime);
+    formData.set("endTime", endTime);
+    formData.set("totalPriceARS", recurringPriceARS);
+    startTransition(async () => {
+      const result = await createRecurringBookingAction(tenantSlug, formData);
+      if (result.ok) {
+        toast.success(
+          result.data.conflicts > 0
+            ? `Turno fijo creado. ${result.data.conflicts} semana(s) no se pudieron tomar porque ya había algo reservado — revisalas en "Turnos fijos".`
+            : "Turno fijo creado para las próximas semanas.",
+        );
         onOpenChange(false);
         router.refresh();
       } else {
@@ -92,6 +115,7 @@ export function ManualBookingDialog({
         <Tabs defaultValue="booking">
           <TabsList className="w-full">
             <TabsTrigger value="booking" className="flex-1">Reserva manual</TabsTrigger>
+            <TabsTrigger value="recurring" className="flex-1">Turno fijo</TabsTrigger>
             <TabsTrigger value="block" className="flex-1">Bloquear</TabsTrigger>
           </TabsList>
 
@@ -160,6 +184,39 @@ export function ManualBookingDialog({
 
               <DialogFooter>
                 <Button type="submit" disabled={isPending}>{isPending ? "Guardando..." : "Crear reserva"}</Button>
+              </DialogFooter>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="recurring">
+            <form action={handleRecurring} className="flex flex-col gap-3">
+              <p className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+                Reserva ese horario todos los <strong className="capitalize">{weekdayLabel}</strong> a las{" "}
+                <strong>{new Date(startTime).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}</strong> durante las
+                próximas 13 semanas, sin necesidad de seña. Nadie más va a poder reservar ese horario mientras el turno fijo esté activo.
+              </p>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="recurringPlayerName">Nombre del jugador</Label>
+                <Input id="recurringPlayerName" name="playerName" required />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="recurringPlayerEmail">Email del jugador</Label>
+                <Input id="recurringPlayerEmail" name="playerEmail" type="email" required />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="recurringPriceARS">Precio del turno (ARS)</Label>
+                <Input
+                  id="recurringPriceARS"
+                  type="number"
+                  min={0}
+                  step={100}
+                  required
+                  value={recurringPriceARS}
+                  onChange={(e) => setRecurringPriceARS(e.target.value)}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={isPending}>{isPending ? "Guardando..." : "Crear turno fijo"}</Button>
               </DialogFooter>
             </form>
           </TabsContent>

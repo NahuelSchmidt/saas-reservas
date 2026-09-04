@@ -53,3 +53,11 @@ BEGIN
     );
   END LOOP;
 END $$;
+
+-- ---------------------------------------------------------------------------
+-- 3. RLS de las tablas agregadas después (mismo criterio que arriba)
+-- ---------------------------------------------------------------------------
+-- products/sales: ver prisma/migrations/*_products_sales_rls.
+-- recurring_bookings/cash_register_closes: ver prisma/migrations/*_add_recurring_and_cash_close.
+-- "sale_items" queda fuera de RLS a propósito: no lleva tenantId directo, se
+-- accede siempre a través de Sale (igual que booking_participants).

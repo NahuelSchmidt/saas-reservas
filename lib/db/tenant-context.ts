@@ -19,6 +19,8 @@ const TENANT_SCOPED_MODELS = new Set([
   "AuditLog",
   "Product",
   "Sale",
+  "RecurringBooking",
+  "CashRegisterClose",
 ]);
 
 const WRITE_WITH_DATA_OPS = new Set(["create", "createMany", "upsert"]);

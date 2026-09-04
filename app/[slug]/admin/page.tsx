@@ -21,24 +21,31 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
     {
       label: "Ocupación de hoy",
       value: `${stats.occupancyPct}%`,
+      sublabel: undefined as string | undefined,
       icon: Percent,
       color: "text-violet-600 bg-violet-500/10",
     },
     {
       label: "Ingresos de hoy",
       value: formatCentsARS(stats.todayRevenueCents),
+      sublabel:
+        stats.todayRevenueProductsCents > 0
+          ? `${formatCentsARS(stats.todayRevenueBookingsCents)} reservas · ${formatCentsARS(stats.todayRevenueProductsCents)} kiosco`
+          : undefined,
       icon: Wallet,
       color: "text-emerald-600 bg-emerald-500/10",
     },
     {
       label: "Ingresos de la semana",
       value: formatCentsARS(stats.weekRevenueCents),
+      sublabel: undefined as string | undefined,
       icon: TrendingUp,
       color: "text-blue-600 bg-blue-500/10",
     },
     {
       label: "Ingresos del mes",
       value: formatCentsARS(stats.monthRevenueCents),
+      sublabel: undefined as string | undefined,
       icon: CalendarClock,
       color: "text-amber-600 bg-amber-500/10",
     },
@@ -63,6 +70,7 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
               <div>
                 <div className="font-heading text-2xl font-bold">{s.value}</div>
                 <div className="text-sm text-muted-foreground">{s.label}</div>
+                {s.sublabel && <div className="text-xs text-muted-foreground">{s.sublabel}</div>}
               </div>
             </CardContent>
           </Card>

@@ -23,6 +23,7 @@ type Booking = {
   totalPriceCents: number;
   depositAmountCents: number;
   notes: string | null;
+  recurringBookingId: string | null;
   bookedBy: { name: string; email: string };
   payments: Payment[];
 };
@@ -120,6 +121,12 @@ export function BookingDetailsDialog({
         <DialogHeader>
           <DialogTitle>{booking.bookedBy.name}</DialogTitle>
         </DialogHeader>
+        {booking.recurringBookingId && (
+          <p className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+            🔁 Este turno es parte de un turno fijo. Cancelarlo acá solo cancela esta semana — para cancelar todas las semanas andá a{" "}
+            <strong>Turnos fijos</strong>.
+          </p>
+        )}
         <div className="flex flex-col gap-2 text-sm">
           <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span>{booking.bookedBy.email}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">Estado</span><Badge>{STATUS_LABEL[booking.status]}</Badge></div>
