@@ -56,6 +56,7 @@ export async function createBookingAction(
       startTime: parsed.data.startTime,
       bookedByUserId: player.id,
       playerEmail: guestEmail,
+      playerPhone: parsed.data.playerPhone,
       notes: parsed.data.notes,
     });
 

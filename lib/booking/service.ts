@@ -4,6 +4,7 @@ import { withTenant } from "@/lib/db/tenant-context";
 import { computeAvailableSlots } from "@/lib/availability/engine";
 import { createDepositPreference } from "@/lib/payments/mercadopago";
 import { sendBookingCancelledEmail, sendBookingConfirmedEmail } from "@/lib/email/resend";
+import { sendBookingCancelledWhatsApp, sendBookingConfirmedWhatsApp } from "@/lib/whatsapp/evolution";
 import { SlotUnavailableError, isExclusionViolation } from "./errors";
 
 export { SlotUnavailableError };
@@ -64,9 +65,10 @@ export async function createBooking(params: {
   startTime: Date;
   bookedByUserId: string;
   playerEmail: string;
+  playerPhone?: string;
   notes?: string;
 }) {
-  const { tenantId, tenantSlug, tenantName, courtId, startTime, bookedByUserId, playerEmail, notes } = params;
+  const { tenantId, tenantSlug, tenantName, courtId, startTime, bookedByUserId, playerEmail, playerPhone, notes } = params;
 
   const result = await withTenant(tenantId, async (tx) => {
     const [config, court] = await Promise.all([
@@ -140,6 +142,22 @@ export async function createBooking(params: {
     } catch (err) {
       // La reserva ya es válida sin seña; no fallar la reserva por un error de email.
       console.error("No se pudo enviar el email de confirmación", err);
+    }
+    if (playerPhone) {
+      try {
+        await sendBookingConfirmedWhatsApp({
+          phone: playerPhone,
+          tenantName,
+          tenantSlug,
+          bookingId: booking.id,
+          courtName: court.name,
+          startTime,
+          totalPriceCents: priceCents,
+          depositAmountCents: 0,
+        });
+      } catch (err) {
+        console.error("No se pudo enviar el WhatsApp de confirmación", err);
+      }
     }
     return { booking, paymentUrl: null as string | null };
   }
@@ -235,6 +253,22 @@ export async function confirmBookingPayment(params: {
     // El pago ya quedó confirmado; no fallar la conciliación por un error de email.
     console.error("No se pudo enviar el email de confirmación", err);
   }
+  if (result.booking.bookedBy.phone) {
+    try {
+      await sendBookingConfirmedWhatsApp({
+        phone: result.booking.bookedBy.phone,
+        tenantName: result.booking.tenant.name,
+        tenantSlug: result.booking.tenant.slug,
+        bookingId: result.booking.id,
+        courtName: result.booking.court.name,
+        startTime: result.booking.startTime,
+        totalPriceCents: result.booking.totalPriceCents,
+        depositAmountCents: result.booking.depositAmountCents,
+      });
+    } catch (err) {
+      console.error("No se pudo enviar el WhatsApp de confirmación", err);
+    }
+  }
 
   return result.booking;
 }
@@ -320,6 +354,19 @@ export async function cancelBooking(params: {
   } catch (err) {
     // La cancelación ya se aplicó; no fallarla por un error de email.
     console.error("No se pudo enviar el email de cancelación", err);
+  }
+  if (result.booking.bookedBy.phone) {
+    try {
+      await sendBookingCancelledWhatsApp({
+        phone: result.booking.bookedBy.phone,
+        tenantName: result.booking.tenant.name,
+        courtName: result.booking.court.name,
+        startTime: result.booking.startTime,
+        refundAmountCents: result.refundAmountCents,
+      });
+    } catch (err) {
+      console.error("No se pudo enviar el WhatsApp de cancelación", err);
+    }
   }
 
   return result.booking;
