@@ -541,13 +541,18 @@ export function PadelLanding() {
               <a href="#funciones" className="sp-nav-link">Funciones</a>
               <a href="#precios" className="sp-nav-link">Precios</a>
             </div>
-            <Link
-              href="/login"
-              className="sp-nav-cta sp-heading"
-              style={css("font-weight: 800; font-size: 14.5px; color: #071008; background: #CCFF33; padding: 11px 20px; border-radius: 999px; letter-spacing: -0.01em;")}
-            >
-              Probá gratis
-            </Link>
+            <div style={css("display: flex; align-items: center; gap: 14px;")}>
+              <Link href="/login" className="sp-nav-link sp-heading" style={css("font-weight: 700; font-size: 14.5px;")}>
+                Iniciar sesión
+              </Link>
+              <Link
+                href="/login"
+                className="sp-nav-cta sp-heading"
+                style={css("font-weight: 800; font-size: 14.5px; color: #071008; background: #CCFF33; padding: 11px 20px; border-radius: 999px; letter-spacing: -0.01em;")}
+              >
+                Probá gratis
+              </Link>
+            </div>
           </div>
         </nav>
         <div aria-hidden="true" style={css("height: 66px;")} />
