@@ -1,4 +1,6 @@
 import { withTenant } from "@/lib/db/tenant-context";
+import { guestEmailFromPhone } from "./guest";
+import { sendBookingConfirmedWhatsApp } from "@/lib/whatsapp/evolution";
 import { isExclusionViolation, SlotUnavailableError } from "./errors";
 
 export async function getAdminDaySchedule(tenantId: string, date: Date) {
@@ -48,11 +50,13 @@ export async function getAdminDaySchedule(tenantId: string, date: Date) {
 /** Reserva manual cargada por un empleado/admin (walk-in, teléfono, etc.). Queda CONFIRMED directo, sin pasar por Mercado Pago. */
 export async function createManualBooking(params: {
   tenantId: string;
+  tenantSlug: string;
+  tenantName: string;
   courtId: string;
   startTime: Date;
   endTime: Date;
   totalPriceCents: number;
-  playerEmail: string;
+  playerPhone: string;
   playerName: string;
   markDepositPaid: boolean;
   depositAmountCents: number;
@@ -60,11 +64,13 @@ export async function createManualBooking(params: {
   createdByUserId: string;
   notes?: string;
 }) {
-  return withTenant(params.tenantId, async (tx) => {
+  const guestEmail = guestEmailFromPhone(params.playerPhone);
+
+  const result = await withTenant(params.tenantId, async (tx) => {
     const player = await tx.user.upsert({
-      where: { email: params.playerEmail },
-      update: {},
-      create: { email: params.playerEmail, name: params.playerName },
+      where: { email: guestEmail },
+      update: { name: params.playerName, phone: params.playerPhone },
+      create: { email: guestEmail, name: params.playerName, phone: params.playerPhone },
     });
 
     try {
@@ -109,12 +115,31 @@ export async function createManualBooking(params: {
         },
       });
 
-      return booking;
+      const court = await tx.court.findUniqueOrThrow({ where: { id: params.courtId }, select: { name: true } });
+
+      return { booking, court };
     } catch (err) {
       if (isExclusionViolation(err)) throw new SlotUnavailableError();
       throw err;
     }
   });
+
+  try {
+    await sendBookingConfirmedWhatsApp({
+      phone: params.playerPhone,
+      playerName: params.playerName,
+      tenantName: params.tenantName,
+      tenantSlug: params.tenantSlug,
+      bookingId: result.booking.id,
+      courtName: result.court.name,
+      startTime: params.startTime,
+      endTime: params.endTime,
+    });
+  } catch (err) {
+    console.error("No se pudo enviar el WhatsApp de confirmación", err);
+  }
+
+  return result.booking;
 }
 
 /** Bloquea un horario (mantenimiento, evento privado, clase) sin asociarlo a un jugador. */

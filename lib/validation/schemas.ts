@@ -58,7 +58,7 @@ export type GuestBookingInput = z.infer<typeof guestBookingSchema>;
 
 export const manualBookingSchema = createBookingSchema.extend({
   endTime: z.coerce.date(),
-  playerEmail: z.string().email(),
+  playerPhone: z.string().min(6, "Ingresá un teléfono válido").max(30),
   playerName: z.string().min(1),
   totalPriceCents: z.coerce.number().int().nonnegative(),
   markDepositPaid: z.boolean().default(false),

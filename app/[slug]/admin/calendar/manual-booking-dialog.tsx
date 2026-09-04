@@ -126,8 +126,8 @@ export function ManualBookingDialog({
                 <Input id="playerName" name="playerName" required />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="playerEmail">Email del jugador</Label>
-                <Input id="playerEmail" name="playerEmail" type="email" required />
+                <Label htmlFor="playerPhone">Teléfono del jugador</Label>
+                <Input id="playerPhone" name="playerPhone" type="tel" placeholder="11 2345 6789" required />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="totalPriceARS">Precio del turno (ARS)</Label>

@@ -14,6 +14,7 @@ import {
 } from "@/lib/booking/service";
 import { guestBookingSchema, cancelBookingSchema } from "@/lib/validation/schemas";
 import { parseLocalISODate } from "@/lib/availability/date-utils";
+import { guestEmailFromPhone } from "@/lib/booking/guest";
 import type { Slot } from "@/lib/availability/engine";
 
 export type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -30,12 +31,6 @@ export async function getAvailabilityAction(
     console.error(err);
     return { ok: false, error: "No pudimos cargar la disponibilidad." };
   }
-}
-
-/** Convierte un teléfono en un email sintético estable, para poder reusar el modelo User (que requiere email único) sin pedirle cuenta al jugador. */
-function guestEmailFromPhone(phone: string) {
-  const digits = phone.replace(/\D/g, "");
-  return `tel-${digits}@guest.sistema-padel.local`;
 }
 
 export async function createBookingAction(
