@@ -1,4 +1,5 @@
-import { Package } from "lucide-react";
+import Link from "next/link";
+import { Package, History } from "lucide-react";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { listProducts, getTodaySales } from "@/lib/products/service";
 import { formatCentsARS } from "@/lib/availability/engine";
@@ -25,6 +26,12 @@ export default async function ProductsPage({ params }: { params: Promise<{ slug:
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Productos</h1>
           <p className="text-sm text-muted-foreground">Stock de pelotas, bebidas y demás para vender en el mostrador.</p>
+          <Link
+            href={`/${slug}/admin/products/history`}
+            className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <History className="size-3.5" /> Ver historial de ventas
+          </Link>
         </div>
         <div className="flex gap-2">
           <NewSaleDialog tenantSlug={tenant.slug} products={products.filter((p) => p.active)} />

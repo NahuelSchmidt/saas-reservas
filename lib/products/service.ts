@@ -148,6 +148,7 @@ export async function createSale(params: {
   });
 }
 
+/** A pesar del nombre, sirve para cualquier día — la página de historial (products/history) reusa esta misma función. */
 export async function getTodaySales(tenantId: string, date: Date) {
   const dayStart = new Date(date);
   dayStart.setHours(0, 0, 0, 0);
@@ -156,7 +157,7 @@ export async function getTodaySales(tenantId: string, date: Date) {
   return withTenant(tenantId, (tx) =>
     tx.sale.findMany({
       where: { tenantId, createdAt: { gte: dayStart, lt: dayEnd } },
-      include: { items: true },
+      include: { items: true, createdBy: { select: { name: true } } },
       orderBy: { createdAt: "desc" },
     }),
   );
