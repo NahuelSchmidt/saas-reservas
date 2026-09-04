@@ -1,10 +1,12 @@
-import { Clock3, Settings2, ShieldAlert } from "lucide-react";
+import { Clock3, Settings2, ShieldAlert, Wallet } from "lucide-react";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { withTenant } from "@/lib/db/tenant-context";
+import { getMercadoPagoAccountStatus } from "@/lib/payments/mercadopago-connect";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookingConfigForm } from "./booking-config-form";
 import { CancellationPolicyForm } from "./cancellation-policy-form";
 import { BusinessHoursForm } from "./business-hours-form";
+import { MercadoPagoSection } from "./mercadopago-section";
 
 function SectionTitle({ icon: Icon, color, children }: { icon: typeof Clock3; color: string; children: React.ReactNode }) {
   return (
@@ -21,10 +23,11 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const tenant = await resolveTenantBySlug(slug);
 
-  const [config, policy, hours] = await withTenant(tenant.id, async (tx) => [
-    await tx.bookingConfig.findUnique({ where: { tenantId: tenant.id } }),
-    await tx.cancellationPolicy.findUnique({ where: { tenantId: tenant.id } }),
-    await tx.businessHours.findMany({ where: { tenantId: tenant.id }, orderBy: { dayOfWeek: "asc" } }),
+  const [config, policy, hours, mercadoPagoAccount] = await Promise.all([
+    withTenant(tenant.id, (tx) => tx.bookingConfig.findUnique({ where: { tenantId: tenant.id } })),
+    withTenant(tenant.id, (tx) => tx.cancellationPolicy.findUnique({ where: { tenantId: tenant.id } })),
+    withTenant(tenant.id, (tx) => tx.businessHours.findMany({ where: { tenantId: tenant.id }, orderBy: { dayOfWeek: "asc" } })),
+    getMercadoPagoAccountStatus(tenant.id),
   ]);
 
   return (
@@ -40,6 +43,19 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
         </CardHeader>
         <CardContent>
           <BusinessHoursForm tenantSlug={tenant.slug} hours={hours} />
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/60 shadow-sm">
+        <CardHeader>
+          <SectionTitle icon={Wallet} color="bg-sky-500/10 text-sky-600">Mercado Pago</SectionTitle>
+        </CardHeader>
+        <CardContent>
+          <MercadoPagoSection
+            tenantSlug={tenant.slug}
+            account={mercadoPagoAccount}
+            depositRequired={config?.depositRequired ?? true}
+          />
         </CardContent>
       </Card>
 

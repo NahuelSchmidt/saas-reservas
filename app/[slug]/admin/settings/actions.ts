@@ -1,9 +1,11 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { requireTenantRole } from "@/lib/auth/guards";
 import { withTenant } from "@/lib/db/tenant-context";
+import { getAuthorizationUrl, disconnectMercadoPagoAccount } from "@/lib/payments/mercadopago-connect";
 import {
   bookingConfigSchema,
   cancellationPolicySchema,
@@ -33,6 +35,20 @@ export async function updateBookingConfigAction(tenantSlug: string, formData: Fo
       create: { tenantId: tenant.id, ...parsed.data },
     }),
   );
+  revalidatePath(`/${tenantSlug}/admin/settings`);
+  return { ok: true, data: { ok: true } };
+}
+
+export async function connectMercadoPagoAction(tenantSlug: string) {
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  await requireTenantRole(tenant.id, ["ADMIN"]);
+  redirect(getAuthorizationUrl(tenant.id));
+}
+
+export async function disconnectMercadoPagoAction(tenantSlug: string): Promise<ActionResult<{ ok: true }>> {
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  await requireTenantRole(tenant.id, ["ADMIN"]);
+  await disconnectMercadoPagoAccount(tenant.id);
   revalidatePath(`/${tenantSlug}/admin/settings`);
   return { ok: true, data: { ok: true } };
 }

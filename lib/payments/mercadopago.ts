@@ -1,26 +1,24 @@
 import { MercadoPagoConfig, Preference, Payment as MPPayment } from "mercadopago";
 import crypto from "node:crypto";
 
-function client() {
-  const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
-  if (!accessToken) throw new Error("MERCADOPAGO_ACCESS_TOKEN no configurado");
-  return new MercadoPagoConfig({ accessToken });
-}
-
 /**
- * Crea una preferencia de Checkout Pro para cobrar la seña de una reserva.
- * `externalReference` debe ser el bookingId: es lo que usamos para
- * conciliar el pago cuando llega el webhook.
+ * Crea una preferencia de Checkout Pro para cobrar la seña de una reserva,
+ * usando el access_token propio del complejo (Mercado Pago Connect) — la
+ * plata le llega directo a su cuenta, no a una cuenta central de la
+ * plataforma. `externalReference` debe ser el bookingId: es lo que usamos
+ * para conciliar el pago cuando llega el webhook.
  */
 export async function createDepositPreference(params: {
   bookingId: string;
+  tenantId: string;
   tenantSlug: string;
   courtName: string;
   startTime: Date;
   amountCents: number;
   payerEmail?: string;
+  accessToken: string;
 }) {
-  const preference = new Preference(client());
+  const preference = new Preference(new MercadoPagoConfig({ accessToken: params.accessToken }));
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
   const result = await preference.create({
@@ -36,7 +34,7 @@ export async function createDepositPreference(params: {
       ],
       payer: params.payerEmail ? { email: params.payerEmail } : undefined,
       external_reference: params.bookingId,
-      notification_url: `${baseUrl}/api/webhooks/mercadopago`,
+      notification_url: `${baseUrl}/api/webhooks/mercadopago?tenantId=${params.tenantId}`,
       back_urls: {
         success: `${baseUrl}/${params.tenantSlug}/reservas/${params.bookingId}?status=success`,
         pending: `${baseUrl}/${params.tenantSlug}/reservas/${params.bookingId}?status=pending`,
@@ -49,8 +47,9 @@ export async function createDepositPreference(params: {
   return { preferenceId: result.id, initPoint: result.init_point };
 }
 
-export async function fetchMercadoPagoPayment(paymentId: string) {
-  const payment = new MPPayment(client());
+/** Consulta un pago usando las credenciales del complejo dueño de esa cuenta conectada. */
+export async function fetchMercadoPagoPayment(paymentId: string, accessToken: string) {
+  const payment = new MPPayment(new MercadoPagoConfig({ accessToken }));
   return payment.get({ id: paymentId });
 }
 

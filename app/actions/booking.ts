@@ -4,7 +4,14 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/prisma";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
-import { createBooking, cancelBooking, getBookingDetail, getDayAvailability, SlotUnavailableError } from "@/lib/booking/service";
+import {
+  createBooking,
+  cancelBooking,
+  getBookingDetail,
+  getDayAvailability,
+  SlotUnavailableError,
+  MercadoPagoNotConnectedError,
+} from "@/lib/booking/service";
 import { guestBookingSchema, cancelBookingSchema } from "@/lib/validation/schemas";
 import { parseLocalISODate } from "@/lib/availability/date-utils";
 import type { Slot } from "@/lib/availability/engine";
@@ -64,7 +71,9 @@ export async function createBookingAction(
     revalidatePath(`/${tenantSlug}`);
     return { ok: true, data: { bookingId: booking.id, paymentUrl } };
   } catch (err) {
-    if (err instanceof SlotUnavailableError) return { ok: false, error: err.message };
+    if (err instanceof SlotUnavailableError || err instanceof MercadoPagoNotConnectedError) {
+      return { ok: false, error: err.message };
+    }
     console.error(err);
     return { ok: false, error: "No pudimos crear la reserva. Intentá de nuevo." };
   }

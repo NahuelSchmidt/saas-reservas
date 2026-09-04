@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchMercadoPagoPayment, verifyMercadoPagoSignature } from "@/lib/payments/mercadopago";
-import { confirmBookingPayment, findTenantIdForBooking } from "@/lib/booking/service";
+import { getValidAccessToken } from "@/lib/payments/mercadopago-connect";
+import { confirmBookingPayment } from "@/lib/booking/service";
 
 // Mercado Pago espera 200 rápido; cualquier error nuestro se loguea pero
 // igual devolvemos 200 salvo que la firma sea inválida, para evitar que MP
@@ -9,8 +10,13 @@ export async function POST(req: NextRequest) {
   const url = new URL(req.url);
   const dataId = url.searchParams.get("data.id") ?? url.searchParams.get("id");
   const topic = url.searchParams.get("type") ?? url.searchParams.get("topic");
+  // Agregado por nosotros a la notification_url al crear la preferencia (ver
+  // lib/payments/mercadopago.ts): identifica de qué complejo es el pago, ya
+  // que cada uno tiene su propia cuenta conectada y por lo tanto sus propias
+  // credenciales para consultarlo.
+  const tenantId = url.searchParams.get("tenantId");
 
-  if (!dataId || topic !== "payment") {
+  if (!dataId || topic !== "payment" || !tenantId) {
     return NextResponse.json({ received: true });
   }
 
@@ -23,14 +29,14 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const payment = await fetchMercadoPagoPayment(dataId);
+    const accessToken = await getValidAccessToken(tenantId);
+    if (!accessToken) return NextResponse.json({ received: true });
+
+    const payment = await fetchMercadoPagoPayment(dataId, accessToken);
     const bookingId = payment.external_reference;
     if (!bookingId || payment.status !== "approved") {
       return NextResponse.json({ received: true });
     }
-
-    const tenantId = await findTenantIdForBooking(bookingId);
-    if (!tenantId) return NextResponse.json({ received: true });
 
     await confirmBookingPayment({
       tenantId,

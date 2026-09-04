@@ -57,6 +57,7 @@ model Tenant {
   sales              Sale[]
   recurringBookings  RecurringBooking[]
   cashRegisterCloses CashRegisterClose[]
+  mercadoPagoAccount MercadoPagoAccount?
 
   @@map("tenants")
 }
@@ -546,6 +547,27 @@ model SaleItem {
   subtotalCents  Int
 
   @@map("sale_items")
+}
+
+// ---------------------------------------------------------------------------
+// Mercado Pago Connect: cada complejo conecta su propia cuenta para cobrar
+// señas — la plata le llega directo a él, no a una cuenta central.
+// ---------------------------------------------------------------------------
+
+model MercadoPagoAccount {
+  id           String   @id @default(cuid())
+  tenantId     String   @unique
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  mpUserId     String // user_id de la cuenta de Mercado Pago conectada
+  publicKey    String?
+  accessToken  String // encriptado (AES-256-GCM), ver lib/crypto/secret-box.ts
+  refreshToken String // encriptado
+  expiresAt    DateTime
+  scope        String?
+  connectedAt  DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("mercadopago_accounts")
 }
 
 // ---------------------------------------------------------------------------

@@ -21,6 +21,7 @@ const TENANT_SCOPED_MODELS = new Set([
   "Sale",
   "RecurringBooking",
   "CashRegisterClose",
+  "MercadoPagoAccount",
 ]);
 
 const WRITE_WITH_DATA_OPS = new Set(["create", "createMany", "upsert"]);

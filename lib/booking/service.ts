@@ -1,13 +1,13 @@
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/db/prisma";
 import { withTenant } from "@/lib/db/tenant-context";
 import { computeAvailableSlots } from "@/lib/availability/engine";
 import { createDepositPreference } from "@/lib/payments/mercadopago";
+import { getValidAccessToken } from "@/lib/payments/mercadopago-connect";
 import { sendBookingCancelledEmail, sendBookingConfirmedEmail } from "@/lib/email/resend";
 import { sendBookingCancelledWhatsApp, sendBookingConfirmedWhatsApp } from "@/lib/whatsapp/evolution";
-import { SlotUnavailableError, isExclusionViolation } from "./errors";
+import { SlotUnavailableError, MercadoPagoNotConnectedError, isExclusionViolation } from "./errors";
 
-export { SlotUnavailableError };
+export { SlotUnavailableError, MercadoPagoNotConnectedError };
 
 async function computeAvailabilityWithTx(
   tx: Prisma.TransactionClient,
@@ -164,13 +164,18 @@ export async function createBooking(params: {
   }
 
   try {
+    const accessToken = await getValidAccessToken(tenantId);
+    if (!accessToken) throw new MercadoPagoNotConnectedError();
+
     const preference = await createDepositPreference({
       bookingId: booking.id,
+      tenantId,
       tenantSlug,
       courtName: court.name,
       startTime,
       amountCents: depositAmountCents,
       payerEmail: playerEmail,
+      accessToken,
     });
     return { booking, paymentUrl: preference.initPoint ?? null };
   } catch (err) {
@@ -180,6 +185,7 @@ export async function createBooking(params: {
     await withTenant(tenantId, (tx) =>
       tx.booking.update({ where: { id: booking.id }, data: { status: "CANCELLED" } }),
     );
+    if (err instanceof MercadoPagoNotConnectedError) throw err;
     console.error("No se pudo crear la preferencia de pago, reserva cancelada", err);
     throw new Error("No pudimos generar el link de pago. Intentá de nuevo en unos minutos.");
   }
@@ -372,11 +378,6 @@ export async function cancelBooking(params: {
   }
 
   return result.booking;
-}
-
-export async function findTenantIdForBooking(bookingId: string) {
-  const booking = await prisma.booking.findUnique({ where: { id: bookingId }, select: { tenantId: true } });
-  return booking?.tenantId ?? null;
 }
 
 export async function getBookingDetail(tenantId: string, bookingId: string) {
