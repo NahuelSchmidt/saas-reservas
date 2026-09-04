@@ -49,6 +49,13 @@ export const createBookingSchema = z.object({
 });
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 
+// Reserva pública sin cuenta: solo nombre y teléfono, sin login.
+export const guestBookingSchema = createBookingSchema.extend({
+  playerName: z.string().min(1, "Requerido").max(80),
+  playerPhone: z.string().min(6, "Ingresá un teléfono válido").max(30),
+});
+export type GuestBookingInput = z.infer<typeof guestBookingSchema>;
+
 export const manualBookingSchema = createBookingSchema.extend({
   endTime: z.coerce.date(),
   playerEmail: z.string().email(),

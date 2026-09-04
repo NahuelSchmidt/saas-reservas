@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth/config";
+import { prisma } from "@/lib/db/prisma";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
-import { createBooking, cancelBooking, getDayAvailability, SlotUnavailableError } from "@/lib/booking/service";
-import { createBookingSchema, cancelBookingSchema } from "@/lib/validation/schemas";
+import { createBooking, cancelBooking, getBookingDetail, getDayAvailability, SlotUnavailableError } from "@/lib/booking/service";
+import { guestBookingSchema, cancelBookingSchema } from "@/lib/validation/schemas";
 import { parseLocalISODate } from "@/lib/availability/date-utils";
 import type { Slot } from "@/lib/availability/engine";
 
@@ -24,17 +25,27 @@ export async function getAvailabilityAction(
   }
 }
 
+/** Convierte un teléfono en un email sintético estable, para poder reusar el modelo User (que requiere email único) sin pedirle cuenta al jugador. */
+function guestEmailFromPhone(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  return `tel-${digits}@guest.sistema-padel.local`;
+}
+
 export async function createBookingAction(
   tenantSlug: string,
   input: unknown,
 ): Promise<ActionResult<{ bookingId: string; paymentUrl: string | null }>> {
-  const session = await auth();
-  if (!session?.user?.email) return { ok: false, error: "Necesitás iniciar sesión para reservar." };
-
-  const parsed = createBookingSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Datos de reserva inválidos." };
+  const parsed = guestBookingSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos de reserva inválidos." };
 
   const tenant = await resolveTenantBySlug(tenantSlug);
+  const guestEmail = guestEmailFromPhone(parsed.data.playerPhone);
+
+  const player = await prisma.user.upsert({
+    where: { email: guestEmail },
+    update: { name: parsed.data.playerName, phone: parsed.data.playerPhone },
+    create: { email: guestEmail, name: parsed.data.playerName, phone: parsed.data.playerPhone },
+  });
 
   try {
     const { booking, paymentUrl } = await createBooking({
@@ -43,8 +54,8 @@ export async function createBookingAction(
       tenantName: tenant.name,
       courtId: parsed.data.courtId,
       startTime: parsed.data.startTime,
-      bookedByUserId: session.user.id,
-      playerEmail: session.user.email,
+      bookedByUserId: player.id,
+      playerEmail: guestEmail,
       notes: parsed.data.notes,
     });
 
@@ -61,19 +72,24 @@ export async function cancelBookingAction(
   tenantSlug: string,
   input: unknown,
 ): Promise<ActionResult<{ cancelled: true }>> {
-  const session = await auth();
-  if (!session?.user?.id) return { ok: false, error: "Necesitás iniciar sesión." };
-
   const parsed = cancelBookingSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Datos inválidos." };
 
   const tenant = await resolveTenantBySlug(tenantSlug);
 
   try {
+    // Sin cuenta de jugador, el link con el bookingId (impredecible) es la
+    // credencial: quien lo tiene, puede cancelar. Si hay sesión (staff u
+    // otro caso), esa identidad queda en la auditoría; si no, queda a
+    // nombre de quien reservó.
+    const session = await auth();
+    const booking = await getBookingDetail(tenant.id, parsed.data.bookingId);
+    if (!booking) return { ok: false, error: "Reserva no encontrada." };
+
     await cancelBooking({
       tenantId: tenant.id,
       bookingId: parsed.data.bookingId,
-      actorUserId: session.user.id,
+      actorUserId: session?.user?.id ?? booking.bookedBy.id,
       reason: parsed.data.reason,
     });
     revalidatePath(`/${tenantSlug}`);

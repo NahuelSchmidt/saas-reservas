@@ -1,5 +1,4 @@
-import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth/config";
+import { notFound } from "next/navigation";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { getBookingDetail } from "@/lib/booking/service";
 import { formatCentsARS } from "@/lib/availability/engine";
@@ -32,16 +31,13 @@ export default async function BookingDetailPage({
   const { status: mpStatus } = await searchParams;
 
   const tenant = await resolveTenantBySlug(slug);
-  const session = await auth();
-  if (!session?.user) redirect(`/login?callbackUrl=/${slug}/reservas/${bookingId}`);
 
   const booking = await getBookingDetail(tenant.id, bookingId);
   if (!booking) notFound();
 
-  const isOwner = booking.bookedBy.id === session.user.id;
-  const isStaff = session.user.memberships.some((m) => m.tenantId === tenant.id);
-  if (!isOwner && !isStaff) notFound();
-
+  // Sin cuenta de jugador, este link (bookingId impredecible) es la
+  // credencial de acceso: cualquiera que lo tenga puede ver/cancelar el
+  // turno, igual que un "ver mi pedido" de un e-commerce sin login.
   return (
     <div className="flex flex-1 flex-col items-center px-6 py-10 sm:px-10">
       <Card className="w-full max-w-lg">

@@ -8,6 +8,8 @@ import { getAvailabilityAction, createBookingAction } from "@/app/actions/bookin
 import { formatCentsARS, type Slot } from "@/lib/availability/engine";
 import { addLocalDays, parseLocalISODate } from "@/lib/availability/date-utils";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const LOCATION_LABEL: Record<string, string> = {
@@ -41,6 +43,8 @@ export function BookingBoard({
   const [dateISO, setDateISO] = useState(initialDateISO);
   const [slots, setSlots] = useState<Slot[]>(initialSlots);
   const [selected, setSelected] = useState<Slot | null>(null);
+  const [playerName, setPlayerName] = useState("");
+  const [playerPhone, setPlayerPhone] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const courts = useMemo(() => {
@@ -69,17 +73,19 @@ export function BookingBoard({
   }
 
   function book(slot: Slot) {
+    if (!playerName.trim() || !playerPhone.trim()) {
+      toast.error("Completá tu nombre y teléfono.");
+      return;
+    }
     startTransition(async () => {
       const result = await createBookingAction(tenantSlug, {
         courtId: slot.courtId,
         startTime: slot.startTime,
+        playerName: playerName.trim(),
+        playerPhone: playerPhone.trim(),
       });
 
       if (!result.ok) {
-        if (result.error.includes("iniciar sesión")) {
-          router.push(`/login?callbackUrl=/${tenantSlug}`);
-          return;
-        }
         toast.error(result.error);
         setSelected(null);
         loadDate(dateISO); // la disponibilidad puede haber cambiado, refrescar
@@ -203,6 +209,22 @@ export function BookingBoard({
                     </div>
                     <div className="font-heading text-2xl font-bold">{formatCentsARS(selected.priceCents)}</div>
                     <div className="text-xs text-muted-foreground">{formatDuration(selected.startTime, selected.endTime)}</div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3 border-t pt-3">
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="playerName">Nombre completo</Label>
+                    <Input id="playerName" value={playerName} onChange={(e) => setPlayerName(e.target.value)} placeholder="Juan Pérez" />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="playerPhone">Teléfono</Label>
+                    <Input
+                      id="playerPhone"
+                      type="tel"
+                      value={playerPhone}
+                      onChange={(e) => setPlayerPhone(e.target.value)}
+                      placeholder="11 2345 6789"
+                    />
                   </div>
                 </div>
               </div>
