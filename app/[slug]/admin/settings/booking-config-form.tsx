@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateBookingConfigAction } from "./actions";
@@ -21,6 +21,16 @@ type Config = {
 export function BookingConfigForm({ tenantSlug, config }: { tenantSlug: string; config: Config }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  // El input de "Valor de la seña" siempre se edita en la unidad visible (% o
+  // pesos); la conversión a centavos para el monto fijo pasa en el server
+  // action (updateBookingConfigAction), así el <input type="number"> nunca
+  // muestra un valor en centavos que confunda al admin.
+  const [depositIsPercentage, setDepositIsPercentage] = useState(config?.depositIsPercentage ?? true);
+  const initialDepositValue = config
+    ? config.depositIsPercentage
+      ? config.depositValue
+      : config.depositValue / 100
+    : 30;
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -64,7 +74,11 @@ export function BookingConfigForm({ tenantSlug, config }: { tenantSlug: string; 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="depositIsPercentage">Tipo de seña</Label>
-          <Select name="depositIsPercentage" defaultValue={config?.depositIsPercentage === false ? "false" : "true"}>
+          <Select
+            name="depositIsPercentage"
+            value={String(depositIsPercentage)}
+            onValueChange={(v) => setDepositIsPercentage(v === "true")}
+          >
             <SelectTrigger id="depositIsPercentage"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="true">Porcentaje del total</SelectItem>
@@ -74,8 +88,8 @@ export function BookingConfigForm({ tenantSlug, config }: { tenantSlug: string; 
           {/* El Select nativo de shadcn no serializa "on"/"off" como checkbox; usamos un select con select real */}
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="depositValue">Valor de la seña</Label>
-          <Input id="depositValue" name="depositValue" type="number" min={1} defaultValue={config?.depositValue ?? 30} />
+          <Label htmlFor="depositValue">Valor de la seña {depositIsPercentage ? "(%)" : "($ ARS)"}</Label>
+          <Input id="depositValue" name="depositValue" type="number" min={1} defaultValue={initialDepositValue} />
         </div>
       </div>
 

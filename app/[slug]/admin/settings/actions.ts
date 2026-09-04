@@ -23,16 +23,24 @@ export async function updateBookingConfigAction(tenantSlug: string, formData: Fo
     minAdvanceMinutes: formData.get("minAdvanceMinutes"),
     maxAdvanceDays: formData.get("maxAdvanceDays"),
     depositRequired: formData.get("depositRequired") === "on",
-    depositIsPercentage: formData.get("depositIsPercentage") === "on",
+    depositIsPercentage: formData.get("depositIsPercentage") === "true",
     depositValue: formData.get("depositValue"),
   });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 
+  // El admin tipea "Valor de la seña" en la unidad visible (% o pesos); si es
+  // monto fijo, se convierte a centavos acá, como el resto de los precios
+  // del sistema (ver el comentario de depositValue en schema.prisma).
+  const data = {
+    ...parsed.data,
+    depositValue: parsed.data.depositIsPercentage ? parsed.data.depositValue : parsed.data.depositValue * 100,
+  };
+
   await withTenant(tenant.id, (tx) =>
     tx.bookingConfig.upsert({
       where: { tenantId: tenant.id },
-      update: parsed.data,
-      create: { tenantId: tenant.id, ...parsed.data },
+      update: data,
+      create: { tenantId: tenant.id, ...data },
     }),
   );
   revalidatePath(`/${tenantSlug}/admin/settings`);
