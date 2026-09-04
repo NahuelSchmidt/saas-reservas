@@ -133,5 +133,6 @@ export const bookingConfigSchema = z.object({
   depositRequired: z.boolean(),
   depositIsPercentage: z.boolean(),
   depositValue: z.coerce.number().int().positive(),
+  cashDiscountPct: z.coerce.number().int().min(0).max(100).default(0),
 });
 export type BookingConfigInput = z.infer<typeof bookingConfigSchema>;

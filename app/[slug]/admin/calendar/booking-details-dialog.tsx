@@ -45,21 +45,32 @@ const METHOD_LABEL: Record<string, string> = {
 export function BookingDetailsDialog({
   tenantSlug,
   booking,
+  cashDiscountPct,
   open,
   onOpenChange,
 }: {
   tenantSlug: string;
   booking: Booking;
+  cashDiscountPct: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
   const paidCents = sumPaidCents(booking.payments);
   const balanceCents = balanceDueCents(booking.totalPriceCents, booking.payments);
-  const [cashAmount, setCashAmount] = useState(String(balanceCents / 100));
+  const cashBalanceCents = Math.round((balanceCents * (100 - cashDiscountPct)) / 100);
+  const [cashAmount, setCashAmount] = useState(String(cashBalanceCents / 100));
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "TRANSFER">("CASH");
   const [note, setNote] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  // La seña (online/transferencia) nunca lleva descuento — solo el saldo que
+  // se cobra en persona. Al cambiar de método se repropone el monto sugerido
+  // para ese método (el admin puede seguir editándolo a mano después).
+  function handleMethodChange(method: "CASH" | "TRANSFER") {
+    setPaymentMethod(method);
+    setCashAmount(String((method === "CASH" ? cashBalanceCents : balanceCents) / 100));
+  }
 
   const registeredPayments = booking.payments.filter((p) => p.status === "APPROVED" && p.type !== "REFUND");
 
@@ -169,7 +180,7 @@ export function BookingDetailsDialog({
               </div>
               <div className="flex w-36 flex-col gap-1.5">
                 <label className="text-xs text-muted-foreground">Método</label>
-                <Select value={paymentMethod} onValueChange={(v) => v && setPaymentMethod(v as "CASH" | "TRANSFER")}>
+                <Select value={paymentMethod} onValueChange={(v) => v && handleMethodChange(v as "CASH" | "TRANSFER")}>
                   <SelectTrigger className="h-9">
                     <SelectValue>{paymentMethod === "CASH" ? "Efectivo" : "Transferencia"}</SelectValue>
                   </SelectTrigger>
@@ -181,6 +192,11 @@ export function BookingDetailsDialog({
               </div>
               <Button onClick={registerCash} disabled={isPending}>Cobrar</Button>
             </div>
+            {paymentMethod === "CASH" && cashDiscountPct > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Incluye {cashDiscountPct}% de descuento por pagar en efectivo ({formatCentsARS(balanceCents)} sin descuento).
+              </p>
+            )}
             <Input
               value={note}
               onChange={(e) => setNote(e.target.value)}

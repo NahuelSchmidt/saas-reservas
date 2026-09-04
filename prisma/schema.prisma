@@ -278,6 +278,7 @@ model BookingConfig {
   depositRequired     Boolean  @default(true)
   depositIsPercentage Boolean  @default(true)
   depositValue        Int      @default(30) // 30% o monto fijo en centavos si depositIsPercentage=false
+  cashDiscountPct     Int      @default(0) // % de descuento sobre el saldo si se paga en efectivo (0 = sin descuento). La seña siempre se paga online/transferencia y no se descuenta.
 
   @@map("booking_configs")
 }

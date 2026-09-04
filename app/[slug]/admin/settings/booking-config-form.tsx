@@ -16,6 +16,7 @@ type Config = {
   depositRequired: boolean;
   depositIsPercentage: boolean;
   depositValue: number;
+  cashDiscountPct: number;
 } | null;
 
 export function BookingConfigForm({ tenantSlug, config }: { tenantSlug: string; config: Config }) {
@@ -91,6 +92,22 @@ export function BookingConfigForm({ tenantSlug, config }: { tenantSlug: string; 
           <Label htmlFor="depositValue">Valor de la seña {depositIsPercentage ? "(%)" : "($ ARS)"}</Label>
           <Input id="depositValue" name="depositValue" type="number" min={1} defaultValue={initialDepositValue} />
         </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="cashDiscountPct">Descuento por pagar en efectivo el saldo (%)</Label>
+        <Input
+          id="cashDiscountPct"
+          name="cashDiscountPct"
+          type="number"
+          min={0}
+          max={100}
+          className="max-w-40"
+          defaultValue={config?.cashDiscountPct ?? 0}
+        />
+        <p className="text-xs text-muted-foreground">
+          Se aplica solo al saldo que se cobra en el club en efectivo (no a la seña, que siempre se paga online). Dejalo en 0 si no ofrecés descuento.
+        </p>
       </div>
 
       <Button type="submit" disabled={isPending} className="w-fit">

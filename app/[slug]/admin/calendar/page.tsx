@@ -127,6 +127,7 @@ export default async function CalendarPage({
             depositRequired: schedule.config.depositRequired,
             depositIsPercentage: schedule.config.depositIsPercentage,
             depositValue: schedule.config.depositValue,
+            cashDiscountPct: schedule.config.cashDiscountPct,
           }}
         />
       )}

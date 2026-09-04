@@ -26,7 +26,7 @@ type Booking = {
 };
 type BusinessHours = { openTime: string; closeTime: string };
 type PricingRule = { courtId: string | null; dayOfWeek: number | null; startTime: string; endTime: string; clientType: string; priceCents: number };
-type DepositConfig = { depositRequired: boolean; depositIsPercentage: boolean; depositValue: number };
+type DepositConfig = { depositRequired: boolean; depositIsPercentage: boolean; depositValue: number; cashDiscountPct: number };
 
 function timeToMinutes(t: string) {
   const [h, m] = t.split(":").map(Number);
@@ -191,6 +191,7 @@ export function ScheduleGrid({
         <BookingDetailsDialog
           tenantSlug={tenantSlug}
           booking={selected.booking}
+          cashDiscountPct={depositConfig.cashDiscountPct}
           open
           onOpenChange={(open) => !open && setSelected(null)}
         />
