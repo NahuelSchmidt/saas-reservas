@@ -146,7 +146,7 @@ export function ScheduleGrid({
                   return (
                     <td key={court.id} className="border-b p-1.5">
                       <button
-                        className={`w-full rounded-lg border px-2.5 py-2 text-left text-xs ${color}`}
+                        className={`w-full rounded-lg border px-2.5 py-2 text-center text-xs ${color}`}
                         onClick={() => setSelected({ type: "booking", booking })}
                       >
                         {booking.isBlock ? (
