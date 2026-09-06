@@ -665,8 +665,10 @@ export function PadelLanding() {
               </div>
             </div>
 
-            <div data-rise="" style={css("border-radius: 22px; border: 1px solid var(--land-line2); background: var(--land-panel); box-shadow: 0 40px 90px var(--land-shadow-strong); overflow: hidden;")}>
-              <div style={css("display: flex; align-items: center; gap: 8px; padding: 13px 18px; border-bottom: 1px solid var(--land-line); background: var(--land-surface);")}>
+            <div data-rise="">
+              <div style={css("border-radius: 18px; border: 1px solid rgba(14, 26, 17, 0.9); background: #0E1A11; padding: 12px 12px 16px; box-shadow: 0 40px 90px var(--land-shadow-strong);")}>
+                <div style={css("border-radius: 8px; background: var(--land-panel); overflow: hidden;")}>
+                  <div style={css("display: flex; align-items: center; gap: 8px; padding: 13px 18px; border-bottom: 1px solid var(--land-line); background: var(--land-surface);")}>
                 <div style={css("width: 9px; height: 9px; border-radius: 999px; background: var(--land-dot);")} />
                 <div style={css("width: 9px; height: 9px; border-radius: 999px; background: var(--land-dot);")} />
                 <div style={css("width: 9px; height: 9px; border-radius: 999px; background: var(--land-dot);")} />
@@ -752,6 +754,10 @@ export function PadelLanding() {
                   ))}
                 </div>
               </div>
+              </div>
+              </div>
+              <div style={css("width: 130px; height: 20px; margin: 0 auto; background: linear-gradient(180deg, #0E1A11, #0A130C); border-radius: 0 0 10px 10px;")} />
+              <div style={css("width: 220px; height: 10px; margin: 6px auto 0; background: #0A130C; border-radius: 999px;")} />
             </div>
           </div>
         </section>
