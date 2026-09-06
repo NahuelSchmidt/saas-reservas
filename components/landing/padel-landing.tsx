@@ -470,6 +470,10 @@ export function PadelLanding() {
 
         .sp-nav-link { color: var(--land-muted); transition: color 0.15s ease; }
         .sp-nav-link:hover { color: var(--land-text); }
+        .sp-nav-link-dark { color: rgba(245, 247, 241, 0.78); transition: color 0.15s ease; }
+        .sp-nav-link-dark:hover { color: #F5F7F1; }
+        .sp-btn-outline-lg-dark { transition: border-color 0.18s ease, background 0.18s ease; }
+        .sp-btn-outline-lg-dark:hover { border-color: rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.08); }
         .sp-nav-cta { transition: transform 0.18s ease, box-shadow 0.18s ease; }
         .sp-nav-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 26px var(--land-accent-line); color: #071008; }
         .sp-btn-primary-lg { transition: transform 0.18s ease, box-shadow 0.18s ease; }
@@ -525,24 +529,24 @@ export function PadelLanding() {
           <div style={css("position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; margin-left: -0.5px; background: repeating-linear-gradient(180deg, var(--land-sideline-soft) 0 16px, transparent 16px 32px);")} />
         </div>
 
-        <nav style={css("position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: transparent;")}>
+        <nav style={css("position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(8, 12, 7, 0.62); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(255, 255, 255, 0.08);")}>
           <div style={css("max-width: 1240px; margin: 0 auto; padding: 16px 28px; display: flex; align-items: center; gap: 28px;")}>
             <div style={css("display: flex; align-items: center; gap: 10px; margin-right: auto;")}>
               <div style={css("width: 34px; height: 34px; border-radius: 11px; background: linear-gradient(140deg, #CCFF33, #17C964); display: grid; place-items: center; font-weight: 900; color: #071008; font-size: 17px;")} className="sp-heading">
                 S
               </div>
-              <span style={css("font-weight: 800; font-size: 19px; letter-spacing: -0.02em;")} className="sp-heading">
+              <span style={css("font-weight: 800; font-size: 19px; letter-spacing: -0.02em; color: #F5F7F1;")} className="sp-heading">
                 Sistema Padel
               </span>
             </div>
             <div style={css("display: flex; align-items: center; gap: 26px; font-size: 14.5px; font-weight: 600;")}>
-              <a href="#jugadores" className="sp-nav-link">Jugadores</a>
-              <a href="#duenos" className="sp-nav-link">Complejos</a>
-              <a href="#funciones" className="sp-nav-link">Funciones</a>
-              <a href="#precios" className="sp-nav-link">Precios</a>
+              <a href="#jugadores" className="sp-nav-link-dark">Jugadores</a>
+              <a href="#duenos" className="sp-nav-link-dark">Complejos</a>
+              <a href="#funciones" className="sp-nav-link-dark">Funciones</a>
+              <a href="#precios" className="sp-nav-link-dark">Precios</a>
             </div>
             <div style={css("display: flex; align-items: center; gap: 14px;")}>
-              <Link href="/login" className="sp-nav-link sp-heading" style={css("font-weight: 700; font-size: 14.5px;")}>
+              <Link href="/login" className="sp-nav-link-dark sp-heading" style={css("font-weight: 700; font-size: 14.5px;")}>
                 Iniciar sesión
               </Link>
               <Link
@@ -557,11 +561,16 @@ export function PadelLanding() {
         </nav>
         <div aria-hidden="true" style={css("height: 66px;")} />
 
-        <section data-screen-label="Hero" style={css("position: relative; z-index: 2; padding: 92px 28px 110px; overflow: hidden;")}>
-          <div style={css("position: absolute; inset: 0; background: radial-gradient(900px 520px at 78% 8%, var(--land-green-soft), transparent 70%), radial-gradient(700px 460px at 8% 90%, var(--land-accent-soft), transparent 70%);")} />
+        <section
+          data-screen-label="Hero"
+          style={css(
+            "position: relative; z-index: 2; padding: 132px 28px 110px; overflow: hidden; background: linear-gradient(160deg, #1b2016 0%, #10130c 55%, #070805 100%);",
+          )}
+        >
+          <div style={css("position: absolute; inset: 0; background: radial-gradient(1100px 620px at 50% -12%, rgba(255, 255, 255, 0.1), transparent 65%), radial-gradient(700px 460px at 90% 100%, rgba(23, 201, 100, 0.16), transparent 70%);")} />
           <div style={css("position: relative; max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center;")}>
             <div>
-              <div style={css("display: inline-flex; align-items: center; gap: 9px; padding: 7px 14px 7px 10px; border: 1px solid var(--land-accent-line); background: var(--land-surface); backdrop-filter: blur(6px); border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--land-accent-ink); margin-bottom: 26px;")}>
+              <div style={css("display: inline-flex; align-items: center; gap: 9px; padding: 7px 14px 7px 10px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.06); backdrop-filter: blur(6px); border-radius: 999px; font-size: 13px; font-weight: 700; color: #F5F7F1; margin-bottom: 26px;")}>
                 <span style={css("position: relative; display: inline-grid; place-items: center; width: 8px; height: 8px;")}>
                   <span style={css("position: absolute; width: 8px; height: 8px; border-radius: 999px; background: #CCFF33; animation: sp-blink 1.6s ease-in-out infinite;")} />
                 </span>
@@ -569,18 +578,15 @@ export function PadelLanding() {
               </div>
               <h1
                 className="sp-heading"
-                style={css("font-weight: 900; font-size: clamp(44px, 5.6vw, 78px); line-height: 0.94; letter-spacing: -0.035em; margin: 0 0 22px; text-wrap: balance;")}
+                style={css("font-weight: 900; font-size: clamp(44px, 5.6vw, 78px); line-height: 0.94; letter-spacing: -0.035em; margin: 0 0 22px; text-wrap: balance; color: #F5F7F1;")}
               >
                 Reservá tu cancha
                 <br />
                 en segundos, a
                 <br />
-                <span style={css("position: relative; display: inline-block;")}>
-                  <span style={css("position: absolute; inset: 0; color: rgba(6, 26, 12, 0.55); filter: blur(6px); z-index: 0;")}>cualquier hora</span>
-                  <span style={css("position: relative; z-index: 1; background: var(--land-headline-accent); -webkit-background-clip: text; background-clip: text; color: transparent;")}>cualquier hora</span>
-                </span>
+                <span style={css("color: #CCFF33;")}>cualquier hora</span>
               </h1>
-              <p style={css("font-size: 19.5px; line-height: 1.55; color: var(--land-muted); max-width: 520px; margin: 0 0 34px; text-wrap: pretty;")}>
+              <p style={css("font-size: 19.5px; line-height: 1.55; color: rgba(245, 247, 241, 0.72); max-width: 520px; margin: 0 0 34px; text-wrap: pretty;")}>
                 Disponibilidad real 24/7, confirmación al instante y la seña pagada online. Se acabaron los llamados, los WhatsApp perdidos y las canchas vacías por cancelaciones.
               </p>
               <div style={css("display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 34px;")}>
@@ -593,26 +599,26 @@ export function PadelLanding() {
                 </Link>
                 <a
                   href="#duenos"
-                  className="sp-btn-outline-lg sp-heading"
-                  style={css("font-weight: 800; font-size: 16.5px; color: var(--land-text); border: 1px solid var(--land-line2); padding: 17px 28px; border-radius: 999px;")}
+                  className="sp-btn-outline-lg-dark sp-heading"
+                  style={css("font-weight: 800; font-size: 16.5px; color: #F5F7F1; border: 1px solid rgba(255, 255, 255, 0.24); padding: 17px 28px; border-radius: 999px;")}
                 >
                   Tengo un complejo
                 </a>
               </div>
               <div style={css("display: flex; gap: 34px; flex-wrap: wrap;")}>
                 <div>
-                  <div data-count="68" data-prefix="-" data-suffix="%" className="sp-heading" style={css("font-weight: 900; font-size: 27px; color: var(--land-text); letter-spacing: -0.03em;")}>-68%</div>
-                  <div style={css("font-size: 13.5px; color: var(--land-muted2); font-weight: 600;")}>de ausentismo</div>
+                  <div data-count="68" data-prefix="-" data-suffix="%" className="sp-heading" style={css("font-weight: 900; font-size: 27px; color: #F5F7F1; letter-spacing: -0.03em;")}>-68%</div>
+                  <div style={css("font-size: 13.5px; color: rgba(245, 247, 241, 0.6); font-weight: 600;")}>de ausentismo</div>
                 </div>
-                <div style={css("width: 1px; background: var(--land-line);")} />
+                <div style={css("width: 1px; background: rgba(255, 255, 255, 0.14);")} />
                 <div>
-                  <div data-count="40" data-suffix=" seg" className="sp-heading" style={css("font-weight: 900; font-size: 27px; color: var(--land-text); letter-spacing: -0.03em;")}>40 seg</div>
-                  <div style={css("font-size: 13.5px; color: var(--land-muted2); font-weight: 600;")}>para reservar</div>
+                  <div data-count="40" data-suffix=" seg" className="sp-heading" style={css("font-weight: 900; font-size: 27px; color: #F5F7F1; letter-spacing: -0.03em;")}>40 seg</div>
+                  <div style={css("font-size: 13.5px; color: rgba(245, 247, 241, 0.6); font-weight: 600;")}>para reservar</div>
                 </div>
-                <div style={css("width: 1px; background: var(--land-line);")} />
+                <div style={css("width: 1px; background: rgba(255, 255, 255, 0.14);")} />
                 <div>
-                  <div className="sp-heading" style={css("font-weight: 900; font-size: 27px; color: var(--land-text); letter-spacing: -0.03em;")}>24/7</div>
-                  <div style={css("font-size: 13.5px; color: var(--land-muted2); font-weight: 600;")}>sin atender el teléfono</div>
+                  <div className="sp-heading" style={css("font-weight: 900; font-size: 27px; color: #F5F7F1; letter-spacing: -0.03em;")}>24/7</div>
+                  <div style={css("font-size: 13.5px; color: rgba(245, 247, 241, 0.6); font-weight: 600;")}>sin atender el teléfono</div>
                 </div>
               </div>
             </div>
