@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { Archivo, Manrope } from "next/font/google";
@@ -36,6 +36,14 @@ function css(decl: string): CSSProperties {
   }
   return out as unknown as CSSProperties;
 }
+
+// Fotos de stock (Unsplash/Pexels, licencias libres) que rotan de fondo en el
+// hero — reemplazar por fotos reales de los complejos más adelante.
+const heroPhotos = [
+  "https://images.pexels.com/photos/32474981/pexels-photo-32474981.jpeg?auto=compress&cs=tinysrgb&w=1600",
+  "https://images.unsplash.com/photo-1520470082789-e347ad8b1944?auto=format&fit=crop&w=1600&q=70",
+  "https://images.pexels.com/photos/399187/pexels-photo-399187.jpeg?auto=compress&cs=tinysrgb&w=1600",
+];
 
 const players = [
   {
@@ -196,6 +204,12 @@ const bars = [32, 24, 46, 58, 72, 96, 88, 64, 40];
 export function PadelLanding() {
   const grassRef = useRef<HTMLCanvasElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const [heroPhotoIndex, setHeroPhotoIndex] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setHeroPhotoIndex((i) => (i + 1) % heroPhotos.length), 5000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -563,12 +577,27 @@ export function PadelLanding() {
 
         <section
           data-screen-label="Hero"
-          style={css(
-            "position: relative; z-index: 2; padding: 132px 28px 110px; overflow: hidden; background: linear-gradient(160deg, #1b2016 0%, #10130c 55%, #070805 100%);",
-          )}
+          style={css("position: relative; z-index: 2; padding: 132px 28px 110px; overflow: hidden; background: #10130c;")}
         >
-          <div style={css("position: absolute; inset: 0; background: radial-gradient(1100px 620px at 50% -12%, rgba(255, 255, 255, 0.1), transparent 65%), radial-gradient(700px 460px at 90% 100%, rgba(23, 201, 100, 0.16), transparent 70%);")} />
-          <div style={css("position: relative; max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center;")}>
+          <div aria-hidden="true" style={css("position: absolute; inset: 0; z-index: 0;")}>
+            {heroPhotos.map((url, i) => (
+              <div
+                key={url}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundImage: `url(${url})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  opacity: i === heroPhotoIndex ? 1 : 0,
+                  transition: "opacity 1.6s ease",
+                }}
+              />
+            ))}
+            <div style={css("position: absolute; inset: 0; background: linear-gradient(160deg, rgba(10, 14, 8, 0.92) 0%, rgba(10, 14, 8, 0.68) 45%, rgba(10, 14, 8, 0.88) 100%);")} />
+            <div style={css("position: absolute; inset: 0; background: radial-gradient(1100px 620px at 50% -12%, rgba(255, 255, 255, 0.1), transparent 65%), radial-gradient(700px 460px at 90% 100%, rgba(23, 201, 100, 0.18), transparent 70%);")} />
+          </div>
+          <div style={css("position: relative; z-index: 1; max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center;")}>
             <div>
               <div style={css("display: inline-flex; align-items: center; gap: 9px; padding: 7px 14px 7px 10px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.06); backdrop-filter: blur(6px); border-radius: 999px; font-size: 13px; font-weight: 700; color: #F5F7F1; margin-bottom: 26px;")}>
                 <span style={css("position: relative; display: inline-grid; place-items: center; width: 8px; height: 8px;")}>
@@ -665,6 +694,53 @@ export function PadelLanding() {
           </div>
         </section>
 
+        <section style={css("position: relative; z-index: 2; padding: 96px 28px; background: var(--land-bg2);")}>
+          <div style={css("max-width: 1240px; margin: 0 auto;")}>
+            <div data-rise="" style={css("max-width: 640px; margin-bottom: 40px;")}>
+              <h2 className="sp-heading" style={css("font-weight: 900; font-size: clamp(30px, 3.4vw, 44px); line-height: 1.04; letter-spacing: -0.03em; margin: 0 0 14px;")}>
+                Explorá por deporte
+              </h2>
+              <p style={css("font-size: 16.5px; color: var(--land-muted); line-height: 1.6; margin: 0;")}>
+                Empezamos por pádel — el resto de los deportes se va sumando.
+              </p>
+            </div>
+            <div style={css("display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; align-items: stretch;")}>
+              <Link
+                href="/login"
+                className="sp-card-rise"
+                style={css(
+                  "position: relative; display: flex; align-items: flex-end; min-height: 340px; border-radius: 22px; overflow: hidden; padding: 26px; background-image: url(" +
+                    heroPhotos[0] +
+                    "); background-size: cover; background-position: center;",
+                )}
+              >
+                <div style={css("position: absolute; inset: 0; background: linear-gradient(0deg, rgba(6, 10, 5, 0.86) 0%, rgba(6, 10, 5, 0.1) 60%);")} />
+                <div style={css("position: relative;")}>
+                  <h3 className="sp-heading" style={css("font-weight: 900; font-size: 27px; color: #F5F7F1; margin: 0 0 6px; letter-spacing: -0.02em;")}>Pádel</h3>
+                  <p style={css("font-size: 14.5px; color: rgba(245, 247, 241, 0.82); margin: 0;")}>Reservá tu cancha ahora mismo</p>
+                </div>
+              </Link>
+              <div
+                className="sp-card-rise"
+                style={css(
+                  "position: relative; display: flex; align-items: flex-end; min-height: 340px; border-radius: 22px; overflow: hidden; padding: 26px; background-image: url(" +
+                    heroPhotos[1] +
+                    "); background-size: cover; background-position: center;",
+                )}
+              >
+                <div style={css("position: absolute; inset: 0; background: linear-gradient(0deg, rgba(6, 10, 5, 0.86) 0%, rgba(6, 10, 5, 0.25) 60%);")} />
+                <div style={css("position: absolute; top: 20px; right: 20px; padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); backdrop-filter: blur(6px); font-size: 12px; font-weight: 800; color: #F5F7F1;")}>
+                  Próximamente
+                </div>
+                <div style={css("position: relative;")}>
+                  <h3 className="sp-heading" style={css("font-weight: 900; font-size: 27px; color: #F5F7F1; margin: 0 0 6px; letter-spacing: -0.02em;")}>Fútbol 5, 7 y 11</h3>
+                  <p style={css("font-size: 14.5px; color: rgba(245, 247, 241, 0.82); margin: 0;")}>El mismo sistema, para cualquier cancha</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div style={css("position: relative; z-index: 2; height: 46px; display: grid; align-items: center; overflow: hidden;")}>
           <div style={css("height: 3px; background: repeating-linear-gradient(90deg, var(--land-accent-line) 0 42px, transparent 42px 84px);")} />
           <div style={css("position: absolute; top: 50%; left: 0; margin-top: -13px; animation: sp-roll-across 9s linear infinite;")}>
@@ -674,25 +750,53 @@ export function PadelLanding() {
           </div>
         </div>
 
-        <section id="jugadores" style={css("position: relative; z-index: 2; padding: 96px 28px; background: var(--land-bg2);")}>
-          <div style={css("max-width: 1240px; margin: 0 auto;")}>
-            <div data-rise="" style={css("max-width: 640px; margin-bottom: 52px;")}>
+        <section id="jugadores" style={css("position: relative; z-index: 2; padding: 96px 28px; background: var(--land-bg2); overflow: hidden;")}>
+          <div style={css("max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 64px; align-items: center;")}>
+            <div data-rise="" style={css("display: flex; justify-content: center;")}>
+              <div style={css("width: 260px; border-radius: 40px; border: 9px solid #0E1A11; background: #0E1A11; box-shadow: 0 40px 90px var(--land-shadow-strong);")}>
+                <div style={css("position: relative; aspect-ratio: 9 / 19; border-radius: 32px; overflow: hidden; background: linear-gradient(180deg, #17C964, #0B7A3C); padding: 24px 16px;")}>
+                  <div style={css("position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 84px; height: 18px; border-radius: 999px; background: #0E1A11;")} />
+                  <div style={css("margin-top: 44px; display: flex; flex-direction: column; align-items: center; gap: 8px;")}>
+                    <div style={css("width: 48px; height: 48px; border-radius: 999px; background: #FFFFFF; display: grid; place-items: center; color: #17C964; font-size: 24px; font-weight: 900;")}>✓</div>
+                    <div className="sp-heading" style={css("color: #FFFFFF; font-weight: 900; font-size: 17px; text-align: center;")}>¡Reserva confirmada!</div>
+                    <div style={css("color: rgba(255, 255, 255, 0.85); font-size: 12px; text-align: center;")}>Tu seña quedó acreditada</div>
+                  </div>
+                  <div style={css("margin-top: 22px; background: #FFFFFF; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px;")}>
+                    <div style={css("display: flex; justify-content: space-between; font-size: 12px; color: var(--land-muted2);")}>
+                      <span>Cancha</span>
+                      <strong style={css("color: var(--land-text);")}>Cancha 3</strong>
+                    </div>
+                    <div style={css("display: flex; justify-content: space-between; font-size: 12px; color: var(--land-muted2);")}>
+                      <span>Fecha</span>
+                      <strong style={css("color: var(--land-text);")}>Hoy · 21:00</strong>
+                    </div>
+                    <div style={css("display: flex; justify-content: space-between; font-size: 12px; color: var(--land-muted2);")}>
+                      <span>Seña</span>
+                      <strong style={css("color: #05481F;")}>$6.000 pagada</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
               <div style={css("font-size: 13px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--land-green-ink); margin-bottom: 14px;")}>Para jugadores</div>
               <h2 className="sp-heading" style={css("font-weight: 900; font-size: clamp(32px, 3.8vw, 50px); line-height: 1.02; letter-spacing: -0.03em; margin: 0 0 16px;")}>
                 Elegís horario, pagás la seña y listo. Nada más.
               </h2>
-              <p style={css("font-size: 17.5px; color: var(--land-muted); line-height: 1.6; margin: 0;")}>Sin llamar, sin esperar respuesta, sin quedarte afuera del turno de las 21.</p>
-            </div>
-            <div style={css("display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px;")}>
-              {players.map((p, i) => (
-                <div key={p.title} data-rise="" className="sp-card-rise" style={css("padding: 26px 24px 28px; border-radius: 20px; background: var(--land-card-bg); border: 1px solid var(--land-line);")}>
-                  <div className={i % 2 === 0 ? "sp-icon-rotate-neg" : "sp-icon-rotate-pos"} style={{ ...css("width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; margin-bottom: 20px;"), background: p.chip }}>
-                    {p.icon}
+              <p style={css("font-size: 17.5px; color: var(--land-muted); line-height: 1.6; margin: 0 0 36px;")}>Sin llamar, sin esperar respuesta, sin quedarte afuera del turno de las 21.</p>
+              <div style={css("display: grid; gap: 26px;")}>
+                {players.map((p, i) => (
+                  <div key={p.title} data-rise="" style={css("display: flex; gap: 16px; align-items: flex-start;")}>
+                    <div className={i % 2 === 0 ? "sp-icon-rotate-neg" : "sp-icon-rotate-pos"} style={{ ...css("flex: none; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center;"), background: p.chip }}>
+                      {p.icon}
+                    </div>
+                    <div>
+                      <h3 className="sp-heading" style={css("font-weight: 800; font-size: 18px; margin: 0 0 5px; letter-spacing: -0.02em;")}>{p.title}</h3>
+                      <p style={css("font-size: 14.5px; color: var(--land-muted); line-height: 1.6; margin: 0;")}>{p.text}</p>
+                    </div>
                   </div>
-                  <h3 className="sp-heading" style={css("font-weight: 800; font-size: 19px; margin: 0 0 9px; letter-spacing: -0.02em;")}>{p.title}</h3>
-                  <p style={css("font-size: 14.5px; color: var(--land-muted); line-height: 1.6; margin: 0;")}>{p.text}</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </section>
