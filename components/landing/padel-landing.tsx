@@ -202,7 +202,6 @@ const clientNames = [
 const bars = [32, 24, 46, 58, 72, 96, 88, 64, 40];
 
 export function PadelLanding() {
-  const grassRef = useRef<HTMLCanvasElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const [heroPhotoIndex, setHeroPhotoIndex] = useState(0);
 
@@ -213,110 +212,7 @@ export function PadelLanding() {
 
   useEffect(() => {
     const root = rootRef.current;
-    const cv = grassRef.current;
     if (!root) return;
-
-    let raf = 0;
-    let lastFrame = 0;
-    let onResize: (() => void) | null = null;
-
-    if (cv) {
-      const ctx = cv.getContext("2d");
-      if (ctx) {
-        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        let w = 0;
-        let h = 0;
-        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-        type Blade = {
-          x: number;
-          y: number;
-          len: number;
-          lean: number;
-          w: number;
-          tone: number;
-          phase: number;
-          speed: number;
-        };
-        let blades: Blade[] = [];
-        const palette = {
-          base: ["#7FB967", "#74AF5E"],
-          blade: [110, 168, 84] as [number, number, number],
-          blade2: [156, 206, 118] as [number, number, number],
-          band: 0.045,
-          tip: 0.32,
-        };
-
-        const build = () => {
-          w = cv.clientWidth;
-          h = cv.clientHeight;
-          cv.width = Math.round(w * dpr);
-          cv.height = Math.round(h * dpr);
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-          const count = Math.min(11000, Math.round((w * h) / 210));
-          blades = new Array(count);
-          for (let i = 0; i < count; i++) {
-            blades[i] = {
-              x: Math.random() * w,
-              y: Math.random() * h,
-              len: 6 + Math.random() * 10,
-              lean: (Math.random() - 0.5) * 2.4,
-              w: 0.9 + Math.random() * 1.1,
-              tone: Math.random(),
-              phase: Math.random() * Math.PI * 2,
-              speed: 0.7 + Math.random() * 0.9,
-            };
-          }
-        };
-
-        const mix = (a: [number, number, number], b: [number, number, number], t: number) =>
-          `rgb(${Math.round(a[0] + (b[0] - a[0]) * t)},${Math.round(a[1] + (b[1] - a[1]) * t)},${Math.round(a[2] + (b[2] - a[2]) * t)})`;
-
-        const draw = (t: number) => {
-          if (t - lastFrame < 32) {
-            raf = requestAnimationFrame(draw);
-            return;
-          }
-          lastFrame = t;
-          const g = ctx.createLinearGradient(0, 0, 0, h);
-          g.addColorStop(0, palette.base[0]);
-          g.addColorStop(1, palette.base[1]);
-          ctx.fillStyle = g;
-          ctx.fillRect(0, 0, w, h);
-
-          const band = 132;
-          ctx.fillStyle = `rgba(255,255,255,${palette.band})`;
-          for (let x = 0; x < w; x += band * 2) ctx.fillRect(x, 0, band, h);
-
-          const time = t / 1000;
-          const wind = Math.sin(time * 0.35) * 0.6 + 0.7;
-          ctx.lineCap = "round";
-          for (let i = 0; i < blades.length; i++) {
-            const b = blades[i];
-            const sway = reduced ? 0 : Math.sin(time * b.speed + b.phase + b.x * 0.012) * 2.6 * wind;
-            const tipX = b.x + b.lean + sway;
-            ctx.strokeStyle = mix(palette.blade, palette.blade2, b.tone);
-            ctx.lineWidth = b.w;
-            ctx.beginPath();
-            ctx.moveTo(b.x, b.y);
-            ctx.quadraticCurveTo(b.x + (b.lean + sway) * 0.35, b.y - b.len * 0.62, tipX, b.y - b.len);
-            ctx.stroke();
-          }
-
-          const v = ctx.createRadialGradient(w * 0.5, -h * 0.15, 0, w * 0.5, -h * 0.15, h * 1.15);
-          v.addColorStop(0, `rgba(255,255,255,${palette.tip})`);
-          v.addColorStop(1, "rgba(255,255,255,0)");
-          ctx.fillStyle = v;
-          ctx.fillRect(0, 0, w, h);
-
-          raf = requestAnimationFrame(draw);
-        };
-
-        build();
-        onResize = () => build();
-        window.addEventListener("resize", onResize);
-        raf = requestAnimationFrame(draw);
-      }
-    }
 
     const lines = root.querySelectorAll<HTMLElement>("[data-draw]");
     lines.forEach((el) => {
@@ -416,8 +312,6 @@ export function PadelLanding() {
       io.disconnect();
       cio.disconnect();
       bio.disconnect();
-      if (raf) cancelAnimationFrame(raf);
-      if (onResize) window.removeEventListener("resize", onResize);
       window.clearTimeout(fallback);
     };
   }, []);
@@ -426,14 +320,7 @@ export function PadelLanding() {
     <div ref={rootRef} className={`${archivo.variable} ${manrope.variable} sp-landing flex flex-1 flex-col`}>
       <style>{`
         .sp-landing {
-          --land-bg: #98CB82; --land-bg2: rgba(247, 252, 243, 0.94); --land-panel: #FFFFFF;
-          --land-field:
-            radial-gradient(1200px 700px at 50% -8%, rgba(255, 255, 255, 0.34), transparent 74%),
-            repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 5px),
-            repeating-linear-gradient(90deg, rgba(12, 58, 22, 0.07) 0 1px, transparent 1px 4px),
-            repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0 2px, rgba(12, 58, 22, 0.05) 2px 4px),
-            repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 132px, rgba(12, 58, 22, 0.07) 132px 264px);
-          --land-sideline: rgba(255, 255, 255, 0.82); --land-sideline-soft: rgba(255, 255, 255, 0.42);
+          --land-bg: #F7FCF3; --land-bg2: rgba(247, 252, 243, 0.94); --land-panel: #FFFFFF;
           --land-panel-float: rgba(255, 255, 255, 0.96); --land-panel-soft: #FFFFFF;
           --land-nav-bg: rgba(247, 252, 243, 0.9);
           --land-text: #0E1A11; --land-text2: #2C3A2E; --land-muted: #1F3A21; --land-muted2: #223A26; --land-muted3: #33502F;
@@ -533,16 +420,7 @@ export function PadelLanding() {
         .sp-btn-outline-xl:hover { background: var(--land-surface2); color: var(--land-text); }
       `}</style>
 
-      <div style={css("background: var(--land-field), var(--land-bg); color: var(--land-text); overflow-x: hidden; position: relative;")}>
-        <canvas ref={grassRef} aria-hidden="true" style={css("position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;")} />
-        <div aria-hidden="true" style={css("position: absolute; inset: 0; pointer-events: none; z-index: 1;")}>
-          <div style={css("position: absolute; top: 0; bottom: 0; left: 3.2%; width: 2px; background: var(--land-sideline);")} />
-          <div style={css("position: absolute; top: 0; bottom: 0; right: 3.2%; width: 2px; background: var(--land-sideline);")} />
-          <div style={css("position: absolute; top: 0; bottom: 0; left: 12.5%; width: 1px; background: var(--land-sideline-soft);")} />
-          <div style={css("position: absolute; top: 0; bottom: 0; right: 12.5%; width: 1px; background: var(--land-sideline-soft);")} />
-          <div style={css("position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; margin-left: -0.5px; background: repeating-linear-gradient(180deg, var(--land-sideline-soft) 0 16px, transparent 16px 32px);")} />
-        </div>
-
+      <div style={css("background: var(--land-bg); color: var(--land-text); overflow-x: hidden; position: relative;")}>
         <nav style={css("position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(8, 12, 7, 0.62); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(255, 255, 255, 0.08);")}>
           <div style={css("max-width: 1240px; margin: 0 auto; padding: 16px 28px; display: flex; align-items: center; gap: 28px;")}>
             <div style={css("display: flex; align-items: center; gap: 10px; margin-right: auto;")}>
