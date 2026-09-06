@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
+// Número (formato internacional, solo dígitos, ej. "5491122334455") al que
+// escribe un dueño de complejo que quiere su panel — no hay alta manual.
+const contactWhatsappUrl = process.env.CONTACT_WHATSAPP_NUMBER
+  ? `https://wa.me/${process.env.CONTACT_WHATSAPP_NUMBER}?text=${encodeURIComponent("Hola! Quiero mi panel para mi complejo.")}`
+  : null;
+
 export default async function LoginPage({
   searchParams,
 }: {
@@ -13,7 +19,6 @@ export default async function LoginPage({
 }) {
   const { callbackUrl } = await searchParams;
   const tenant = await findTenantForCallback(callbackUrl ?? "");
-  const registerHref = `/register${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`;
 
   return (
     <div className="flex flex-1 items-center justify-center px-6 py-16">
@@ -39,18 +44,14 @@ export default async function LoginPage({
 
           <LoginForm callbackUrl={callbackUrl ?? ""} />
 
-          <p className="text-center text-xs text-muted-foreground">
-            ¿No tenés cuenta todavía?{" "}
-            <Link href={registerHref} className="underline">
-              Registrate
-            </Link>
-          </p>
-          <p className="text-center text-xs text-muted-foreground">
-            ¿Sos dueño de un complejo y todavía no tenés cuenta?{" "}
-            <Link href="/" className="underline">
-              Contactanos
-            </Link>
-          </p>
+          {contactWhatsappUrl && (
+            <p className="text-center text-xs text-muted-foreground">
+              ¿Sos dueño de un complejo y todavía no tenés panel?{" "}
+              <Link href={contactWhatsappUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                Escribinos por WhatsApp
+              </Link>
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
