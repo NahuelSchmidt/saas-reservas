@@ -597,98 +597,56 @@ export function PadelLanding() {
             <div style={css("position: absolute; inset: 0; background: linear-gradient(160deg, rgba(10, 14, 8, 0.92) 0%, rgba(10, 14, 8, 0.68) 45%, rgba(10, 14, 8, 0.88) 100%);")} />
             <div style={css("position: absolute; inset: 0; background: radial-gradient(1100px 620px at 50% -12%, rgba(255, 255, 255, 0.1), transparent 65%), radial-gradient(700px 460px at 90% 100%, rgba(23, 201, 100, 0.18), transparent 70%);")} />
           </div>
-          <div style={css("position: relative; z-index: 1; max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center;")}>
-            <div>
-              <div style={css("display: inline-flex; align-items: center; gap: 9px; padding: 7px 14px 7px 10px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.06); backdrop-filter: blur(6px); border-radius: 999px; font-size: 13px; font-weight: 700; color: #F5F7F1; margin-bottom: 26px;")}>
-                <span style={css("position: relative; display: inline-grid; place-items: center; width: 8px; height: 8px;")}>
-                  <span style={css("position: absolute; width: 8px; height: 8px; border-radius: 999px; background: #CCFF33; animation: sp-blink 1.6s ease-in-out infinite;")} />
-                </span>
-                Todas tus canchas, una sola plataforma
-              </div>
-              <h1
-                className="sp-heading"
-                style={css("font-weight: 900; font-size: clamp(44px, 5.6vw, 78px); line-height: 0.94; letter-spacing: -0.035em; margin: 0 0 22px; text-wrap: balance; color: #F5F7F1;")}
-              >
-                Reservá tu cancha
-                <br />
-                en segundos, a
-                <br />
-                <span style={css("color: #CCFF33;")}>cualquier hora</span>
-              </h1>
-              <p style={css("font-size: 19.5px; line-height: 1.55; color: rgba(245, 247, 241, 0.72); max-width: 520px; margin: 0 0 34px; text-wrap: pretty;")}>
-                Disponibilidad real 24/7, confirmación al instante y la seña pagada online. Se acabaron los llamados, los WhatsApp perdidos y las canchas vacías por cancelaciones.
-              </p>
-              <div style={css("display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 34px;")}>
-                <Link
-                  href="/login"
-                  className="sp-btn-primary-lg sp-heading"
-                  style={css("position: relative; overflow: hidden; font-weight: 800; font-size: 16.5px; color: #071008; background: #CCFF33; padding: 17px 30px; border-radius: 999px;")}
-                >
-                  Reservá ahora →
-                </Link>
-                <a
-                  href="#duenos"
-                  className="sp-btn-outline-lg-dark sp-heading"
-                  style={css("font-weight: 800; font-size: 16.5px; color: #F5F7F1; border: 1px solid rgba(255, 255, 255, 0.24); padding: 17px 28px; border-radius: 999px;")}
-                >
-                  Tengo un complejo
-                </a>
-              </div>
-              <div style={css("display: flex; gap: 34px; flex-wrap: wrap;")}>
-                <div>
-                  <div data-count="68" data-prefix="-" data-suffix="%" className="sp-heading" style={css("font-weight: 900; font-size: 27px; color: #F5F7F1; letter-spacing: -0.03em;")}>-68%</div>
-                  <div style={css("font-size: 13.5px; color: rgba(245, 247, 241, 0.6); font-weight: 600;")}>de ausentismo</div>
-                </div>
-                <div style={css("width: 1px; background: rgba(255, 255, 255, 0.14);")} />
-                <div>
-                  <div data-count="40" data-suffix=" seg" className="sp-heading" style={css("font-weight: 900; font-size: 27px; color: #F5F7F1; letter-spacing: -0.03em;")}>40 seg</div>
-                  <div style={css("font-size: 13.5px; color: rgba(245, 247, 241, 0.6); font-weight: 600;")}>para reservar</div>
-                </div>
-                <div style={css("width: 1px; background: rgba(255, 255, 255, 0.14);")} />
-                <div>
-                  <div className="sp-heading" style={css("font-weight: 900; font-size: 27px; color: #F5F7F1; letter-spacing: -0.03em;")}>24/7</div>
-                  <div style={css("font-size: 13.5px; color: rgba(245, 247, 241, 0.6); font-weight: 600;")}>sin atender el teléfono</div>
-                </div>
-              </div>
+          <div style={css("position: relative; z-index: 1; max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; text-align: center;")}>
+            <div style={css("display: inline-flex; align-items: center; gap: 9px; padding: 7px 14px 7px 10px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.06); backdrop-filter: blur(6px); border-radius: 999px; font-size: 13px; font-weight: 700; color: #F5F7F1; margin-bottom: 26px;")}>
+              <span style={css("position: relative; display: inline-grid; place-items: center; width: 8px; height: 8px;")}>
+                <span style={css("position: absolute; width: 8px; height: 8px; border-radius: 999px; background: #CCFF33; animation: sp-blink 1.6s ease-in-out infinite;")} />
+              </span>
+              Todas tus canchas, una sola plataforma
             </div>
-
-            <div style={css("position: relative; aspect-ratio: 1 / 1.05;")}>
-              <div style={css("position: absolute; inset: 0; border-radius: 26px; border: 1px solid var(--land-line); background: var(--land-hero-bg); overflow: hidden;")}>
-                <svg viewBox="0 0 400 420" style={css("position: absolute; inset: 0; width: 100%; height: 100%;")}>
-                  <rect x={46} y={34} width={308} height={352} rx={4} fill="rgba(23,201,100,0.07)" stroke="var(--land-court-line)" strokeWidth={2} data-draw="" />
-                  <line x1={46} y1={210} x2={354} y2={210} stroke="var(--land-accent-ink)" strokeWidth={2.5} data-draw="" />
-                  <line x1={46} y1={122} x2={354} y2={122} stroke="var(--land-court-line-soft)" strokeWidth={2} data-draw="" />
-                  <line x1={46} y1={298} x2={354} y2={298} stroke="var(--land-court-line-soft)" strokeWidth={2} data-draw="" />
-                  <line x1={200} y1={122} x2={200} y2={34} stroke="var(--land-court-line-soft)" strokeWidth={2} data-draw="" />
-                  <line x1={200} y1={298} x2={200} y2={386} stroke="var(--land-court-line-soft)" strokeWidth={2} data-draw="" />
-                  <g stroke="var(--land-court-line-faint)" strokeWidth={1}>
-                    <line x1={46} y1={196} x2={354} y2={196} />
-                    <line x1={46} y1={224} x2={354} y2={224} />
-                  </g>
-                  <line x1={46} y1={210} x2={354} y2={210} stroke="var(--land-accent-ink)" strokeWidth={1} strokeDasharray="10 14" style={css("animation: sp-dash-run 12s linear infinite; opacity: 0.7;")} />
-                </svg>
-                <div style={css("position: absolute; left: 50%; top: 46%; transform: translateX(-50%);")}>
-                  <div style={css("animation: sp-ball-bounce 1.9s cubic-bezier(0.42, 0, 0.58, 1) infinite;")}>
-                    <div style={css("width: 46px; height: 46px; border-radius: 999px; background: radial-gradient(circle at 32% 28%, #FFFFFF, #CCFF33 58%, #8FBF12); box-shadow: 0 0 0 2px rgba(7, 16, 8, 0.35), 0 12px 30px var(--land-accent-line); animation: sp-ball-spin 1.9s linear infinite; position: relative; overflow: hidden;")}>
-                      <div style={css("position: absolute; inset: -6px; border-left: 2px solid rgba(7, 16, 8, 0.28); border-radius: 999px; transform: rotate(18deg);")} />
-                    </div>
-                  </div>
-                  <div style={css("width: 46px; height: 10px; border-radius: 999px; background: rgba(7, 16, 8, 0.75); filter: blur(4px); margin-top: 4px; animation: sp-shadow-pulse 1.9s cubic-bezier(0.42, 0, 0.58, 1) infinite;")} />
-                  <div style={css("position: absolute; left: 50%; top: -160px; width: 2px; height: 150px; margin-left: -1px; transform-origin: bottom; background: linear-gradient(180deg, transparent, rgba(204, 255, 51, 0.55)); animation: sp-trail-fade 1.9s cubic-bezier(0.42, 0, 0.58, 1) infinite;")} />
-                </div>
+            <h1
+              className="sp-heading"
+              style={css("font-weight: 900; font-size: clamp(44px, 5.6vw, 78px); line-height: 0.94; letter-spacing: -0.035em; margin: 0 0 22px; text-wrap: balance; color: #F5F7F1;")}
+            >
+              Reservá tu cancha
+              <br />
+              en segundos, a
+              <br />
+              <span style={css("color: #CCFF33;")}>cualquier hora</span>
+            </h1>
+            <p style={css("font-size: 19.5px; line-height: 1.55; color: rgba(245, 247, 241, 0.72); max-width: 560px; margin: 0 0 34px; text-wrap: pretty;")}>
+              Disponibilidad real 24/7, confirmación al instante y la seña pagada online. Se acabaron los llamados, los WhatsApp perdidos y las canchas vacías por cancelaciones.
+            </p>
+            <div style={css("display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-bottom: 42px;")}>
+              <Link
+                href="/login"
+                className="sp-btn-primary-lg sp-heading"
+                style={css("position: relative; overflow: hidden; font-weight: 800; font-size: 16.5px; color: #071008; background: #CCFF33; padding: 17px 30px; border-radius: 999px;")}
+              >
+                Reservá ahora →
+              </Link>
+              <a
+                href="#duenos"
+                className="sp-btn-outline-lg-dark sp-heading"
+                style={css("font-weight: 800; font-size: 16.5px; color: #F5F7F1; border: 1px solid rgba(255, 255, 255, 0.24); padding: 17px 28px; border-radius: 999px;")}
+              >
+                Tengo un complejo
+              </a>
+            </div>
+            <div style={css("display: flex; justify-content: center; gap: 34px; flex-wrap: wrap;")}>
+              <div>
+                <div data-count="68" data-prefix="-" data-suffix="%" className="sp-heading" style={css("font-weight: 900; font-size: 27px; color: #F5F7F1; letter-spacing: -0.03em;")}>-68%</div>
+                <div style={css("font-size: 13.5px; color: rgba(245, 247, 241, 0.6); font-weight: 600;")}>de ausentismo</div>
               </div>
-
-              <div style={css("position: absolute; left: -22px; bottom: 58px; width: 244px; padding: 15px 17px; border-radius: 16px; background: var(--land-panel-float); border: 1px solid var(--land-line2); box-shadow: 0 22px 50px var(--land-shadow-strong); backdrop-filter: blur(8px); animation: sp-floaty 5.5s ease-in-out infinite;")}>
-                <div style={css("display: flex; align-items: center; gap: 10px; margin-bottom: 10px;")}>
-                  <div style={css("width: 26px; height: 26px; border-radius: 8px; background: var(--land-green-soft); display: grid; place-items: center; color: var(--land-green-ink); font-size: 14px; font-weight: 800;")}>✓</div>
-                  <div className="sp-heading" style={css("font-weight: 800; font-size: 14px;")}>Reserva confirmada</div>
-                </div>
-                <div style={css("font-size: 12.5px; color: var(--land-muted); line-height: 1.5;")}>Cancha 3 · Hoy 21:00<br />Seña $6.000 pagada</div>
+              <div style={css("width: 1px; background: rgba(255, 255, 255, 0.14);")} />
+              <div>
+                <div data-count="40" data-suffix=" seg" className="sp-heading" style={css("font-weight: 900; font-size: 27px; color: #F5F7F1; letter-spacing: -0.03em;")}>40 seg</div>
+                <div style={css("font-size: 13.5px; color: rgba(245, 247, 241, 0.6); font-weight: 600;")}>para reservar</div>
               </div>
-
-              <div style={css("position: absolute; right: -18px; top: 40px; padding: 12px 16px; border-radius: 14px; background: var(--land-accent-soft); border: 1px solid var(--land-accent-line); backdrop-filter: blur(8px); animation: sp-floaty 6.5s ease-in-out 0.8s infinite;")}>
-                <div data-count="92" data-suffix="%" className="sp-heading" style={css("font-weight: 900; font-size: 20px; color: var(--land-accent-ink); letter-spacing: -0.02em;")}>92%</div>
-                <div style={css("font-size: 12px; color: var(--land-accent-ink); font-weight: 600;")}>ocupación del finde</div>
+              <div style={css("width: 1px; background: rgba(255, 255, 255, 0.14);")} />
+              <div>
+                <div className="sp-heading" style={css("font-weight: 900; font-size: 27px; color: #F5F7F1; letter-spacing: -0.03em;")}>24/7</div>
+                <div style={css("font-size: 13.5px; color: rgba(245, 247, 241, 0.6); font-weight: 600;")}>sin atender el teléfono</div>
               </div>
             </div>
           </div>
