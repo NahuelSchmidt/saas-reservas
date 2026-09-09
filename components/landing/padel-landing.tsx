@@ -203,11 +203,24 @@ const bars = [32, 24, 46, 58, 72, 96, 88, 64, 40];
 
 export function PadelLanding() {
   const rootRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
   const [heroPhotoIndex, setHeroPhotoIndex] = useState(0);
+  const [navSolid, setNavSolid] = useState(true);
 
   useEffect(() => {
     const id = setInterval(() => setHeroPhotoIndex((i) => (i + 1) % heroPhotos.length), 5000);
     return () => clearInterval(id);
+  }, []);
+
+  // Barra opaca (crema) mientras se ve el hero oscuro de fondo, transparente
+  // una vez que se scrollea más allá de él (ahí el fondo de la página ya es
+  // del mismo crema, así que no hace falta la barra para que se lea bien).
+  useEffect(() => {
+    const heroHeight = heroRef.current?.offsetHeight ?? 600;
+    const onScroll = () => setNavSolid(window.scrollY < heroHeight - 80);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
@@ -421,24 +434,32 @@ export function PadelLanding() {
       `}</style>
 
       <div style={css("background: var(--land-bg); color: var(--land-text); overflow-x: hidden; position: relative;")}>
-        <nav style={css("position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(16, 19, 12, 0.72); backdrop-filter: blur(20px) saturate(140%); border-bottom: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);")}>
+        <nav
+          style={css(
+            `position: fixed; top: 0; left: 0; right: 0; z-index: 50; transition: background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; ${
+              navSolid
+                ? "background: rgba(247, 252, 243, 0.92); backdrop-filter: blur(20px) saturate(140%); border-bottom: 1px solid rgba(14, 60, 26, 0.1); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);"
+                : "background: transparent; backdrop-filter: none; border-bottom: 1px solid transparent; box-shadow: none;"
+            }`,
+          )}
+        >
           <div style={css("max-width: 1240px; margin: 0 auto; padding: 16px 28px; display: flex; align-items: center; gap: 28px;")}>
             <div style={css("display: flex; align-items: center; gap: 10px; margin-right: auto;")}>
               <div style={css("width: 34px; height: 34px; border-radius: 11px; background: linear-gradient(140deg, #CCFF33, #17C964); display: grid; place-items: center; font-weight: 900; color: #071008; font-size: 17px;")} className="sp-heading">
                 S
               </div>
-              <span style={css("font-weight: 800; font-size: 19px; letter-spacing: -0.02em; color: #F5F7F1;")} className="sp-heading">
+              <span style={css("font-weight: 800; font-size: 19px; letter-spacing: -0.02em; color: var(--land-text);")} className="sp-heading">
                 Sistema Padel
               </span>
             </div>
             <div style={css("display: flex; align-items: center; gap: 26px; font-size: 14.5px; font-weight: 600;")}>
-              <a href="#jugadores" className="sp-nav-link-dark">Jugadores</a>
-              <a href="#duenos" className="sp-nav-link-dark">Complejos</a>
-              <a href="#funciones" className="sp-nav-link-dark">Funciones</a>
-              <a href="#precios" className="sp-nav-link-dark">Precios</a>
+              <a href="#jugadores" className="sp-nav-link">Jugadores</a>
+              <a href="#duenos" className="sp-nav-link">Complejos</a>
+              <a href="#funciones" className="sp-nav-link">Funciones</a>
+              <a href="#precios" className="sp-nav-link">Precios</a>
             </div>
             <div style={css("display: flex; align-items: center; gap: 14px;")}>
-              <Link href="/login" className="sp-nav-link-dark sp-heading" style={css("font-weight: 700; font-size: 14.5px;")}>
+              <Link href="/login" className="sp-nav-link sp-heading" style={css("font-weight: 700; font-size: 14.5px;")}>
                 Iniciar sesión
               </Link>
               <Link
@@ -454,6 +475,7 @@ export function PadelLanding() {
         <div aria-hidden="true" style={css("height: 66px;")} />
 
         <section
+          ref={heroRef}
           data-screen-label="Hero"
           style={css("position: relative; z-index: 2; padding: 132px 28px 110px; overflow: hidden; background: #10130c;")}
         >
