@@ -2,6 +2,7 @@ import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { withTenant } from "@/lib/db/tenant-context";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StaffInviteDialog } from "./staff-invite-dialog";
+import { StaffEditDialog } from "./staff-edit-dialog";
 import { StaffRoleSelect } from "./staff-role-select";
 import { RemoveStaffButton } from "./remove-staff-button";
 
@@ -48,7 +49,10 @@ export default async function StaffPage({ params }: { params: Promise<{ slug: st
                   <StaffRoleSelect tenantSlug={tenant.slug} membershipId={m.id} role={m.role} />
                 </TableCell>
                 <TableCell>
-                  <RemoveStaffButton tenantSlug={tenant.slug} membershipId={m.id} name={m.user.name} />
+                  <div className="flex items-center gap-1">
+                    <StaffEditDialog tenantSlug={tenant.slug} membershipId={m.id} name={m.user.name} email={m.user.email} />
+                    <RemoveStaffButton tenantSlug={tenant.slug} membershipId={m.id} name={m.user.name} />
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

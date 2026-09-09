@@ -6,7 +6,7 @@ import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { requireTenantRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { withTenant } from "@/lib/db/tenant-context";
-import { staffInviteSchema } from "@/lib/validation/schemas";
+import { staffInviteSchema, staffUpdateSchema } from "@/lib/validation/schemas";
 import type { ActionResult } from "@/app/actions/booking";
 
 export async function inviteStaffAction(
@@ -50,6 +50,43 @@ export async function inviteStaffAction(
 
   revalidatePath(`/${tenantSlug}/admin/staff`);
   return { ok: true, data: { id: membership.id } };
+}
+
+export async function updateStaffAction(
+  tenantSlug: string,
+  membershipId: string,
+  formData: FormData,
+): Promise<ActionResult<{ id: string }>> {
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  await requireTenantRole(tenant.id, ["ADMIN"]);
+
+  const parsed = staffUpdateSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password") || undefined,
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
+  const { name, email, password } = parsed.data;
+
+  const membership = await withTenant(tenant.id, (tx) => tx.tenantMembership.findUnique({ where: { id: membershipId } }));
+  if (!membership) return { ok: false, error: "No encontramos esa cuenta." };
+
+  const emailOwner = await prisma.user.findUnique({ where: { email } });
+  if (emailOwner && emailOwner.id !== membership.userId) {
+    return { ok: false, error: "Ya hay otra cuenta con ese email." };
+  }
+
+  await prisma.user.update({
+    where: { id: membership.userId },
+    data: {
+      name,
+      email,
+      ...(password ? { passwordHash: await bcrypt.hash(password, 10) } : {}),
+    },
+  });
+
+  revalidatePath(`/${tenantSlug}/admin/staff`);
+  return { ok: true, data: { id: membershipId } };
 }
 
 export async function updateStaffRoleAction(

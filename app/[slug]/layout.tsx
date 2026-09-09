@@ -3,6 +3,12 @@ import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { auth } from "@/lib/auth/config";
 import { doSignOut } from "@/app/actions/auth";
 
+const STAFF_ROLE_LABEL: Record<string, string> = {
+  ADMIN: "Admin",
+  EMPLOYEE: "Empleado",
+  INSTRUCTOR: "Instructor",
+};
+
 export default async function TenantLayout({
   children,
   params,
@@ -13,7 +19,9 @@ export default async function TenantLayout({
   const { slug } = await params;
   const tenant = await resolveTenantBySlug(slug);
   const session = await auth();
-  const isInstructor = session?.user?.memberships.some((m) => m.tenantId === tenant.id && m.role === "INSTRUCTOR");
+  const myMembership = session?.user?.memberships.find((m) => m.tenantId === tenant.id);
+  const isInstructor = myMembership?.role === "INSTRUCTOR";
+  const myRoleLabel = myMembership ? STAFF_ROLE_LABEL[myMembership.role] : null;
 
   return (
     <div
@@ -39,12 +47,14 @@ export default async function TenantLayout({
             <span className="font-heading text-lg font-bold tracking-tight">{tenant.name}</span>
           </Link>
           <nav className="flex items-center gap-2">
-            <Link
-              href={`/${tenant.slug}/torneos`}
-              className="rounded-full px-4 py-1.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              Torneos
-            </Link>
+            {!myMembership && (
+              <Link
+                href={`/${tenant.slug}/torneos`}
+                className="rounded-full px-4 py-1.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                Torneos
+              </Link>
+            )}
             {session?.user ? (
               <>
                 {isInstructor && (
@@ -55,7 +65,7 @@ export default async function TenantLayout({
                     Mis clases
                   </Link>
                 )}
-                <span className="hidden text-sm text-white/80 sm:inline">{session.user.email}</span>
+                <span className="hidden text-sm text-white/80 sm:inline">{myRoleLabel ?? session.user.email}</span>
                 <form action={doSignOut}>
                   <button
                     type="submit"

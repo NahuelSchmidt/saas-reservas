@@ -128,6 +128,13 @@ export const staffInviteSchema = z.object({
 });
 export type StaffInviteInput = z.infer<typeof staffInviteSchema>;
 
+export const staffUpdateSchema = z.object({
+  name: z.string().min(1, "Requerido").max(80),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Mínimo 6 caracteres").optional(),
+});
+export type StaffUpdateInput = z.infer<typeof staffUpdateSchema>;
+
 export const cancellationPolicySchema = z.object({
   hoursBeforeFullRefund: z.coerce.number().int().min(0).max(168),
   hoursBeforePartialRefund: z.coerce.number().int().min(0).max(168),
