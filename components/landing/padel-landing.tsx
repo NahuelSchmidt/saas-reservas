@@ -421,7 +421,7 @@ export function PadelLanding() {
       `}</style>
 
       <div style={css("background: var(--land-bg); color: var(--land-text); overflow-x: hidden; position: relative;")}>
-        <nav style={css("position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: linear-gradient(180deg, rgba(8, 22, 12, 0.94), rgba(8, 18, 11, 0.88)); backdrop-filter: blur(20px) saturate(140%); border-bottom: 1px solid rgba(204, 255, 51, 0.14); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);")}>
+        <nav style={css("position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(16, 19, 12, 0.72); backdrop-filter: blur(20px) saturate(140%); border-bottom: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);")}>
           <div style={css("max-width: 1240px; margin: 0 auto; padding: 16px 28px; display: flex; align-items: center; gap: 28px;")}>
             <div style={css("display: flex; align-items: center; gap: 10px; margin-right: auto;")}>
               <div style={css("width: 34px; height: 34px; border-radius: 11px; background: linear-gradient(140deg, #CCFF33, #17C964); display: grid; place-items: center; font-weight: 900; color: #071008; font-size: 17px;")} className="sp-heading">
