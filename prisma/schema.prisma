@@ -39,10 +39,10 @@ model Tenant {
   updatedAt      DateTime     @updatedAt
 
   planId       String?
-  plan         SubscriptionPlan?  @relation(fields: [planId], references: [id])
+  plan         SubscriptionPlan?   @relation(fields: [planId], references: [id])
   subscription TenantSubscription?
 
-  memberships       TenantMembership[]
+  memberships        TenantMembership[]
   courts             Court[]
   businessHours      BusinessHours[]
   pricingRules       PricingRule[]
@@ -59,17 +59,28 @@ model Tenant {
   cashRegisterCloses CashRegisterClose[]
   mercadoPagoAccount MercadoPagoAccount?
 
+  instructors            Instructor[]
+  classTypes             ClassType[]
+  classSessions          ClassSession[]
+  classEnrollments       ClassEnrollment[]
+  tournaments            Tournament[]
+  tournamentCategories   TournamentCategory[]
+  tournamentParticipants TournamentParticipant[]
+  tournamentTeams        TournamentTeam[]
+  tournamentGroups       TournamentGroup[]
+  tournamentMatches      TournamentMatch[]
+
   @@map("tenants")
 }
 
 model SubscriptionPlan {
-  id          String   @id @default(cuid())
-  name        String
-  priceCents  Int
-  maxCourts   Int
+  id           String   @id @default(cuid())
+  name         String
+  priceCents   Int
+  maxCourts    Int
   maxEmployees Int
-  features    Json     @default("{}")
-  createdAt   DateTime @default(now())
+  features     Json     @default("{}")
+  createdAt    DateTime @default(now())
 
   tenants       Tenant[]
   subscriptions TenantSubscription[]
@@ -85,12 +96,12 @@ enum TenantSubscriptionStatus {
 }
 
 model TenantSubscription {
-  id                     String                    @id @default(cuid())
-  tenantId               String                    @unique
-  tenant                 Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id                     String                   @id @default(cuid())
+  tenantId               String                   @unique
+  tenant                 Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   planId                 String
-  plan                   SubscriptionPlan          @relation(fields: [planId], references: [id])
-  status                 TenantSubscriptionStatus  @default(TRIALING)
+  plan                   SubscriptionPlan         @relation(fields: [planId], references: [id])
+  status                 TenantSubscriptionStatus @default(TRIALING)
   currentPeriodEnd       DateTime?
   providerSubscriptionId String?
 
@@ -112,14 +123,20 @@ model User {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
-  memberships      TenantMembership[]
-  bookingsMade     Booking[]          @relation("BookedBy")
-  bookingsCreated  Booking[]          @relation("CreatedBy")
-  auditLogs        AuditLog[]
-  waitlistEntries  WaitlistEntry[]
-  sales            Sale[]
+  memberships              TenantMembership[]
+  bookingsMade             Booking[]           @relation("BookedBy")
+  bookingsCreated          Booking[]           @relation("CreatedBy")
+  auditLogs                AuditLog[]
+  waitlistEntries          WaitlistEntry[]
+  sales                    Sale[]
   recurringBookingsCreated RecurringBooking[]
   cashRegisterCloses       CashRegisterClose[]
+
+  instructorProfiles       Instructor[]
+  classSessionsCreated     ClassSession[]
+  classEnrollments         ClassEnrollment[]
+  tournamentsCreated       Tournament[]
+  tournamentParticipations TournamentParticipant[]
 
   accounts Account[]
   sessions Session[]
@@ -130,6 +147,9 @@ model User {
 enum TenantRole {
   ADMIN
   EMPLOYEE
+  // Solo puede administrar sus propias clases (ver app/[slug]/mis-clases) —
+  // no tiene acceso al panel de admin general.
+  INSTRUCTOR
 }
 
 model TenantMembership {
@@ -222,19 +242,21 @@ model Court {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  pricingRules PricingRule[]
-  bookings     Booking[]
-  waitlist     WaitlistEntry[]
+  pricingRules      PricingRule[]
+  bookings          Booking[]
+  waitlist          WaitlistEntry[]
   recurringBookings RecurringBooking[]
+  classSessions     ClassSession[]
+  tournamentMatches TournamentMatch[]
 
   @@index([tenantId])
   @@map("courts")
 }
 
 model BusinessHours {
-  id        String   @id @default(cuid())
+  id        String @id @default(cuid())
   tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   dayOfWeek Int // 0=domingo .. 6=sábado
   openTime  String // "08:00"
   closeTime String // "23:00"
@@ -250,49 +272,49 @@ enum ClientType {
 }
 
 model PricingRule {
-  id           String      @id @default(cuid())
-  tenantId     String
-  tenant       Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  courtId      String? // null = aplica a todas las canchas del tenant
-  court        Court?      @relation(fields: [courtId], references: [id], onDelete: Cascade)
-  dayOfWeek    Int? // null = todos los días
-  startTime    String // "18:00"
-  endTime      String // "22:00"
-  seasonStart  DateTime?
-  seasonEnd    DateTime?
-  clientType   ClientType  @default(ANY)
-  priceCents   Int
+  id                    String     @id @default(cuid())
+  tenantId              String
+  tenant                Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  courtId               String? // null = aplica a todas las canchas del tenant
+  court                 Court?     @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  dayOfWeek             Int? // null = todos los días
+  startTime             String // "18:00"
+  endTime               String // "22:00"
+  seasonStart           DateTime?
+  seasonEnd             DateTime?
+  clientType            ClientType @default(ANY)
+  priceCents            Int
   // Precio en efectivo de 1/4 del turno (una "cabeza"), si el club cobra
   // distinto al pagar en efectivo. null = no hay precio especial, se usa
   // priceCents/4 tanto para efectivo como para transferencia.
   cashQuarterPriceCents Int?
-  createdAt    DateTime    @default(now())
+  createdAt             DateTime   @default(now())
 
   @@index([tenantId, courtId])
   @@map("pricing_rules")
 }
 
 model BookingConfig {
-  id                  String   @id @default(cuid())
-  tenantId            String   @unique
-  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  slotDurationMinutes Int      @default(90)
-  minAdvanceMinutes   Int      @default(60)
-  maxAdvanceDays      Int      @default(14)
-  depositRequired     Boolean  @default(true)
-  depositIsPercentage Boolean  @default(true)
-  depositValue        Int      @default(30) // 30% o monto fijo en centavos si depositIsPercentage=false
+  id                  String  @id @default(cuid())
+  tenantId            String  @unique
+  tenant              Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  slotDurationMinutes Int     @default(90)
+  minAdvanceMinutes   Int     @default(60)
+  maxAdvanceDays      Int     @default(14)
+  depositRequired     Boolean @default(true)
+  depositIsPercentage Boolean @default(true)
+  depositValue        Int     @default(30) // 30% o monto fijo en centavos si depositIsPercentage=false
 
   @@map("booking_configs")
 }
 
 model CancellationPolicy {
-  id                     String @id @default(cuid())
-  tenantId               String @unique
-  tenant                 Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  hoursBeforeFullRefund  Int    @default(24)
-  hoursBeforePartialRefund Int  @default(6)
-  partialRefundPct       Int   @default(50)
+  id                       String @id @default(cuid())
+  tenantId                 String @unique
+  tenant                   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  hoursBeforeFullRefund    Int    @default(24)
+  hoursBeforePartialRefund Int    @default(6)
+  partialRefundPct         Int    @default(50)
 
   @@map("cancellation_policies")
 }
@@ -323,36 +345,36 @@ enum BookingSource {
 }
 
 model Booking {
-  id             String        @id @default(cuid())
-  tenantId       String
-  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  courtId        String
-  court          Court         @relation(fields: [courtId], references: [id], onDelete: Cascade)
-  bookedByUserId String
-  bookedBy       User          @relation("BookedBy", fields: [bookedByUserId], references: [id])
-  createdByUserId String?
-  createdBy       User?        @relation("CreatedBy", fields: [createdByUserId], references: [id])
-  startTime      DateTime
-  endTime        DateTime
-  status         BookingStatus @default(PENDING_PAYMENT)
-  source         BookingSource @default(ONLINE)
-  totalPriceCents   Int
+  id                    String        @id @default(cuid())
+  tenantId              String
+  tenant                Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  courtId               String
+  court                 Court         @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  bookedByUserId        String
+  bookedBy              User          @relation("BookedBy", fields: [bookedByUserId], references: [id])
+  createdByUserId       String?
+  createdBy             User?         @relation("CreatedBy", fields: [createdByUserId], references: [id])
+  startTime             DateTime
+  endTime               DateTime
+  status                BookingStatus @default(PENDING_PAYMENT)
+  source                BookingSource @default(ONLINE)
+  totalPriceCents       Int
   // Snapshot de PricingRule.cashQuarterPriceCents al momento de reservar (no
   // cambia si luego se edita la regla de precios). null = sin precio
   // especial en efectivo, usar totalPriceCents/4 para cualquier método.
   cashQuarterPriceCents Int?
-  depositAmountCents Int       @default(0)
-  depositStatus  DepositStatus @default(NOT_REQUIRED)
-  isBlock        Boolean       @default(false) // bloqueo manual (mantenimiento/evento), no es una reserva de jugador
-  checkedIn      Boolean       @default(false)
-  notes          String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  depositAmountCents    Int           @default(0)
+  depositStatus         DepositStatus @default(NOT_REQUIRED)
+  isBlock               Boolean       @default(false) // bloqueo manual (mantenimiento/evento), no es una reserva de jugador
+  checkedIn             Boolean       @default(false)
+  notes                 String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
 
   recurringBookingId String?
   recurringBooking   RecurringBooking? @relation(fields: [recurringBookingId], references: [id], onDelete: SetNull)
 
-  payments    Payment[]
+  payments     Payment[]
   participants BookingParticipant[]
 
   // Nota: la protección real anti doble-reserva es un EXCLUDE CONSTRAINT de Postgres
@@ -364,13 +386,13 @@ model Booking {
 
 // Modelado desde el día 1 para Fase 2 (split payment), sin UI/lógica activa en el MVP.
 model BookingParticipant {
-  id           String  @id @default(cuid())
-  bookingId    String
-  booking      Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  userId       String?
-  guestName    String?
-  guestPhone   String?
-  shareCents   Int?
+  id         String  @id @default(cuid())
+  bookingId  String
+  booking    Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  userId     String?
+  guestName  String?
+  guestPhone String?
+  shareCents Int?
 
   @@map("booking_participants")
 }
@@ -414,17 +436,17 @@ model Payment {
 
 // Modelado desde el día 1 para Fase 2 (lista de espera), sin lógica activa en el MVP.
 model WaitlistEntry {
-  id              String   @id @default(cuid())
-  tenantId        String
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  courtId         String
-  court           Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
-  userId          String
-  user            User     @relation(fields: [userId], references: [id])
-  desiredStart    DateTime
-  desiredEnd      DateTime
-  notified        Boolean  @default(false)
-  createdAt       DateTime @default(now())
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  courtId      String
+  court        Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  desiredStart DateTime
+  desiredEnd   DateTime
+  notified     Boolean  @default(false)
+  createdAt    DateTime @default(now())
 
   @@map("waitlist_entries")
 }
@@ -456,16 +478,16 @@ model Coupon {
 // ---------------------------------------------------------------------------
 
 model AuditLog {
-  id           String   @id @default(cuid())
-  tenantId     String
-  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  actorUserId  String?
-  actor        User?    @relation(fields: [actorUserId], references: [id])
-  action       String // "booking.created" | "booking.cancelled" | "court.updated" | ...
-  entityType   String
-  entityId     String
-  metadata     Json     @default("{}")
-  createdAt    DateTime @default(now())
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actorUserId String?
+  actor       User?    @relation(fields: [actorUserId], references: [id])
+  action      String // "booking.created" | "booking.cancelled" | "court.updated" | ...
+  entityType  String
+  entityId    String
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
 
   @@index([tenantId, entityType, entityId])
   @@map("audit_logs")
@@ -599,4 +621,363 @@ model CashRegisterClose {
 
   @@unique([tenantId, date])
   @@map("cash_register_closes")
+}
+
+// ---------------------------------------------------------------------------
+// Clases (individuales o grupales, se cobran por sesión suelta)
+// ---------------------------------------------------------------------------
+
+enum ClassLevel {
+  ANY
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ClassModality {
+  GROUP
+  INDIVIDUAL
+}
+
+// Un instructor puede ser staff interno (userId apunta a un User que ya es
+// TenantMembership) o un profesor externo sin cuenta en el sistema — en ese
+// caso userId queda null y se liquida por commissionPct. Ambos casos convivan
+// en el mismo modelo porque, salvo el link a User y la comisión, comparten
+// todos los demás campos (nombre, foto, bio, canchas/sesiones que dicta).
+model Instructor {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId        String? // set = staff interno con cuenta propia; null = profesor externo
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name          String
+  phone         String?
+  email         String?
+  photoUrl      String?
+  bio           String?
+  commissionPct Int? // % que se le liquida al profesor por clase dictada, si corresponde
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  classSessions ClassSession[]
+
+  @@index([tenantId])
+  @@map("instructors")
+}
+
+// Catálogo de tipos de clase (plantilla): define los valores por defecto que
+// se copian a cada ClassSession al crearla, que después puede pisarlos
+// (ej. una sesión puntual con un precio distinto al default del tipo).
+model ClassType {
+  id                     String        @id @default(cuid())
+  tenantId               String
+  tenant                 Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name                   String // ej. "Grupal nivel 3", "Individual con profesor"
+  level                  ClassLevel    @default(ANY)
+  modality               ClassModality @default(GROUP)
+  defaultDurationMinutes Int           @default(60)
+  defaultCapacity        Int           @default(4)
+  defaultPriceCents      Int
+  active                 Boolean       @default(true)
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+
+  sessions ClassSession[]
+
+  @@index([tenantId])
+  @@map("class_types")
+}
+
+enum ClassSessionStatus {
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+}
+
+// Instancia concreta de una clase: día/hora/cancha/instructor puntuales.
+// Comparte cancha con Booking pero, a diferencia de bookings, no tiene hoy un
+// EXCLUDE CONSTRAINT propio a nivel de Postgres — el chequeo de que la cancha
+// esté libre (ni reservada ni con otra clase) se hace en la capa de app
+// (ver lib/classes/service.ts, reusa lib/availability/engine.ts). Si en el
+// futuro se ve contención real, migrar a la misma defensa que bookings.
+model ClassSession {
+  id              String             @id @default(cuid())
+  tenantId        String
+  tenant          Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  classTypeId     String
+  classType       ClassType          @relation(fields: [classTypeId], references: [id], onDelete: Restrict)
+  instructorId    String
+  instructor      Instructor         @relation(fields: [instructorId], references: [id], onDelete: Restrict)
+  courtId         String?
+  court           Court?             @relation(fields: [courtId], references: [id], onDelete: SetNull)
+  startTime       DateTime
+  endTime         DateTime
+  capacity        Int
+  priceCents      Int // snapshot del precio al crear la sesión (no cambia si luego se edita el ClassType)
+  status          ClassSessionStatus @default(SCHEDULED)
+  notes           String?
+  createdByUserId String?
+  createdBy       User?              @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  enrollments ClassEnrollment[]
+
+  @@index([tenantId, courtId, startTime])
+  @@index([tenantId, instructorId, startTime])
+  @@map("class_sessions")
+}
+
+enum ClassEnrollmentStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  NO_SHOW
+}
+
+enum ClassPaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+}
+
+model ClassEnrollment {
+  id             String                @id @default(cuid())
+  tenantId       String
+  tenant         Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  classSessionId String
+  classSession   ClassSession          @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  studentUserId  String
+  studentUser    User                  @relation(fields: [studentUserId], references: [id])
+  studentName    String // snapshot, igual que SaleItem.productName
+  studentPhone   String?
+  priceCents     Int // snapshot del precio al inscribirse
+  paymentMethod  PaymentMethod?
+  paymentStatus  ClassPaymentStatus    @default(PENDING)
+  status         ClassEnrollmentStatus @default(PENDING_PAYMENT)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@unique([classSessionId, studentUserId])
+  @@index([tenantId, classSessionId])
+  @@map("class_enrollments")
+}
+
+// ---------------------------------------------------------------------------
+// Torneos — soporta 3 formatos con el mismo set de tablas:
+//   - SINGLE_ELIMINATION: solo TournamentMatch en fase "KNOCKOUT" encadenados
+//     por nextMatchId/nextMatchSlot (el ganador avanza automáticamente).
+//   - GROUPS_KNOCKOUT: primero TournamentGroup + TournamentGroupStanding
+//     (fase "GROUP"), después una fase "KNOCKOUT" igual a SINGLE_ELIMINATION
+//     armada con los clasificados.
+//   - AMERICANO: no hay TournamentTeam fija por jugador — cada ronda se
+//     generan TournamentTeam efímeros (roundGenerated seteado) que rotan las
+//     parejas; los partidos quedan en fase "AMERICANO_ROUND" y no encadenan
+//     con nextMatchId. Los puntos se suman por TournamentParticipant, no por
+//     equipo (ver lib/tournaments/service.ts).
+// ---------------------------------------------------------------------------
+
+enum TournamentFormat {
+  SINGLE_ELIMINATION
+  GROUPS_KNOCKOUT
+  AMERICANO
+}
+
+enum TournamentStatus {
+  DRAFT
+  REGISTRATION_OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Tournament {
+  id                   String           @id @default(cuid())
+  tenantId             String
+  tenant               Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name                 String
+  description          String?
+  format               TournamentFormat
+  status               TournamentStatus @default(DRAFT)
+  startDate            DateTime
+  endDate              DateTime?
+  registrationFeeCents Int              @default(0)
+  maxTeamsPerCategory  Int?
+  createdByUserId      String?
+  createdBy            User?            @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  categories        TournamentCategory[]
+  tournamentMatches TournamentMatch[]
+
+  @@index([tenantId, status])
+  @@map("tournaments")
+}
+
+model TournamentCategory {
+  id           String     @id @default(cuid())
+  tenantId     String
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  name         String // ej. "4ta Caballeros", "Damas Mixto"
+  maxTeams     Int?
+  createdAt    DateTime   @default(now())
+
+  participants TournamentParticipant[]
+  teams        TournamentTeam[]
+  groups       TournamentGroup[]
+  matches      TournamentMatch[]
+
+  @@unique([tournamentId, name])
+  @@index([tenantId])
+  @@map("tournament_categories")
+}
+
+// Jugador anotado a una categoría. En AMERICANO es la unidad de inscripción
+// (no hay pareja fija); en los otros dos formatos, cada TournamentTeam agrupa
+// 2 de estos vía TournamentTeamMember.
+model TournamentParticipant {
+  id         String             @id @default(cuid())
+  tenantId   String
+  tenant     Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   TournamentCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name       String
+  phone      String?
+  email      String?
+  userId     String?
+  user       User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt  DateTime           @default(now())
+
+  teamMemberships TournamentTeamMember[]
+
+  @@index([tenantId, categoryId])
+  @@map("tournament_participants")
+}
+
+enum TournamentTeamStatus {
+  REGISTERED
+  WITHDRAWN
+}
+
+// Pareja/equipo. Fija (se inscribe una vez) en SINGLE_ELIMINATION y
+// GROUPS_KNOCKOUT; en AMERICANO se generan y descartan equipos efímeros por
+// ronda (roundGenerated != null) para rotar las parejas.
+model TournamentTeam {
+  id             String               @id @default(cuid())
+  tenantId       String
+  tenant         Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoryId     String
+  category       TournamentCategory   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name           String // ej. "Juan Pérez / Fede Gómez"
+  seed           Int?
+  roundGenerated Int? // solo AMERICANO: número de ronda para la que se armó esta pareja
+  feePaid        Boolean              @default(false)
+  status         TournamentTeamStatus @default(REGISTERED)
+  createdAt      DateTime             @default(now())
+
+  members        TournamentTeamMember[]
+  groupStandings TournamentGroupStanding[]
+  matchesAsTeamA TournamentMatch[]         @relation("MatchTeamA")
+  matchesAsTeamB TournamentMatch[]         @relation("MatchTeamB")
+  matchesWon     TournamentMatch[]         @relation("MatchWinner")
+
+  @@index([tenantId, categoryId])
+  @@map("tournament_teams")
+}
+
+model TournamentTeamMember {
+  id            String                @id @default(cuid())
+  teamId        String
+  team          TournamentTeam        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  participantId String
+  participant   TournamentParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, participantId])
+  @@map("tournament_team_members")
+}
+
+// Solo se usa en GROUPS_KNOCKOUT (fase de grupos antes de la eliminación).
+model TournamentGroup {
+  id         String             @id @default(cuid())
+  tenantId   String
+  tenant     Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   TournamentCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name       String // ej. "Grupo A"
+  createdAt  DateTime           @default(now())
+
+  standings TournamentGroupStanding[]
+  matches   TournamentMatch[]
+
+  @@index([tenantId, categoryId])
+  @@map("tournament_groups")
+}
+
+// Tabla de posiciones de un grupo. Se recalcula (no se recrea) cada vez que
+// se carga un resultado — ver lib/tournaments/service.ts#recomputeStandings.
+model TournamentGroupStanding {
+  id        String          @id @default(cuid())
+  groupId   String
+  group     TournamentGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  teamId    String
+  team      TournamentTeam  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  played    Int             @default(0)
+  won       Int             @default(0)
+  lost      Int             @default(0)
+  setsWon   Int             @default(0)
+  setsLost  Int             @default(0)
+  gamesWon  Int             @default(0)
+  gamesLost Int             @default(0)
+  points    Int             @default(0)
+
+  @@unique([groupId, teamId])
+  @@map("tournament_group_standings")
+}
+
+enum TournamentMatchStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  WALKOVER
+}
+
+model TournamentMatch {
+  id            String                @id @default(cuid())
+  tenantId      String
+  tenant        Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tournamentId  String
+  tournament    Tournament            @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  categoryId    String
+  category      TournamentCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  groupId       String? // set solo en la fase de grupos de GROUPS_KNOCKOUT
+  group         TournamentGroup?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  stageLabel    String // "Grupos" | "Ronda 3" (americano) | "Cuartos de final" | "Semifinal" | "Final" | ...
+  round         Int                   @default(1)
+  courtId       String?
+  court         Court?                @relation(fields: [courtId], references: [id], onDelete: SetNull)
+  scheduledAt   DateTime?
+  teamAId       String?
+  teamA         TournamentTeam?       @relation("MatchTeamA", fields: [teamAId], references: [id], onDelete: SetNull)
+  teamBId       String?
+  teamB         TournamentTeam?       @relation("MatchTeamB", fields: [teamBId], references: [id], onDelete: SetNull)
+  scoreA        Int[]                 @default([]) // games/sets por set, ej. [6,6] vs [4,3]
+  scoreB        Int[]                 @default([])
+  winnerTeamId  String?
+  winnerTeam    TournamentTeam?       @relation("MatchWinner", fields: [winnerTeamId], references: [id], onDelete: SetNull)
+  status        TournamentMatchStatus @default(SCHEDULED)
+  // Bracket de eliminación: a qué partido avanza el ganador y en qué slot.
+  nextMatchId   String?
+  nextMatch     TournamentMatch?      @relation("MatchProgression", fields: [nextMatchId], references: [id], onDelete: SetNull)
+  nextMatchSlot String? // "A" | "B"
+  feedsFrom     TournamentMatch[]     @relation("MatchProgression")
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@index([tenantId, tournamentId])
+  @@index([tenantId, courtId, scheduledAt])
+  @@map("tournament_matches")
 }

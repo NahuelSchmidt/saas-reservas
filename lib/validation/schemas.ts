@@ -120,6 +120,14 @@ export const tenantOnboardingSchema = z.object({
 });
 export type TenantOnboardingInput = z.infer<typeof tenantOnboardingSchema>;
 
+export const staffInviteSchema = z.object({
+  name: z.string().min(1, "Requerido").max(80),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Mínimo 6 caracteres"),
+  role: z.enum(["ADMIN", "EMPLOYEE", "INSTRUCTOR"]),
+});
+export type StaffInviteInput = z.infer<typeof staffInviteSchema>;
+
 export const cancellationPolicySchema = z.object({
   hoursBeforeFullRefund: z.coerce.number().int().min(0).max(168),
   hoursBeforePartialRefund: z.coerce.number().int().min(0).max(168),
@@ -138,3 +146,128 @@ export const bookingConfigSchema = z.object({
   depositValue: z.coerce.number().int().positive(),
 });
 export type BookingConfigInput = z.infer<typeof bookingConfigSchema>;
+
+// ---------------------------------------------------------------------------
+// Clases
+// ---------------------------------------------------------------------------
+
+export const instructorSchema = z.object({
+  name: z.string().min(1, "Requerido").max(80),
+  phone: z.string().max(30).optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  bio: z.string().max(500).optional(),
+  commissionPct: z.preprocess(
+    (v) => (v === null || v === "" || v === undefined ? undefined : v),
+    z.coerce.number().int().min(0).max(100).optional(),
+  ),
+  userId: z.string().optional().or(z.literal("")), // set = instructor es staff interno
+  active: z.boolean().default(true),
+});
+export type InstructorInput = z.infer<typeof instructorSchema>;
+
+export const classTypeSchema = z.object({
+  name: z.string().min(1, "Requerido").max(80),
+  level: z.enum(["ANY", "BEGINNER", "INTERMEDIATE", "ADVANCED"]).default("ANY"),
+  modality: z.enum(["GROUP", "INDIVIDUAL"]).default("GROUP"),
+  defaultDurationMinutes: z.coerce.number().int().min(15).max(240),
+  defaultCapacity: z.coerce.number().int().min(1).max(30),
+  defaultPriceCents: z.coerce.number().int().positive(),
+  active: z.boolean().default(true),
+});
+export type ClassTypeInput = z.infer<typeof classTypeSchema>;
+
+export const classSessionSchema = z
+  .object({
+    classTypeId: z.string().min(1),
+    instructorId: z.string().min(1),
+    courtId: z.string().optional().or(z.literal("")),
+    startTime: z.coerce.date(),
+    endTime: z.coerce.date(),
+    capacity: z.coerce.number().int().min(1).max(30),
+    priceCents: z.coerce.number().int().positive(),
+    notes: z.string().max(500).optional(),
+  })
+  .refine((s) => s.startTime < s.endTime, {
+    message: "El horario de inicio debe ser anterior al de fin",
+    path: ["endTime"],
+  });
+export type ClassSessionInput = z.infer<typeof classSessionSchema>;
+
+// Inscripción a una clase suelta: se cobra por sesión, no hay cuenta previa
+// necesaria (mismo criterio que guestBookingSchema).
+export const classEnrollmentSchema = z.object({
+  classSessionId: z.string().min(1),
+  studentName: z.string().min(1, "Requerido").max(80),
+  studentPhone: z.string().min(6, "Ingresá un teléfono válido").max(30),
+});
+export type ClassEnrollmentInput = z.infer<typeof classEnrollmentSchema>;
+
+export const registerClassPaymentSchema = z.object({
+  enrollmentId: z.string().min(1),
+  method: z.enum(["CASH", "TRANSFER", "MERCADOPAGO"]),
+});
+export type RegisterClassPaymentInput = z.infer<typeof registerClassPaymentSchema>;
+
+// ---------------------------------------------------------------------------
+// Torneos
+// ---------------------------------------------------------------------------
+
+export const tournamentSchema = z
+  .object({
+    name: z.string().min(1, "Requerido").max(120),
+    description: z.string().max(1000).optional(),
+    format: z.enum(["SINGLE_ELIMINATION", "GROUPS_KNOCKOUT", "AMERICANO"]),
+    startDate: z.coerce.date(),
+    endDate: z.coerce.date().optional(),
+    registrationFeeCents: z.coerce.number().int().nonnegative().default(0),
+    maxTeamsPerCategory: z.preprocess(
+      (v) => (v === null || v === "" || v === undefined ? undefined : v),
+      z.coerce.number().int().positive().optional(),
+    ),
+  })
+  .refine((t) => !t.endDate || t.startDate <= t.endDate, {
+    message: "La fecha de fin debe ser posterior a la de inicio",
+    path: ["endDate"],
+  });
+export type TournamentInput = z.infer<typeof tournamentSchema>;
+
+export const tournamentCategorySchema = z.object({
+  tournamentId: z.string().min(1),
+  name: z.string().min(1, "Requerido").max(80),
+  maxTeams: z.preprocess(
+    (v) => (v === null || v === "" || v === undefined ? undefined : v),
+    z.coerce.number().int().positive().optional(),
+  ),
+});
+export type TournamentCategoryInput = z.infer<typeof tournamentCategorySchema>;
+
+// Inscripción de una pareja fija (SINGLE_ELIMINATION / GROUPS_KNOCKOUT). Para
+// AMERICANO se usa tournamentParticipantSchema (jugador suelto, sin pareja).
+export const tournamentTeamSchema = z.object({
+  categoryId: z.string().min(1),
+  player1Name: z.string().min(1, "Requerido").max(80),
+  player1Phone: z.string().max(30).optional(),
+  player2Name: z.string().min(1, "Requerido").max(80),
+  player2Phone: z.string().max(30).optional(),
+});
+export type TournamentTeamInput = z.infer<typeof tournamentTeamSchema>;
+
+export const tournamentParticipantSchema = z.object({
+  categoryId: z.string().min(1),
+  name: z.string().min(1, "Requerido").max(80),
+  phone: z.string().max(30).optional(),
+});
+export type TournamentParticipantInput = z.infer<typeof tournamentParticipantSchema>;
+
+// Resultado de un partido en sets: [[6,4],[3,6],[10,7]] (el tercer set puede
+// ser un súper tie-break). Se manda como JSON desde el form.
+const setScoreArray = z.array(z.coerce.number().int().min(0).max(99)).min(1).max(5);
+
+export const tournamentMatchResultSchema = z.object({
+  matchId: z.string().min(1),
+  scoreA: setScoreArray,
+  scoreB: setScoreArray,
+  winnerTeamId: z.string().min(1),
+  walkover: z.boolean().default(false),
+});
+export type TournamentMatchResultInput = z.infer<typeof tournamentMatchResultSchema>;

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LayoutDashboard, CalendarDays, LandPlot, Tags, Package, Settings, ExternalLink } from "lucide-react";
+import { LayoutDashboard, CalendarDays, LandPlot, Tags, Package, GraduationCap, Trophy, Users, Settings, ExternalLink } from "lucide-react";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { requireTenantRole, ForbiddenError, UnauthorizedError } from "@/lib/auth/guards";
 import { CopyLinkButton } from "./copy-link-button";
@@ -11,6 +11,9 @@ const NAV_ITEMS = [
   { href: "/courts", label: "Canchas", icon: LandPlot },
   { href: "/pricing", label: "Precios", icon: Tags },
   { href: "/products", label: "Productos", icon: Package },
+  { href: "/classes", label: "Clases", icon: GraduationCap },
+  { href: "/tournaments", label: "Torneos", icon: Trophy },
+  { href: "/staff", label: "Staff", icon: Users },
   { href: "/settings", label: "Configuración", icon: Settings },
 ];
 

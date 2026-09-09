@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "TenantRole" ADD VALUE 'INSTRUCTOR';

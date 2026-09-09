@@ -13,6 +13,7 @@ export default async function TenantLayout({
   const { slug } = await params;
   const tenant = await resolveTenantBySlug(slug);
   const session = await auth();
+  const isInstructor = session?.user?.memberships.some((m) => m.tenantId === tenant.id && m.role === "INSTRUCTOR");
 
   return (
     <div
@@ -38,8 +39,22 @@ export default async function TenantLayout({
             <span className="font-heading text-lg font-bold tracking-tight">{tenant.name}</span>
           </Link>
           <nav className="flex items-center gap-2">
+            <Link
+              href={`/${tenant.slug}/torneos`}
+              className="rounded-full px-4 py-1.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              Torneos
+            </Link>
             {session?.user ? (
               <>
+                {isInstructor && (
+                  <Link
+                    href={`/${tenant.slug}/mis-clases`}
+                    className="rounded-full px-4 py-1.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    Mis clases
+                  </Link>
+                )}
                 <span className="hidden text-sm text-white/80 sm:inline">{session.user.email}</span>
                 <form action={doSignOut}>
                   <button

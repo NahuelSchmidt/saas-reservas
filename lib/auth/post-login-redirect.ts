@@ -11,11 +11,14 @@ export async function getDefaultPostLoginRedirect(email: string): Promise<string
     where: { email },
     select: {
       globalRole: true,
-      memberships: { select: { tenant: { select: { slug: true } } }, take: 1 },
+      memberships: { select: { role: true, tenant: { select: { slug: true } } }, take: 1 },
     },
   });
 
   if (user?.globalRole === "SUPER_ADMIN") return "/plataforma";
-  if (user?.memberships[0]) return `/${user.memberships[0].tenant.slug}/admin`;
+  const membership = user?.memberships[0];
+  if (membership) {
+    return membership.role === "INSTRUCTOR" ? `/${membership.tenant.slug}/mis-clases` : `/${membership.tenant.slug}/admin`;
+  }
   return "/";
 }

@@ -1,0 +1,201 @@
+import { notFound } from "next/navigation";
+import { resolveTenantBySlug } from "@/lib/tenant/resolve";
+import { getTournament, getAmericanoStandings } from "@/lib/tournaments/service";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { BracketGrid } from "@/components/tournaments/bracket-grid";
+
+const FORMAT_LABEL: Record<string, string> = {
+  SINGLE_ELIMINATION: "Eliminación directa",
+  GROUPS_KNOCKOUT: "Grupos + eliminación",
+  AMERICANO: "Americano",
+};
+
+type PublicMatch = {
+  id: string;
+  round: number;
+  stageLabel: string;
+  scoreA: number[];
+  scoreB: number[];
+  status: string;
+  scheduledAt: Date | null;
+  teamA: { id: string; name: string } | null;
+  teamB: { id: string; name: string } | null;
+  winnerTeam: { id: string; name: string } | null;
+};
+
+function groupByRound(matches: PublicMatch[]): [number, PublicMatch[]][] {
+  const byRound = new Map<number, PublicMatch[]>();
+  for (const m of matches) byRound.set(m.round, [...(byRound.get(m.round) ?? []), m]);
+  return [...byRound.entries()].sort(([a], [b]) => a - b);
+}
+
+function MatchRow({ match }: { match: PublicMatch }) {
+  const played = match.status === "COMPLETED" || match.status === "WALKOVER";
+  return (
+    <div className="flex flex-col gap-1 rounded-lg border bg-card px-3 py-2 text-sm shadow-sm">
+      <span className="text-xs text-muted-foreground">{match.stageLabel}</span>
+      <p>
+        <span className={match.winnerTeam?.id === match.teamA?.id ? "font-semibold" : ""}>{match.teamA?.name ?? "Por definir"}</span>
+        {" vs "}
+        <span className={match.winnerTeam?.id === match.teamB?.id ? "font-semibold" : ""}>{match.teamB?.name ?? "Por definir"}</span>
+      </p>
+      {played ? (
+        <p className="text-xs text-muted-foreground">
+          {match.status === "WALKOVER" ? "Walkover — " : ""}
+          {match.scoreA.map((a, i) => `${a}-${match.scoreB[i] ?? 0}`).join(", ")}
+        </p>
+      ) : match.scheduledAt ? (
+        <p className="text-xs text-muted-foreground">
+          {match.scheduledAt.toLocaleDateString("es-AR", { weekday: "short", day: "2-digit", month: "2-digit" })} ·{" "}
+          {match.scheduledAt.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export default async function PublicTournamentDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string; tournamentId: string }>;
+}) {
+  const { slug, tournamentId } = await params;
+  const tenant = await resolveTenantBySlug(slug);
+  const tournament = await getTournament(tenant.id, tournamentId);
+  if (!tournament || tournament.status === "DRAFT") notFound();
+
+  const isAmericano = tournament.format === "AMERICANO";
+  const americanoStandingsByCategory = isAmericano
+    ? await Promise.all(tournament.categories.map((c) => getAmericanoStandings(tenant.id, c.id)))
+    : [];
+
+  return (
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10 sm:px-10">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">{tournament.name}</h1>
+        <p className="text-sm text-muted-foreground">
+          {FORMAT_LABEL[tournament.format]} · Desde el {tournament.startDate.toLocaleDateString("es-AR", { timeZone: "UTC" })}
+          {tournament.endDate && ` hasta el ${tournament.endDate.toLocaleDateString("es-AR", { timeZone: "UTC" })}`}
+        </p>
+        {tournament.description && <p className="mt-1 text-sm text-muted-foreground">{tournament.description}</p>}
+      </div>
+
+      {tournament.categories.length === 0 ? (
+        <p className="rounded-lg border border-dashed py-12 text-center text-sm text-muted-foreground">
+          Todavía no hay categorías cargadas.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-8">
+          {tournament.categories.map((category, categoryIndex) => {
+            const knockoutMatches = category.matches.filter((m) => m.groupId === null);
+
+            return (
+              <div key={category.id} className="flex flex-col gap-4 rounded-xl border p-4">
+                <div className="flex items-center gap-2">
+                  <h2 className="font-heading text-lg font-bold">{category.name}</h2>
+                  <Badge variant="secondary">
+                    {isAmericano ? `${category.participants.length} jugadores` : `${category.teams.length} equipos`}
+                  </Badge>
+                </div>
+
+                {tournament.format === "GROUPS_KNOCKOUT" && category.groups.length > 0 && (
+                  <div className="flex flex-col gap-4">
+                    {category.groups.map((group) => (
+                      <div key={group.id} className="flex flex-col gap-2">
+                        <h3 className="text-sm font-semibold">{group.name}</h3>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Equipo</TableHead>
+                              <TableHead>PJ</TableHead>
+                              <TableHead>G</TableHead>
+                              <TableHead>P</TableHead>
+                              <TableHead>Sets</TableHead>
+                              <TableHead>Games</TableHead>
+                              <TableHead>Pts</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {group.standings.map((s) => (
+                              <TableRow key={s.id}>
+                                <TableCell className="font-medium">{s.team.name}</TableCell>
+                                <TableCell>{s.played}</TableCell>
+                                <TableCell>{s.won}</TableCell>
+                                <TableCell>{s.lost}</TableCell>
+                                <TableCell>{s.setsWon}-{s.setsLost}</TableCell>
+                                <TableCell>{s.gamesWon}-{s.gamesLost}</TableCell>
+                                <TableCell className="font-semibold">{s.points}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                        <div className="flex flex-col gap-1.5">
+                          {category.matches.filter((m) => m.groupId === group.id).map((m) => (
+                            <MatchRow key={m.id} match={m} />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {knockoutMatches.length > 0 && !isAmericano && (
+                  <div className="flex flex-col gap-3">
+                    {tournament.format === "GROUPS_KNOCKOUT" && <h3 className="text-sm font-semibold">Eliminación directa</h3>}
+                    <BracketGrid matches={knockoutMatches} renderMatch={(m) => <MatchRow match={m} />} />
+                  </div>
+                )}
+
+                {isAmericano && (
+                  <div className="flex flex-col gap-4">
+                    {category.matches.length > 0 && (
+                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {groupByRound(category.matches).map(([round, matches]) => (
+                          <div key={round} className="flex flex-col gap-1.5">
+                            <span className="text-xs font-semibold text-muted-foreground">Ronda {round}</span>
+                            {matches.map((m) => (
+                              <MatchRow key={m.id} match={m} />
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {americanoStandingsByCategory[categoryIndex]?.length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        <h3 className="text-sm font-semibold">Posiciones (games ganados)</h3>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Jugador</TableHead>
+                              <TableHead>Partidos</TableHead>
+                              <TableHead>Games</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {americanoStandingsByCategory[categoryIndex].map((s) => (
+                              <TableRow key={s.participantId}>
+                                <TableCell className="font-medium">{s.name}</TableCell>
+                                <TableCell>{s.matchesPlayed}</TableCell>
+                                <TableCell className="font-semibold">{s.gamesWon}-{s.gamesLost}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {tournament.format === "SINGLE_ELIMINATION" && knockoutMatches.length === 0 && (
+                  <p className="text-sm text-muted-foreground">El cuadro todavía no se generó.</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -22,6 +22,19 @@ const TENANT_SCOPED_MODELS = new Set([
   "RecurringBooking",
   "CashRegisterClose",
   "MercadoPagoAccount",
+  "Instructor",
+  "ClassType",
+  "ClassSession",
+  "ClassEnrollment",
+  "Tournament",
+  "TournamentCategory",
+  "TournamentParticipant",
+  "TournamentTeam",
+  "TournamentGroup",
+  "TournamentMatch",
+  // "TournamentTeamMember" y "TournamentGroupStanding" quedan afuera a
+  // propósito: no llevan tenantId directo, igual que "SaleItem" y
+  // "BookingParticipant" — se accede siempre a través de su tabla padre.
 ]);
 
 const WRITE_WITH_DATA_OPS = new Set(["create", "createMany", "upsert"]);

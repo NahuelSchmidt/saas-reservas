@@ -32,13 +32,13 @@ export async function requireSuperAdmin() {
  */
 export async function requireTenantRole(
   tenantId: string,
-  roles: Array<"ADMIN" | "EMPLOYEE">,
+  roles: Array<"ADMIN" | "EMPLOYEE" | "INSTRUCTOR">,
 ) {
   const user = await requireUser();
   if (user.globalRole === "SUPER_ADMIN") return user;
 
   const membership = user.memberships.find((m) => m.tenantId === tenantId);
-  if (!membership || !roles.includes(membership.role as "ADMIN" | "EMPLOYEE")) {
+  if (!membership || !roles.includes(membership.role as "ADMIN" | "EMPLOYEE" | "INSTRUCTOR")) {
     throw new ForbiddenError();
   }
   return user;
