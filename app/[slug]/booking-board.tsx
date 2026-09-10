@@ -44,7 +44,7 @@ export function BookingBoard({
   const [dateISO, setDateISO] = useState(initialDateISO);
   const [slots, setSlots] = useState<Slot[]>(initialSlots);
   const [selected, setSelected] = useState<Slot | null>(null);
-  const [selectedCourtId, setSelectedCourtId] = useState<string | null>(null);
+  const [view, setView] = useState<"list" | "grid">("list");
   const [playerName, setPlayerName] = useState("");
   const [playerPhone, setPlayerPhone] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -61,14 +61,17 @@ export function BookingBoard({
     return Array.from(seen.values()).sort((a, b) => a.getTime() - b.getTime());
   }, [slots]);
 
-  const activeCourtId = selectedCourtId ?? courts[0]?.id ?? null;
-  const courtSlots = useMemo(
-    () =>
-      slots
-        .filter((s) => s.courtId === activeCourtId)
-        .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
-    [slots, activeCourtId],
-  );
+  const groupedByTime = useMemo(() => {
+    const byTime = new Map<number, { time: Date; slots: Slot[] }>();
+    for (const s of slots) {
+      const key = s.startTime.getTime();
+      if (!byTime.has(key)) byTime.set(key, { time: s.startTime, slots: [] });
+      byTime.get(key)!.slots.push(s);
+    }
+    return Array.from(byTime.values())
+      .map((g) => ({ ...g, slots: [...g.slots].sort((a, b) => a.courtName.localeCompare(b.courtName)) }))
+      .sort((a, b) => a.time.getTime() - b.time.getTime());
+  }, [slots]);
 
   function findSlot(courtId: string, time: Date) {
     return slots.find((s) => s.courtId === courtId && s.startTime.getTime() === time.getTime());
@@ -147,52 +150,58 @@ export function BookingBoard({
       )}
 
       {times.length > 0 && (
-        <div className="flex flex-col gap-4 sm:hidden">
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {courts.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setSelectedCourtId(c.id)}
-                className={cn(
-                  "shrink-0 rounded-full border px-4 py-2 text-sm font-semibold whitespace-nowrap transition-colors",
-                  c.id === activeCourtId
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "bg-card text-muted-foreground hover:bg-muted",
-                )}
-              >
-                {c.name}
-              </button>
-            ))}
-          </div>
-
-          {courtSlots.length === 0 ? (
-            <p className="rounded-2xl border border-dashed py-10 text-center text-sm text-muted-foreground">
-              No hay horarios libres en esta cancha este día.
-            </p>
-          ) : (
-            <div className="flex flex-col divide-y overflow-hidden rounded-2xl border shadow-sm">
-              {courtSlots.map((slot) => (
-                <button
-                  key={slot.startTime.getTime()}
-                  onClick={() => setSelected(slot)}
-                  className="flex items-center justify-between gap-3 px-4 py-4 text-left transition-colors active:bg-muted"
-                >
-                  <span className="font-heading text-base font-bold tabular-nums">
-                    {slot.startTime.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-primary">{formatCentsARS(slot.priceCents)}</span>
-                    <ChevronRight className="size-4 text-muted-foreground" />
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={() => setView("list")}
+            className={cn(
+              "rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors",
+              view === "list"
+                ? "border-primary bg-primary text-primary-foreground"
+                : "bg-card text-muted-foreground hover:bg-muted",
+            )}
+          >
+            Horarios
+          </button>
+          <button
+            onClick={() => setView("grid")}
+            className={cn(
+              "rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors",
+              view === "grid"
+                ? "border-primary bg-primary text-primary-foreground"
+                : "bg-card text-muted-foreground hover:bg-muted",
+            )}
+          >
+            Grilla
+          </button>
         </div>
       )}
 
-      {times.length > 0 && (
-        <div className="hidden overflow-x-auto rounded-2xl border shadow-sm sm:block">
+      {times.length > 0 && view === "list" && (
+        <div className="flex flex-col gap-3">
+          {groupedByTime.map(({ time, slots: group }) => (
+            <div key={time.getTime()} className="rounded-2xl border p-4 shadow-sm">
+              <div className="mb-3 font-heading text-base font-bold tabular-nums">
+                {time.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {group.map((slot) => (
+                  <button
+                    key={slot.courtId}
+                    onClick={() => setSelected(slot)}
+                    className="flex flex-col items-start gap-0.5 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-left transition-colors hover:border-primary/50 hover:bg-primary/10"
+                  >
+                    <span className="text-sm font-semibold text-primary">{slot.courtName}</span>
+                    <span className="text-xs text-primary/70">{formatCentsARS(slot.priceCents)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {times.length > 0 && view === "grid" && (
+        <div className="overflow-x-auto rounded-2xl border shadow-sm">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="bg-muted/50">
