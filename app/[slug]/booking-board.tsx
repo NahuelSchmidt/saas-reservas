@@ -45,6 +45,7 @@ export function BookingBoard({
   const [slots, setSlots] = useState<Slot[]>(initialSlots);
   const [selected, setSelected] = useState<Slot | null>(null);
   const [view, setView] = useState<"list" | "grid">("grid");
+  const [selectedTime, setSelectedTime] = useState<number | null>(null);
   const [playerName, setPlayerName] = useState("");
   const [playerPhone, setPlayerPhone] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -73,12 +74,15 @@ export function BookingBoard({
       .sort((a, b) => a.time.getTime() - b.time.getTime());
   }, [slots]);
 
+  const selectedTimeGroup = groupedByTime.find((g) => g.time.getTime() === selectedTime) ?? null;
+
   function findSlot(courtId: string, time: Date) {
     return slots.find((s) => s.courtId === courtId && s.startTime.getTime() === time.getTime());
   }
 
   function loadDate(nextISO: string) {
     setDateISO(nextISO);
+    setSelectedTime(null);
     startTransition(async () => {
       const result = await getAvailabilityAction(tenantSlug, nextISO);
       if (result.ok) setSlots(result.data);
@@ -176,27 +180,54 @@ export function BookingBoard({
         </div>
       )}
 
-      {times.length > 0 && view === "list" && (
-        <div className="flex flex-col gap-3">
+      {times.length > 0 && view === "list" && !selectedTimeGroup && (
+        <div className="flex flex-col divide-y overflow-hidden rounded-2xl border shadow-sm">
           {groupedByTime.map(({ time, slots: group }) => (
-            <div key={time.getTime()} className="rounded-2xl border p-4 shadow-sm">
-              <div className="mb-3 font-heading text-base font-bold tabular-nums">
+            <button
+              key={time.getTime()}
+              onClick={() => setSelectedTime(time.getTime())}
+              className="flex items-center justify-between gap-3 px-4 py-4 text-left transition-colors hover:bg-muted active:bg-muted"
+            >
+              <span className="font-heading text-base font-bold tabular-nums">
                 {time.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {group.map((slot) => (
-                  <button
-                    key={slot.courtId}
-                    onClick={() => setSelected(slot)}
-                    className="flex flex-col items-start gap-0.5 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-left transition-colors hover:border-primary/50 hover:bg-primary/10"
-                  >
-                    <span className="text-sm font-semibold text-primary">{slot.courtName}</span>
-                    <span className="text-xs text-primary/70">{formatCentsARS(slot.priceCents)}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+              </span>
+              <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                {group.length} {group.length === 1 ? "cancha libre" : "canchas libres"}
+                <ChevronRight className="size-4" />
+              </span>
+            </button>
           ))}
+        </div>
+      )}
+
+      {times.length > 0 && view === "list" && selectedTimeGroup && (
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={() => setSelectedTime(null)}
+            className="flex items-center gap-1 self-start text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ChevronLeft className="size-4" /> Elegir otro horario
+          </button>
+          <div className="rounded-2xl border shadow-sm">
+            <div className="border-b px-4 py-3 font-heading text-base font-bold tabular-nums">
+              {selectedTimeGroup.time.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+            </div>
+            <div className="flex flex-col divide-y">
+              {selectedTimeGroup.slots.map((slot) => (
+                <button
+                  key={slot.courtId}
+                  onClick={() => setSelected(slot)}
+                  className="flex items-center justify-between gap-3 px-4 py-4 text-left transition-colors hover:bg-muted active:bg-muted"
+                >
+                  <span className="text-sm font-semibold">{slot.courtName}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-primary">{formatCentsARS(slot.priceCents)}</span>
+                    <ChevronRight className="size-4 text-muted-foreground" />
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
