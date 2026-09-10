@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Lightbulb, Layers } from "lucide-react";
 import { getAvailabilityAction, createBookingAction } from "@/app/actions/booking";
 import { formatCentsARS, type Slot } from "@/lib/availability/engine";
 import { addLocalDays, parseLocalISODate } from "@/lib/availability/date-utils";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +44,7 @@ export function BookingBoard({
   const [dateISO, setDateISO] = useState(initialDateISO);
   const [slots, setSlots] = useState<Slot[]>(initialSlots);
   const [selected, setSelected] = useState<Slot | null>(null);
+  const [selectedCourtId, setSelectedCourtId] = useState<string | null>(null);
   const [playerName, setPlayerName] = useState("");
   const [playerPhone, setPlayerPhone] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -58,6 +60,15 @@ export function BookingBoard({
     for (const s of slots) seen.set(s.startTime.getTime(), s.startTime);
     return Array.from(seen.values()).sort((a, b) => a.getTime() - b.getTime());
   }, [slots]);
+
+  const activeCourtId = selectedCourtId ?? courts[0]?.id ?? null;
+  const courtSlots = useMemo(
+    () =>
+      slots
+        .filter((s) => s.courtId === activeCourtId)
+        .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
+    [slots, activeCourtId],
+  );
 
   function findSlot(courtId: string, time: Date) {
     return slots.find((s) => s.courtId === courtId && s.startTime.getTime() === time.getTime());
@@ -111,8 +122,13 @@ export function BookingBoard({
         >
           <ChevronLeft className="size-4" />
         </button>
-        <span className="min-w-52 text-center font-heading text-lg font-semibold capitalize">
-          {parseLocalISODate(dateISO).toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" })}
+        <span className="text-center font-heading text-base font-semibold capitalize sm:min-w-52 sm:text-lg">
+          <span className="sm:hidden">
+            {parseLocalISODate(dateISO).toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" })}
+          </span>
+          <span className="hidden sm:inline">
+            {parseLocalISODate(dateISO).toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" })}
+          </span>
         </span>
         <button
           onClick={() => loadDate(addLocalDays(dateISO, 1))}
@@ -131,7 +147,52 @@ export function BookingBoard({
       )}
 
       {times.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border shadow-sm">
+        <div className="flex flex-col gap-4 sm:hidden">
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {courts.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setSelectedCourtId(c.id)}
+                className={cn(
+                  "shrink-0 rounded-full border px-4 py-2 text-sm font-semibold whitespace-nowrap transition-colors",
+                  c.id === activeCourtId
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "bg-card text-muted-foreground hover:bg-muted",
+                )}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+
+          {courtSlots.length === 0 ? (
+            <p className="rounded-2xl border border-dashed py-10 text-center text-sm text-muted-foreground">
+              No hay horarios libres en esta cancha este día.
+            </p>
+          ) : (
+            <div className="flex flex-col divide-y overflow-hidden rounded-2xl border shadow-sm">
+              {courtSlots.map((slot) => (
+                <button
+                  key={slot.startTime.getTime()}
+                  onClick={() => setSelected(slot)}
+                  className="flex items-center justify-between gap-3 px-4 py-4 text-left transition-colors active:bg-muted"
+                >
+                  <span className="font-heading text-base font-bold tabular-nums">
+                    {slot.startTime.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-primary">{formatCentsARS(slot.priceCents)}</span>
+                    <ChevronRight className="size-4 text-muted-foreground" />
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {times.length > 0 && (
+        <div className="hidden overflow-x-auto rounded-2xl border shadow-sm sm:block">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="bg-muted/50">
