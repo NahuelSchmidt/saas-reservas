@@ -44,7 +44,7 @@ export function BookingBoard({
   const [dateISO, setDateISO] = useState(initialDateISO);
   const [slots, setSlots] = useState<Slot[]>(initialSlots);
   const [selected, setSelected] = useState<Slot | null>(null);
-  const [view, setView] = useState<"list" | "grid">("list");
+  const [view, setView] = useState<"list" | "grid">("grid");
   const [playerName, setPlayerName] = useState("");
   const [playerPhone, setPlayerPhone] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -171,7 +171,7 @@ export function BookingBoard({
                 : "bg-card text-muted-foreground hover:bg-muted",
             )}
           >
-            Grilla
+            Canchas
           </button>
         </div>
       )}
