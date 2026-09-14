@@ -166,6 +166,7 @@ export async function createBooking(params: {
     if (playerPhone) {
       try {
         await sendBookingConfirmedWhatsApp({
+          tenantId,
           phone: playerPhone,
           playerName: playerName ?? "",
           tenantName,
@@ -283,6 +284,7 @@ export async function confirmBookingPayment(params: {
   if (result.booking.bookedBy.phone) {
     try {
       await sendBookingConfirmedWhatsApp({
+        tenantId: params.tenantId,
         phone: result.booking.bookedBy.phone,
         playerName: result.booking.bookedBy.name,
         tenantName: result.booking.tenant.name,
@@ -385,6 +387,7 @@ export async function cancelBooking(params: {
   if (result.booking.bookedBy.phone) {
     try {
       await sendBookingCancelledWhatsApp({
+        tenantId: params.tenantId,
         phone: result.booking.bookedBy.phone,
         playerName: result.booking.bookedBy.name,
         tenantName: result.booking.tenant.name,

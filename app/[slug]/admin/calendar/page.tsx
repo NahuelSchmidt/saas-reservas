@@ -100,7 +100,14 @@ export default async function CalendarPage({
             <div>
               <div className="font-heading text-xl font-bold">{formatCentsARS(cash.totalCents)}</div>
               <div className="text-xs text-muted-foreground">
-                Total del día{cash.productsCents > 0 ? ` · ${formatCentsARS(cash.productsCents)} en productos` : ""}
+                Total del día
+                {[
+                  cash.productsCents > 0 && `${formatCentsARS(cash.productsCents)} en productos`,
+                  cash.classesCents > 0 && `${formatCentsARS(cash.classesCents)} en clases`,
+                ]
+                  .filter(Boolean)
+                  .map((s) => ` · ${s}`)
+                  .join("")}
               </div>
             </div>
           </CardContent>

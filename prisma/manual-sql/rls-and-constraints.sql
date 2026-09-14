@@ -60,5 +60,6 @@ END $$;
 -- products/sales: ver prisma/migrations/*_products_sales_rls.
 -- recurring_bookings/cash_register_closes: ver prisma/migrations/*_add_recurring_and_cash_close.
 -- mercadopago_accounts: ver prisma/migrations/*_add_mercadopago_accounts.
+-- whatsapp_instances: ver prisma/migrations/*_add_whatsapp_instances.
 -- "sale_items" queda fuera de RLS a propósito: no lleva tenantId directo, se
 -- accede siempre a través de Sale (igual que booking_participants).

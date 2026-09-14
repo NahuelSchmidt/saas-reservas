@@ -29,8 +29,14 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
       label: "Ingresos de hoy",
       value: formatCentsARS(stats.todayRevenueCents),
       sublabel:
-        stats.todayRevenueProductsCents > 0
-          ? `${formatCentsARS(stats.todayRevenueBookingsCents)} reservas · ${formatCentsARS(stats.todayRevenueProductsCents)} kiosco`
+        stats.todayRevenueProductsCents > 0 || stats.todayRevenueClassesCents > 0
+          ? [
+              `${formatCentsARS(stats.todayRevenueBookingsCents)} reservas`,
+              stats.todayRevenueProductsCents > 0 && `${formatCentsARS(stats.todayRevenueProductsCents)} kiosco`,
+              stats.todayRevenueClassesCents > 0 && `${formatCentsARS(stats.todayRevenueClassesCents)} clases`,
+            ]
+              .filter(Boolean)
+              .join(" · ")
           : undefined,
       icon: Wallet,
       color: "text-emerald-600 bg-emerald-500/10",

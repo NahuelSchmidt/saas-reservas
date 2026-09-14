@@ -20,12 +20,14 @@ function startOfMonth(d: Date) {
 
 /**
  * Plata efectivamente cobrada en un rango de fechas: pagos aprobados de
- * reservas (seña + saldo, sin reembolsos) + ventas de kiosco. Mismo criterio
- * que `getDailyCashRegister` (lib/booking/admin-service.ts), generalizado a
+ * reservas (seña + saldo, sin reembolsos) + ventas de kiosco + clases
+ * pagadas en el club (collectedBy: CLUB — las pagadas directo al profesor
+ * quedan afuera, esa plata nunca la tuvo el club). Mismo criterio que
+ * `getDailyCashRegister` (lib/booking/admin-service.ts), generalizado a
  * un rango en vez de un solo día — antes el dashboard sumaba el valor total
  * de las reservas confirmadas, que no es lo mismo que la plata que entró
  * (una reserva con seña del 30% "vale" el 100% pero solo cobrás el 30%), y
- * ni siquiera contaba el kiosco.
+ * ni siquiera contaba el kiosco ni las clases.
  */
 async function getRevenueBreakdown(
   tx: Prisma.TransactionClient,
@@ -33,8 +35,9 @@ async function getRevenueBreakdown(
   range: { from: Date; to?: Date },
 ) {
   const createdAt = range.to ? { gte: range.from, lt: range.to } : { gte: range.from };
+  const paidAt = range.to ? { gte: range.from, lt: range.to } : { gte: range.from };
 
-  const [payments, sales] = await Promise.all([
+  const [payments, sales, classEnrollments] = await Promise.all([
     tx.payment.aggregate({
       where: { tenantId, createdAt, status: "APPROVED", type: { not: "REFUND" } },
       _sum: { amountCents: true },
@@ -43,11 +46,16 @@ async function getRevenueBreakdown(
       where: { tenantId, createdAt },
       _sum: { totalCents: true },
     }),
+    tx.classEnrollment.aggregate({
+      where: { tenantId, paidAt, paymentStatus: "PAID", collectedBy: "CLUB" },
+      _sum: { priceCents: true },
+    }),
   ]);
 
   const bookingsCents = payments._sum.amountCents ?? 0;
   const productsCents = sales._sum.totalCents ?? 0;
-  return { bookingsCents, productsCents, totalCents: bookingsCents + productsCents };
+  const classesCents = classEnrollments._sum.priceCents ?? 0;
+  return { bookingsCents, productsCents, classesCents, totalCents: bookingsCents + productsCents + classesCents };
 }
 
 export async function getDashboardStats(tenantId: string) {
@@ -104,6 +112,7 @@ export async function getDashboardStats(tenantId: string) {
       todayRevenueCents: todayRevenue.totalCents,
       todayRevenueBookingsCents: todayRevenue.bookingsCents,
       todayRevenueProductsCents: todayRevenue.productsCents,
+      todayRevenueClassesCents: todayRevenue.classesCents,
       weekRevenueCents: weekRevenue.totalCents,
       monthRevenueCents: monthRevenue.totalCents,
       occupancyPct,

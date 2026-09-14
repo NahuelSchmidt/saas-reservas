@@ -212,6 +212,7 @@ export type ClassEnrollmentInput = z.infer<typeof classEnrollmentSchema>;
 export const registerClassPaymentSchema = z.object({
   enrollmentId: z.string().min(1),
   method: z.enum(["CASH", "TRANSFER", "MERCADOPAGO"]),
+  collectedBy: z.enum(["CLUB", "INSTRUCTOR"]),
 });
 export type RegisterClassPaymentInput = z.infer<typeof registerClassPaymentSchema>;
 

@@ -22,6 +22,7 @@ const TENANT_SCOPED_MODELS = new Set([
   "RecurringBooking",
   "CashRegisterClose",
   "MercadoPagoAccount",
+  "WhatsAppInstance",
   "Instructor",
   "ClassType",
   "ClassSession",

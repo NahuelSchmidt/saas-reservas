@@ -1,14 +1,20 @@
+import { getActiveInstanceName } from "@/lib/whatsapp/evolution-connect";
+
 /**
  * Envío de WhatsApp vía Evolution API (self-hosted). Mismo patrón que
  * lib/email/resend.ts: si no está configurado, el caller decide si eso es
  * un error fatal o no (acá lo tratamos como no-fatal, igual que el email).
+ *
+ * Cada complejo vincula su propio número (ver lib/whatsapp/evolution-connect.ts
+ * — WhatsApp Connect), así que acá solo falta el servidor + apikey global
+ * (administra todas las instancias) — el nombre de instancia se resuelve
+ * por tenant en `sendText`, no es una única instancia global.
  */
 function config() {
   const baseUrl = process.env.EVOLUTION_API_URL;
-  const instance = process.env.EVOLUTION_API_INSTANCE;
   const apiKey = process.env.EVOLUTION_API_KEY;
-  if (!baseUrl || !instance || !apiKey) return null;
-  return { baseUrl: baseUrl.replace(/\/$/, ""), instance, apiKey };
+  if (!baseUrl || !apiKey) return null;
+  return { baseUrl: baseUrl.replace(/\/$/, ""), apiKey };
 }
 
 /**
@@ -28,12 +34,15 @@ export function normalizeArgentinePhone(raw: string): string {
   return digits;
 }
 
-async function sendText(phone: string, text: string) {
+async function sendText(tenantId: string, phone: string, text: string) {
   const cfg = config();
   if (!cfg) return; // no configurado — no rompemos el flujo de reservas por esto
 
+  const instance = await getActiveInstanceName(tenantId);
+  if (!instance) return; // el club todavía no conectó su WhatsApp — no rompemos el flujo por esto
+
   const number = normalizeArgentinePhone(phone);
-  const res = await fetch(`${cfg.baseUrl}/message/sendText/${cfg.instance}`, {
+  const res = await fetch(`${cfg.baseUrl}/message/sendText/${instance}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", apikey: cfg.apiKey },
     body: JSON.stringify({ number, text }),
@@ -49,6 +58,7 @@ function formatHour(d: Date) {
 }
 
 export async function sendBookingConfirmedWhatsApp(params: {
+  tenantId: string;
   phone: string;
   playerName: string;
   tenantName: string;
@@ -58,7 +68,7 @@ export async function sendBookingConfirmedWhatsApp(params: {
   startTime: Date;
   endTime: Date;
 }) {
-  const { phone, playerName, tenantName, courtName, startTime, endTime } = params;
+  const { tenantId, phone, playerName, tenantName, courtName, startTime, endTime } = params;
 
   const text = [
     `Hola ${playerName}, te compartimos los datos de tu reserva:`,
@@ -70,10 +80,11 @@ export async function sendBookingConfirmedWhatsApp(params: {
     `¡Te esperamos!`,
   ].join("\n");
 
-  await sendText(phone, text);
+  await sendText(tenantId, phone, text);
 }
 
 export async function sendBookingCancelledWhatsApp(params: {
+  tenantId: string;
   phone: string;
   playerName: string;
   tenantName: string;
@@ -81,7 +92,7 @@ export async function sendBookingCancelledWhatsApp(params: {
   startTime: Date;
   refundAmountCents: number;
 }) {
-  const { phone, playerName, tenantName, courtName, startTime, refundAmountCents } = params;
+  const { tenantId, phone, playerName, tenantName, courtName, startTime, refundAmountCents } = params;
   const reembolso =
     refundAmountCents > 0
       ? (refundAmountCents / 100).toLocaleString("es-AR", { style: "currency", currency: "ARS" })
@@ -95,5 +106,5 @@ export async function sendBookingCancelledWhatsApp(params: {
     `Club: ${tenantName}`,
     `Reembolso: ${reembolso}`,
   ].join("\n");
-  await sendText(phone, text);
+  await sendText(tenantId, phone, text);
 }

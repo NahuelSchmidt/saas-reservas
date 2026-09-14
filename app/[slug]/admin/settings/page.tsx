@@ -1,12 +1,14 @@
-import { Clock3, Settings2, ShieldAlert, Wallet } from "lucide-react";
+import { Clock3, MessageCircle, Settings2, ShieldAlert, Wallet } from "lucide-react";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { withTenant } from "@/lib/db/tenant-context";
 import { getMercadoPagoAccountStatus } from "@/lib/payments/mercadopago-connect";
+import { getWhatsAppInstanceStatus } from "@/lib/whatsapp/evolution-connect";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookingConfigForm } from "./booking-config-form";
 import { CancellationPolicyForm } from "./cancellation-policy-form";
 import { BusinessHoursForm } from "./business-hours-form";
 import { MercadoPagoSection } from "./mercadopago-section";
+import { WhatsAppSection } from "./whatsapp-section";
 
 function SectionTitle({ icon: Icon, color, children }: { icon: typeof Clock3; color: string; children: React.ReactNode }) {
   return (
@@ -23,11 +25,12 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const tenant = await resolveTenantBySlug(slug);
 
-  const [config, policy, hours, mercadoPagoAccount] = await Promise.all([
+  const [config, policy, hours, mercadoPagoAccount, whatsAppInstance] = await Promise.all([
     withTenant(tenant.id, (tx) => tx.bookingConfig.findUnique({ where: { tenantId: tenant.id } })),
     withTenant(tenant.id, (tx) => tx.cancellationPolicy.findUnique({ where: { tenantId: tenant.id } })),
     withTenant(tenant.id, (tx) => tx.businessHours.findMany({ where: { tenantId: tenant.id }, orderBy: { dayOfWeek: "asc" } })),
     getMercadoPagoAccountStatus(tenant.id),
+    getWhatsAppInstanceStatus(tenant.id),
   ]);
 
   return (
@@ -56,6 +59,15 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
             account={mercadoPagoAccount}
             depositRequired={config?.depositRequired ?? true}
           />
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/60 shadow-sm">
+        <CardHeader>
+          <SectionTitle icon={MessageCircle} color="bg-emerald-500/10 text-emerald-600">WhatsApp</SectionTitle>
+        </CardHeader>
+        <CardContent>
+          <WhatsAppSection tenantSlug={tenant.slug} instance={whatsAppInstance} />
         </CardContent>
       </Card>
 

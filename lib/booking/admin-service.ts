@@ -130,6 +130,7 @@ export async function createManualBooking(params: {
 
   try {
     await sendBookingConfirmedWhatsApp({
+      tenantId: params.tenantId,
       phone: params.playerPhone,
       playerName: params.playerName,
       tenantName: params.tenantName,
@@ -259,18 +260,25 @@ export async function registerCashPayment(params: {
   });
 }
 
-/** Caja diaria: efectivo vs online cobrado en el día. */
+/**
+ * Caja diaria: efectivo vs online cobrado en el día. Incluye clases pagadas
+ * ese día en recepción (collectedBy: CLUB) — las pagadas directo al
+ * profesor quedan afuera a propósito, esa plata nunca la tuvo el club.
+ */
 export async function getDailyCashRegister(tenantId: string, date: Date) {
   const dayStart = new Date(date);
   dayStart.setHours(0, 0, 0, 0);
   const dayEnd = new Date(dayStart.getTime() + 86_400_000);
 
   return withTenant(tenantId, async (tx) => {
-    const [payments, sales] = await Promise.all([
+    const [payments, sales, classPayments] = await Promise.all([
       tx.payment.findMany({
         where: { tenantId, createdAt: { gte: dayStart, lt: dayEnd }, status: "APPROVED", type: { not: "REFUND" } },
       }),
       tx.sale.findMany({ where: { tenantId, createdAt: { gte: dayStart, lt: dayEnd } } }),
+      tx.classEnrollment.findMany({
+        where: { tenantId, paidAt: { gte: dayStart, lt: dayEnd }, paymentStatus: "PAID", collectedBy: "CLUB" },
+      }),
     ]);
 
     const bookingsCashCents = payments.filter((p) => p.method === "CASH").reduce((s, p) => s + p.amountCents, 0);
@@ -279,10 +287,13 @@ export async function getDailyCashRegister(tenantId: string, date: Date) {
     const productsCashCents = sales.filter((s) => s.method === "CASH").reduce((s, sale) => s + sale.totalCents, 0);
     const productsTransferCents = sales.filter((s) => s.method === "TRANSFER").reduce((s, sale) => s + sale.totalCents, 0);
     const productsOnlineCents = sales.filter((s) => s.method === "MERCADOPAGO").reduce((s, sale) => s + sale.totalCents, 0);
+    const classesCashCents = classPayments.filter((e) => e.paymentMethod === "CASH").reduce((s, e) => s + e.priceCents, 0);
+    const classesTransferCents = classPayments.filter((e) => e.paymentMethod === "TRANSFER").reduce((s, e) => s + e.priceCents, 0);
+    const classesOnlineCents = classPayments.filter((e) => e.paymentMethod === "MERCADOPAGO").reduce((s, e) => s + e.priceCents, 0);
 
-    const cashCents = bookingsCashCents + productsCashCents;
-    const transferCents = bookingsTransferCents + productsTransferCents;
-    const onlineCents = bookingsOnlineCents + productsOnlineCents;
+    const cashCents = bookingsCashCents + productsCashCents + classesCashCents;
+    const transferCents = bookingsTransferCents + productsTransferCents + classesTransferCents;
+    const onlineCents = bookingsOnlineCents + productsOnlineCents + classesOnlineCents;
 
     return {
       cashCents,
@@ -290,6 +301,7 @@ export async function getDailyCashRegister(tenantId: string, date: Date) {
       onlineCents,
       totalCents: cashCents + transferCents + onlineCents,
       productsCents: productsCashCents + productsTransferCents + productsOnlineCents,
+      classesCents: classesCashCents + classesTransferCents + classesOnlineCents,
     };
   });
 }

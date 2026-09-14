@@ -235,10 +235,11 @@ export async function registerClassPaymentAction(
   const parsed = registerClassPaymentSchema.safeParse({
     enrollmentId: formData.get("enrollmentId"),
     method: formData.get("method"),
+    collectedBy: formData.get("collectedBy"),
   });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 
-  await registerClassPayment(tenant.id, parsed.data.enrollmentId, parsed.data.method);
+  await registerClassPayment(tenant.id, parsed.data.enrollmentId, parsed.data.method, parsed.data.collectedBy);
   revalidatePath(`/${tenantSlug}/admin/classes`);
   return { ok: true, data: { id: parsed.data.enrollmentId } };
 }

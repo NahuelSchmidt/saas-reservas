@@ -58,6 +58,7 @@ model Tenant {
   recurringBookings  RecurringBooking[]
   cashRegisterCloses CashRegisterClose[]
   mercadoPagoAccount MercadoPagoAccount?
+  whatsAppInstance   WhatsAppInstance?
 
   instructors            Instructor[]
   classTypes             ClassType[]
@@ -601,6 +602,35 @@ model MercadoPagoAccount {
 }
 
 // ---------------------------------------------------------------------------
+// WhatsApp Connect: cada complejo vincula su propio número (escaneando un QR
+// de Evolution API, self-hosted), así los mensajes de confirmación/cancelación
+// salen desde el WhatsApp del club, no desde un número único de la plataforma.
+// No hay tokens de terceros que encriptar acá: `instanceName` identifica la
+// sesión en NUESTRO servidor de Evolution, administrado con el apikey global
+// (EVOLUTION_API_URL/EVOLUTION_API_KEY, ver lib/whatsapp/evolution-connect.ts).
+// ---------------------------------------------------------------------------
+
+enum WhatsAppConnectionStatus {
+  PENDING
+  CONNECTED
+  DISCONNECTED
+}
+
+model WhatsAppInstance {
+  id           String                   @id @default(cuid())
+  tenantId     String                   @unique
+  tenant       Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  instanceName String                   @unique
+  status       WhatsAppConnectionStatus @default(PENDING)
+  phoneNumber  String?
+  connectedAt  DateTime?
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
+
+  @@map("whatsapp_instances")
+}
+
+// ---------------------------------------------------------------------------
 // Cierre de caja diario
 // ---------------------------------------------------------------------------
 
@@ -742,22 +772,36 @@ enum ClassPaymentStatus {
   REFUNDED
 }
 
+// Quién se quedó con la plata de la clase: CLUB si la cobró el complejo
+// (efectivo/transferencia a la cuenta del club — entra a la caja diaria),
+// INSTRUCTOR si el alumno le pagó directo al profesor (frecuente en clases
+// individuales) — esa plata nunca la tuvo el club, así que no debe sumar ni
+// al arqueo de caja ni a los ingresos del complejo (ver getDailyCashRegister
+// en lib/booking/admin-service.ts y getRevenueBreakdown en
+// lib/reports/dashboard.ts), pero igual queda registrado si el alumno pagó.
+enum ClassPaymentCollector {
+  CLUB
+  INSTRUCTOR
+}
+
 model ClassEnrollment {
-  id             String                @id @default(cuid())
+  id             String                 @id @default(cuid())
   tenantId       String
-  tenant         Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant         Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   classSessionId String
-  classSession   ClassSession          @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  classSession   ClassSession           @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
   studentUserId  String
-  studentUser    User                  @relation(fields: [studentUserId], references: [id])
+  studentUser    User                   @relation(fields: [studentUserId], references: [id])
   studentName    String // snapshot, igual que SaleItem.productName
   studentPhone   String?
   priceCents     Int // snapshot del precio al inscribirse
   paymentMethod  PaymentMethod?
-  paymentStatus  ClassPaymentStatus    @default(PENDING)
-  status         ClassEnrollmentStatus @default(PENDING_PAYMENT)
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
+  collectedBy    ClassPaymentCollector?
+  paidAt         DateTime? // cuándo se registró el pago — no siempre coincide con createdAt (se puede inscribir un día y pagar otro)
+  paymentStatus  ClassPaymentStatus     @default(PENDING)
+  status         ClassEnrollmentStatus  @default(PENDING_PAYMENT)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
 
   @@unique([classSessionId, studentUserId])
   @@index([tenantId, classSessionId])

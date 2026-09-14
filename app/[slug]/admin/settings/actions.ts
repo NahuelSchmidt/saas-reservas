@@ -7,6 +7,12 @@ import { requireTenantRole } from "@/lib/auth/guards";
 import { withTenant } from "@/lib/db/tenant-context";
 import { getAuthorizationUrl, disconnectMercadoPagoAccount } from "@/lib/payments/mercadopago-connect";
 import {
+  connectWhatsApp,
+  refreshQrCode,
+  disconnectWhatsApp,
+  getWhatsAppInstanceStatus,
+} from "@/lib/whatsapp/evolution-connect";
+import {
   bookingConfigSchema,
   cancellationPolicySchema,
   businessHoursSchema,
@@ -57,6 +63,46 @@ export async function disconnectMercadoPagoAction(tenantSlug: string): Promise<A
   const tenant = await resolveTenantBySlug(tenantSlug);
   await requireTenantRole(tenant.id, ["ADMIN"]);
   await disconnectMercadoPagoAccount(tenant.id);
+  revalidatePath(`/${tenantSlug}/admin/settings`);
+  return { ok: true, data: { ok: true } };
+}
+
+export async function connectWhatsAppAction(tenantSlug: string): Promise<ActionResult<{ qr: string | null }>> {
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  await requireTenantRole(tenant.id, ["ADMIN"]);
+  try {
+    const qr = await connectWhatsApp(tenant.id, tenant.slug);
+    revalidatePath(`/${tenantSlug}/admin/settings`);
+    return { ok: true, data: { qr: qr?.base64 ?? null } };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo iniciar la conexión con WhatsApp" };
+  }
+}
+
+export async function refreshWhatsAppQrAction(tenantSlug: string): Promise<ActionResult<{ qr: string | null }>> {
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  await requireTenantRole(tenant.id, ["ADMIN"]);
+  try {
+    const qr = await refreshQrCode(tenant.id);
+    return { ok: true, data: { qr: qr?.base64 ?? null } };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo generar el código QR" };
+  }
+}
+
+export async function getWhatsAppStatusAction(
+  tenantSlug: string,
+): Promise<ActionResult<{ status: string; phoneNumber: string | null }>> {
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  await requireTenantRole(tenant.id, ["ADMIN"]);
+  const instance = await getWhatsAppInstanceStatus(tenant.id);
+  return { ok: true, data: { status: instance?.status ?? "DISCONNECTED", phoneNumber: instance?.phoneNumber ?? null } };
+}
+
+export async function disconnectWhatsAppAction(tenantSlug: string): Promise<ActionResult<{ ok: true }>> {
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  await requireTenantRole(tenant.id, ["ADMIN"]);
+  await disconnectWhatsApp(tenant.id);
   revalidatePath(`/${tenantSlug}/admin/settings`);
   return { ok: true, data: { ok: true } };
 }

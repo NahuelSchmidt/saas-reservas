@@ -12,7 +12,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -44,6 +47,7 @@ export type ClassSessionCardData = {
     status: string;
     paymentStatus: string;
     paymentMethod: string | null;
+    collectedBy: string | null;
   }[];
 };
 
@@ -80,12 +84,14 @@ export function ClassSessionCard({ tenantSlug, session }: { tenantSlug: string; 
     });
   }
 
-  function registerPayment(enrollmentId: string, method: unknown) {
-    if (typeof method !== "string" || !method) return;
+  function registerPayment(enrollmentId: string, combined: unknown) {
+    if (typeof combined !== "string" || !combined) return;
+    const [method, collectedBy] = combined.split(":");
     startTransition(async () => {
       const formData = new FormData();
       formData.set("enrollmentId", enrollmentId);
       formData.set("method", method);
+      formData.set("collectedBy", collectedBy);
       const result = await registerClassPaymentAction(tenantSlug, formData);
       if (result.ok) {
         toast.success("Pago registrado.");
@@ -132,14 +138,25 @@ export function ClassSessionCard({ tenantSlug, session }: { tenantSlug: string; 
                 </div>
                 <div className="flex items-center gap-1.5">
                   {e.paymentStatus === "PAID" ? (
-                    <Badge variant="default">Pagó{e.paymentMethod ? ` (${e.paymentMethod === "CASH" ? "efectivo" : e.paymentMethod === "TRANSFER" ? "transferencia" : "MP"})` : ""}</Badge>
+                    <Badge variant="default">
+                      Pagó{e.paymentMethod ? ` (${e.paymentMethod === "CASH" ? "efectivo" : e.paymentMethod === "TRANSFER" ? "transferencia" : "MP"}${e.collectedBy === "INSTRUCTOR" ? " · al profe" : ""})` : ""}
+                    </Badge>
                   ) : (
                     <Select onValueChange={(v) => registerPayment(e.id, v)} disabled={isPending}>
-                      <SelectTrigger size="sm" className="w-32"><SelectValue placeholder="Registrar pago" /></SelectTrigger>
+                      <SelectTrigger size="sm" className="w-40"><SelectValue placeholder="Registrar pago" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="CASH">Efectivo</SelectItem>
-                        <SelectItem value="TRANSFER">Transferencia</SelectItem>
-                        <SelectItem value="MERCADOPAGO">Mercado Pago</SelectItem>
+                        <SelectGroup>
+                          <SelectLabel>Cobrado en el club</SelectLabel>
+                          <SelectItem value="CASH:CLUB">Efectivo</SelectItem>
+                          <SelectItem value="TRANSFER:CLUB">Transferencia</SelectItem>
+                          <SelectItem value="MERCADOPAGO:CLUB">Mercado Pago</SelectItem>
+                        </SelectGroup>
+                        <SelectSeparator />
+                        <SelectGroup>
+                          <SelectLabel>Pagó directo al profe</SelectLabel>
+                          <SelectItem value="CASH:INSTRUCTOR">Efectivo</SelectItem>
+                          <SelectItem value="TRANSFER:INSTRUCTOR">Transferencia</SelectItem>
+                        </SelectGroup>
                       </SelectContent>
                     </Select>
                   )}

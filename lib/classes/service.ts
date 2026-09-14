@@ -327,15 +327,23 @@ export async function cancelEnrollment(tenantId: string, enrollmentId: string) {
   );
 }
 
+/**
+ * `collectedBy` distingue si la plata la tiene el club (efectivo/transferencia
+ * a su cuenta — entra a la caja diaria) o si el alumno le pagó directo al
+ * profesor (frecuente en clases individuales): en ese caso queda igual
+ * marcada como pagada, pero getDailyCashRegister/getRevenueBreakdown la
+ * excluyen porque esa plata nunca la tuvo el club.
+ */
 export async function registerClassPayment(
   tenantId: string,
   enrollmentId: string,
   method: "CASH" | "TRANSFER" | "MERCADOPAGO",
+  collectedBy: "CLUB" | "INSTRUCTOR",
 ) {
   return withTenant(tenantId, (tx) =>
     tx.classEnrollment.update({
       where: { id: enrollmentId },
-      data: { paymentMethod: method, paymentStatus: "PAID", status: "CONFIRMED" },
+      data: { paymentMethod: method, collectedBy, paidAt: new Date(), paymentStatus: "PAID", status: "CONFIRMED" },
     }),
   );
 }
