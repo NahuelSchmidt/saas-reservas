@@ -118,7 +118,7 @@ export default async function PublicTournamentDetailPage({
     : [];
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10 sm:px-10">
+    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-10 sm:px-10">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{tournament.name}</h1>
         <p className="text-sm text-muted-foreground">
@@ -150,7 +150,7 @@ export default async function PublicTournamentDetailPage({
                   <CategoryViewTabs
                     defaultTab="bracket"
                     bracket={
-                      <div className="flex items-stretch gap-6 overflow-x-auto pb-2">
+                      <div className="flex flex-wrap items-stretch gap-6">
                         <div className="flex shrink-0 flex-col justify-around gap-6">
                           {category.groups.map((group) => (
                             <div
