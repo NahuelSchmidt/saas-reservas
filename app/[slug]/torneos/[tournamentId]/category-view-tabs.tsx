@@ -3,10 +3,10 @@
 import { useState, type ReactNode } from "react";
 
 /**
- * El "fixture" que la gente quiere ver de un vistazo es el cuadro de
- * eliminación (quién avanza a quién) — la fase de grupos es información de
- * soporte (tabla de posiciones + partidos de esa zona) que antes se
- * intercalaba arriba del cuadro y lo tapaba. Acá quedan como dos pestañas.
+ * El "fixture" (pestaña Cuadro) muestra TODOS los partidos de punta a punta —
+ * fase de grupos y eliminación directa — para que se vea de corrido quién
+ * jugó contra quién. La tabla de posiciones por grupo (que es lo que antes
+ * ensuciaba esa vista) queda aparte, en la pestaña Posiciones.
  */
 export function CategoryViewTabs({
   defaultTab,
@@ -38,7 +38,7 @@ export function CategoryViewTabs({
             tab === "groups" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          Ver grupos
+          Posiciones
         </button>
       </div>
       {tab === "bracket" ? bracket : groups}

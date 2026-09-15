@@ -148,15 +148,33 @@ export default async function PublicTournamentDetailPage({
 
                 {tournament.format === "GROUPS_KNOCKOUT" && category.groups.length > 0 && (
                   <CategoryViewTabs
-                    defaultTab={knockoutMatches.length > 0 ? "bracket" : "groups"}
+                    defaultTab="bracket"
                     bracket={
-                      knockoutMatches.length > 0 ? (
-                        <BracketGrid matches={knockoutMatches} renderMatch={(m) => <MatchRow match={m} />} />
-                      ) : (
-                        <p className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
-                          El cuadro de eliminación se arma cuando termina la fase de grupos.
-                        </p>
-                      )
+                      <div className="flex flex-col gap-6">
+                        <div className="flex flex-col gap-4">
+                          {category.groups.map((group) => (
+                            <div key={group.id} className="flex flex-col gap-2">
+                              <h3 className="text-sm font-semibold">{group.name}</h3>
+                              <div className="flex flex-col gap-1.5">
+                                {category.matches.filter((m) => m.groupId === group.id).map((m) => (
+                                  <MatchRow key={m.id} match={m} />
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {knockoutMatches.length > 0 ? (
+                          <div className="flex flex-col gap-3">
+                            <h3 className="text-sm font-semibold">Eliminación directa</h3>
+                            <BracketGrid matches={knockoutMatches} renderMatch={(m) => <MatchRow match={m} />} />
+                          </div>
+                        ) : (
+                          <p className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
+                            El cuadro de eliminación se arma cuando termina la fase de grupos.
+                          </p>
+                        )}
+                      </div>
                     }
                     groups={
                       <div className="flex flex-col gap-4">
@@ -189,11 +207,6 @@ export default async function PublicTournamentDetailPage({
                                 ))}
                               </TableBody>
                             </Table>
-                            <div className="flex flex-col gap-1.5">
-                              {category.matches.filter((m) => m.groupId === group.id).map((m) => (
-                                <MatchRow key={m.id} match={m} />
-                              ))}
-                            </div>
                           </div>
                         ))}
                       </div>
