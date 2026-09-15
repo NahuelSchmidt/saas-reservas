@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { Archivo, Manrope } from "next/font/google";
+import { SportNexLogotype } from "@/components/brand/sportnex-logotype";
 
 const archivo = Archivo({
   subsets: ["latin"],
@@ -444,13 +445,8 @@ export function PadelLanding() {
           )}
         >
           <div style={css("max-width: 1240px; margin: 0 auto; padding: 16px 28px; display: flex; align-items: center; gap: 28px;")}>
-            <div style={css("display: flex; align-items: center; gap: 10px; margin-right: auto;")}>
-              <div style={css("width: 34px; height: 34px; border-radius: 11px; background: linear-gradient(140deg, #CCFF33, #17C964); display: grid; place-items: center; font-weight: 900; color: #071008; font-size: 17px;")} className="sp-heading">
-                S
-              </div>
-              <span style={css("font-weight: 800; font-size: 19px; letter-spacing: -0.02em; color: var(--land-text);")} className="sp-heading">
-                SportNex
-              </span>
+            <div style={css("margin-right: auto;")} aria-label="SportNex — inicio">
+              <SportNexLogotype size={22} />
             </div>
             <div style={css("display: flex; align-items: center; gap: 26px; font-size: 14.5px; font-weight: 600;")}>
               <a href="#jugadores" className="sp-nav-link">Jugadores</a>
@@ -508,14 +504,12 @@ export function PadelLanding() {
               className="sp-heading"
               style={css("font-weight: 900; font-size: clamp(44px, 5.6vw, 78px); line-height: 0.94; letter-spacing: -0.035em; margin: 0 0 22px; text-wrap: balance; color: #F5F7F1;")}
             >
-              Reservá tu cancha
+              Todo tu complejo,
               <br />
-              en segundos, a
-              <br />
-              <span style={css("color: #CCFF33;")}>cualquier hora</span>
+              en <span style={css("color: #CCFF33;")}>una sola pantalla</span>.
             </h1>
             <p style={css("font-size: 19.5px; line-height: 1.55; color: rgba(245, 247, 241, 0.72); max-width: 560px; margin: 0 0 34px; text-wrap: pretty;")}>
-              Disponibilidad real 24/7, confirmación al instante y la seña pagada online. Se acabaron los llamados, los WhatsApp perdidos y las canchas vacías por cancelaciones.
+              Reservas online, torneos, clases y cobros. SportNex ordena la agenda de tus canchas y te muestra cuánto factura cada hora.
             </p>
             <div style={css("display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-bottom: 42px;")}>
               <Link
@@ -875,9 +869,8 @@ export function PadelLanding() {
             <div data-rise="" style={css("border-radius: 24px; border: 1px solid var(--land-line2); background: var(--land-panel); overflow: hidden; box-shadow: 0 50px 100px var(--land-shadow-strong);")}>
               <div style={css("display: grid; grid-template-columns: 210px 1fr;")}>
                 <div style={css("padding: 22px 18px; border-right: 1px solid var(--land-line); background: var(--land-surface); display: grid; gap: 6px; align-content: start;")}>
-                  <div style={css("display: flex; align-items: center; gap: 9px; margin-bottom: 18px;")}>
-                    <div style={css("width: 26px; height: 26px; border-radius: 9px; background: linear-gradient(140deg, #CCFF33, #17C964);")} />
-                    <span className="sp-heading" style={css("font-weight: 800; font-size: 15px;")}>SportNex</span>
+                  <div style={css("margin-bottom: 18px;")}>
+                    <SportNexLogotype size={16} />
                   </div>
                   <div style={css("padding: 10px 12px; border-radius: 10px; background: var(--land-accent-soft); color: var(--land-accent-ink); font-size: 13.5px; font-weight: 700;")}>Calendario</div>
                   {["Reservas", "Kiosco y stock", "Reportes", "Canchas", "Clientes"].map((label) => (
@@ -1102,9 +1095,8 @@ export function PadelLanding() {
         <footer style={css("position: relative; z-index: 2; border-top: 1px solid var(--land-line); background: var(--land-bg2); padding: 54px 28px 34px;")}>
           <div style={css("max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 40px;")}>
             <div>
-              <div style={css("display: flex; align-items: center; gap: 10px; margin-bottom: 14px;")}>
-                <div className="sp-heading" style={css("width: 30px; height: 30px; border-radius: 10px; background: linear-gradient(140deg, #CCFF33, #17C964); display: grid; place-items: center; font-weight: 900; color: #071008; font-size: 15px;")}>S</div>
-                <span className="sp-heading" style={css("font-weight: 800; font-size: 17px;")}>SportNex</span>
+              <div style={css("margin-bottom: 14px;")}>
+                <SportNexLogotype size={18} />
               </div>
               <p style={css("font-size: 14px; color: var(--land-muted2); line-height: 1.6; margin: 0 0 18px; max-width: 280px;")}>Reservas y gestión de canchas para complejos deportivos.</p>
               <div style={css("display: flex; gap: 9px;")}>
