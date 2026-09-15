@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Clock, MapPin, CheckCircle2, Radio } from "lucide-react";
+import { Clock, MapPin, CheckCircle2, Radio, ChevronDown } from "lucide-react";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { getTournament, getAmericanoStandings } from "@/lib/tournaments/service";
 import { classifyMatchTimeStatus } from "@/lib/tournaments/match-status";
@@ -33,6 +33,11 @@ function groupByRound(matches: PublicMatch[]): [number, PublicMatch[]][] {
   return [...byRound.entries()].sort(([a], [b]) => a - b);
 }
 
+/**
+ * En lo público solo se ve el fixture (quién juega contra quién) — el
+ * resultado y los datos de cancha/horario quedan adentro de un
+ * `<details>` nativo, así se ve al tocar el partido, sin JS ni un dialog.
+ */
 function MatchRow({ match }: { match: PublicMatch }) {
   const timeStatus = classifyMatchTimeStatus(match);
   const played = timeStatus === "PLAYED";
@@ -40,32 +45,41 @@ function MatchRow({ match }: { match: PublicMatch }) {
     timeStatus === "LIVE" ? "border-l-emerald-500" : played ? "border-l-border" : "border-l-primary/40";
 
   return (
-    <div className={`flex flex-col gap-1.5 rounded-lg border border-l-4 ${borderColor} bg-card px-3 py-2.5 text-sm shadow-sm`}>
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-muted-foreground">{match.stageLabel}</span>
-        {timeStatus === "LIVE" && (
-          <Badge className="gap-1 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10">
-            <Radio className="size-3 animate-pulse" /> En juego
-          </Badge>
+    <details className={`group rounded-lg border border-l-4 ${borderColor} bg-card px-3 py-2.5 text-sm shadow-sm`}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs font-medium text-muted-foreground">{match.stageLabel}</span>
+          <span>
+            <span className={match.winnerTeam?.id === match.teamA?.id ? "font-semibold" : ""}>{match.teamA?.name ?? "Por definir"}</span>
+            {" vs "}
+            <span className={match.winnerTeam?.id === match.teamB?.id ? "font-semibold" : ""}>{match.teamB?.name ?? "Por definir"}</span>
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {timeStatus === "LIVE" && (
+            <Badge className="gap-1 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10">
+              <Radio className="size-3 animate-pulse" /> En juego
+            </Badge>
+          )}
+          {played && (
+            <Badge variant="secondary" className="gap-1">
+              <CheckCircle2 className="size-3" /> Jugado
+            </Badge>
+          )}
+          <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
+        </div>
+      </summary>
+
+      <div className="mt-2 flex flex-col gap-1.5 border-t pt-2">
+        {played ? (
+          <p className="text-xs font-medium">
+            {match.status === "WALKOVER" ? "Walkover — " : ""}
+            {match.scoreA.map((a, i) => `${a}-${match.scoreB[i] ?? 0}`).join(", ")}
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">Todavía no hay resultado.</p>
         )}
-        {played && (
-          <Badge variant="secondary" className="gap-1">
-            <CheckCircle2 className="size-3" /> Jugado
-          </Badge>
-        )}
-      </div>
-      <p>
-        <span className={match.winnerTeam?.id === match.teamA?.id ? "font-semibold" : ""}>{match.teamA?.name ?? "Por definir"}</span>
-        {" vs "}
-        <span className={match.winnerTeam?.id === match.teamB?.id ? "font-semibold" : ""}>{match.teamB?.name ?? "Por definir"}</span>
-      </p>
-      {played ? (
-        <p className="text-xs text-muted-foreground">
-          {match.status === "WALKOVER" ? "Walkover — " : ""}
-          {match.scoreA.map((a, i) => `${a}-${match.scoreB[i] ?? 0}`).join(", ")}
-        </p>
-      ) : (
-        (match.scheduledAt || match.court) && (
+        {(match.scheduledAt || match.court) && (
           <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-foreground/80">
             {match.scheduledAt && (
               <span className="flex items-center gap-1">
@@ -81,9 +95,9 @@ function MatchRow({ match }: { match: PublicMatch }) {
               </span>
             )}
           </div>
-        )
-      )}
-    </div>
+        )}
+      </div>
+    </details>
   );
 }
 
