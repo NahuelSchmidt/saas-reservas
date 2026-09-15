@@ -446,7 +446,7 @@ export function PadelLanding() {
         >
           <div style={css("max-width: 1240px; margin: 0 auto; padding: 16px 28px; display: flex; align-items: center; gap: 28px;")}>
             <div style={css("margin-right: auto;")} aria-label="SportNex — inicio">
-              <SportNexLogotype size={22} />
+              <SportNexLogotype size={27} />
             </div>
             <div style={css("display: flex; align-items: center; gap: 26px; font-size: 14.5px; font-weight: 600;")}>
               <a href="#jugadores" className="sp-nav-link">Jugadores</a>
