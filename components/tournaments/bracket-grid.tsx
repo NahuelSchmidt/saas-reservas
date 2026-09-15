@@ -29,7 +29,11 @@ export function BracketGrid<T extends { id: string; round: number }>({
       <div
         className="grid gap-x-12"
         style={{
-          gridTemplateColumns: `repeat(${rounds.length}, minmax(220px, 1fr))`,
+          // Ancho acotado (no 1fr): sin un tope, cada columna crece hasta el
+          // ancho del texto más largo (nombre de pareja vs pareja en una sola
+          // línea), lo que puede desbordar el contenedor — con un máximo,
+          // el texto simplemente pasa a la línea siguiente adentro de la tarjeta.
+          gridTemplateColumns: `repeat(${rounds.length}, minmax(200px, 260px))`,
           gridTemplateRows: `repeat(${numFirstRoundSlots}, minmax(76px, auto))`,
         }}
       >

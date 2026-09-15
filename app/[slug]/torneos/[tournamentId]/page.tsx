@@ -39,7 +39,7 @@ function groupByRound(matches: PublicMatch[]): [number, PublicMatch[]][] {
  * resultado y los datos de cancha/horario quedan adentro de un
  * `<details>` nativo, así se ve al tocar el partido, sin JS ni un dialog.
  */
-function MatchRow({ match }: { match: PublicMatch }) {
+function MatchRow({ match, hideStageLabel }: { match: PublicMatch; hideStageLabel?: boolean }) {
   const timeStatus = classifyMatchTimeStatus(match);
   const played = timeStatus === "PLAYED";
   const borderColor =
@@ -49,7 +49,7 @@ function MatchRow({ match }: { match: PublicMatch }) {
     <details className={`group rounded-lg border border-l-4 ${borderColor} bg-card px-3 py-2.5 text-sm shadow-sm`}>
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
         <div className="flex flex-col gap-0.5">
-          <span className="text-xs font-medium text-muted-foreground">{match.stageLabel}</span>
+          {!hideStageLabel && <span className="text-xs font-medium text-muted-foreground">{match.stageLabel}</span>}
           <span>
             <span className={match.winnerTeam?.id === match.teamA?.id ? "font-semibold" : ""}>{match.teamA?.name ?? "Por definir"}</span>
             {" vs "}
@@ -150,7 +150,7 @@ export default async function PublicTournamentDetailPage({
                   <CategoryViewTabs
                     defaultTab="bracket"
                     bracket={
-                      <div className="flex flex-wrap items-stretch gap-6">
+                      <div className="flex items-stretch gap-6">
                         <div className="flex shrink-0 flex-col justify-around gap-6">
                           {category.groups.map((group) => (
                             <div
@@ -162,7 +162,7 @@ export default async function PublicTournamentDetailPage({
                               </h3>
                               <div className="flex flex-col gap-1.5">
                                 {category.matches.filter((m) => m.groupId === group.id).map((m) => (
-                                  <MatchRow key={m.id} match={m} />
+                                  <MatchRow key={m.id} match={m} hideStageLabel />
                                 ))}
                               </div>
                               <div className="absolute top-1/2 -right-6 hidden h-px w-6 bg-border/70 sm:block" />
