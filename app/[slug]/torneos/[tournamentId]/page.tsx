@@ -6,6 +6,7 @@ import { classifyMatchTimeStatus } from "@/lib/tournaments/match-status";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BracketGrid } from "@/components/tournaments/bracket-grid";
+import { CategoryViewTabs } from "./category-view-tabs";
 
 const FORMAT_LABEL: Record<string, string> = {
   SINGLE_ELIMINATION: "Eliminación directa",
@@ -146,49 +147,62 @@ export default async function PublicTournamentDetailPage({
                 </div>
 
                 {tournament.format === "GROUPS_KNOCKOUT" && category.groups.length > 0 && (
-                  <div className="flex flex-col gap-4">
-                    {category.groups.map((group) => (
-                      <div key={group.id} className="flex flex-col gap-2">
-                        <h3 className="text-sm font-semibold">{group.name}</h3>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Equipo</TableHead>
-                              <TableHead>PJ</TableHead>
-                              <TableHead>G</TableHead>
-                              <TableHead>P</TableHead>
-                              <TableHead>Sets</TableHead>
-                              <TableHead>Games</TableHead>
-                              <TableHead>Pts</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {group.standings.map((s) => (
-                              <TableRow key={s.id}>
-                                <TableCell className="font-medium">{s.team.name}</TableCell>
-                                <TableCell>{s.played}</TableCell>
-                                <TableCell>{s.won}</TableCell>
-                                <TableCell>{s.lost}</TableCell>
-                                <TableCell>{s.setsWon}-{s.setsLost}</TableCell>
-                                <TableCell>{s.gamesWon}-{s.gamesLost}</TableCell>
-                                <TableCell className="font-semibold">{s.points}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                        <div className="flex flex-col gap-1.5">
-                          {category.matches.filter((m) => m.groupId === group.id).map((m) => (
-                            <MatchRow key={m.id} match={m} />
-                          ))}
-                        </div>
+                  <CategoryViewTabs
+                    defaultTab={knockoutMatches.length > 0 ? "bracket" : "groups"}
+                    bracket={
+                      knockoutMatches.length > 0 ? (
+                        <BracketGrid matches={knockoutMatches} renderMatch={(m) => <MatchRow match={m} />} />
+                      ) : (
+                        <p className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
+                          El cuadro de eliminación se arma cuando termina la fase de grupos.
+                        </p>
+                      )
+                    }
+                    groups={
+                      <div className="flex flex-col gap-4">
+                        {category.groups.map((group) => (
+                          <div key={group.id} className="flex flex-col gap-2">
+                            <h3 className="text-sm font-semibold">{group.name}</h3>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Equipo</TableHead>
+                                  <TableHead>PJ</TableHead>
+                                  <TableHead>G</TableHead>
+                                  <TableHead>P</TableHead>
+                                  <TableHead>Sets</TableHead>
+                                  <TableHead>Games</TableHead>
+                                  <TableHead>Pts</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {group.standings.map((s) => (
+                                  <TableRow key={s.id}>
+                                    <TableCell className="font-medium">{s.team.name}</TableCell>
+                                    <TableCell>{s.played}</TableCell>
+                                    <TableCell>{s.won}</TableCell>
+                                    <TableCell>{s.lost}</TableCell>
+                                    <TableCell>{s.setsWon}-{s.setsLost}</TableCell>
+                                    <TableCell>{s.gamesWon}-{s.gamesLost}</TableCell>
+                                    <TableCell className="font-semibold">{s.points}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                            <div className="flex flex-col gap-1.5">
+                              {category.matches.filter((m) => m.groupId === group.id).map((m) => (
+                                <MatchRow key={m.id} match={m} />
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    }
+                  />
                 )}
 
-                {knockoutMatches.length > 0 && !isAmericano && (
+                {knockoutMatches.length > 0 && !isAmericano && tournament.format !== "GROUPS_KNOCKOUT" && (
                   <div className="flex flex-col gap-3">
-                    {tournament.format === "GROUPS_KNOCKOUT" && <h3 className="text-sm font-semibold">Eliminación directa</h3>}
                     <BracketGrid matches={knockoutMatches} renderMatch={(m) => <MatchRow match={m} />} />
                   </div>
                 )}
