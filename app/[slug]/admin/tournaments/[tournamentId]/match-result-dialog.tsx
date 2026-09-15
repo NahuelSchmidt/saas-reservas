@@ -34,6 +34,8 @@ export type MatchData = {
   winnerTeam: { id: string; name: string } | null;
   status: string;
   scheduledAt: Date | null;
+  courtId: string | null;
+  court: { id: string; name: string } | null;
 };
 
 export function MatchResultDialog({

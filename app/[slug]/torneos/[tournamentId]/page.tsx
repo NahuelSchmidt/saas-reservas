@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
+import { Clock, MapPin, CheckCircle2, Radio } from "lucide-react";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { getTournament, getAmericanoStandings } from "@/lib/tournaments/service";
+import { classifyMatchTimeStatus } from "@/lib/tournaments/match-status";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BracketGrid } from "@/components/tournaments/bracket-grid";
@@ -19,6 +21,7 @@ type PublicMatch = {
   scoreB: number[];
   status: string;
   scheduledAt: Date | null;
+  court: { name: string } | null;
   teamA: { id: string; name: string } | null;
   teamB: { id: string; name: string } | null;
   winnerTeam: { id: string; name: string } | null;
@@ -31,10 +34,26 @@ function groupByRound(matches: PublicMatch[]): [number, PublicMatch[]][] {
 }
 
 function MatchRow({ match }: { match: PublicMatch }) {
-  const played = match.status === "COMPLETED" || match.status === "WALKOVER";
+  const timeStatus = classifyMatchTimeStatus(match);
+  const played = timeStatus === "PLAYED";
+  const borderColor =
+    timeStatus === "LIVE" ? "border-l-emerald-500" : played ? "border-l-border" : "border-l-primary/40";
+
   return (
-    <div className="flex flex-col gap-1 rounded-lg border bg-card px-3 py-2 text-sm shadow-sm">
-      <span className="text-xs text-muted-foreground">{match.stageLabel}</span>
+    <div className={`flex flex-col gap-1.5 rounded-lg border border-l-4 ${borderColor} bg-card px-3 py-2.5 text-sm shadow-sm`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-medium text-muted-foreground">{match.stageLabel}</span>
+        {timeStatus === "LIVE" && (
+          <Badge className="gap-1 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10">
+            <Radio className="size-3 animate-pulse" /> En juego
+          </Badge>
+        )}
+        {played && (
+          <Badge variant="secondary" className="gap-1">
+            <CheckCircle2 className="size-3" /> Jugado
+          </Badge>
+        )}
+      </div>
       <p>
         <span className={match.winnerTeam?.id === match.teamA?.id ? "font-semibold" : ""}>{match.teamA?.name ?? "Por definir"}</span>
         {" vs "}
@@ -45,12 +64,25 @@ function MatchRow({ match }: { match: PublicMatch }) {
           {match.status === "WALKOVER" ? "Walkover — " : ""}
           {match.scoreA.map((a, i) => `${a}-${match.scoreB[i] ?? 0}`).join(", ")}
         </p>
-      ) : match.scheduledAt ? (
-        <p className="text-xs text-muted-foreground">
-          {match.scheduledAt.toLocaleDateString("es-AR", { weekday: "short", day: "2-digit", month: "2-digit" })} ·{" "}
-          {match.scheduledAt.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
-        </p>
-      ) : null}
+      ) : (
+        (match.scheduledAt || match.court) && (
+          <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-foreground/80">
+            {match.scheduledAt && (
+              <span className="flex items-center gap-1">
+                <Clock className="size-3.5" />
+                {match.scheduledAt.toLocaleDateString("es-AR", { weekday: "short", day: "2-digit", month: "2-digit" })}{" "}
+                {match.scheduledAt.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
+            {match.court && (
+              <span className="flex items-center gap-1">
+                <MapPin className="size-3.5" />
+                {match.court.name}
+              </span>
+            )}
+          </div>
+        )
+      )}
     </div>
   );
 }

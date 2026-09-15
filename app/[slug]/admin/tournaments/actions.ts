@@ -216,13 +216,17 @@ export async function updateMatchScheduleAction(
   tenantSlug: string,
   tournamentId: string,
   matchId: string,
-  scheduledAtLocal: string,
+  data: { scheduledAtLocal?: string; courtId?: string | null },
 ): Promise<ActionResult<{ id: string }>> {
   const tenant = await resolveTenantBySlug(tenantSlug);
   await requireTenantRole(tenant.id, ["ADMIN", "EMPLOYEE"]);
 
-  const scheduledAt = scheduledAtLocal ? new Date(scheduledAtLocal) : null;
-  await updateMatchSchedule(tenant.id, matchId, scheduledAt);
+  await updateMatchSchedule(tenant.id, matchId, {
+    ...(data.scheduledAtLocal !== undefined
+      ? { scheduledAt: data.scheduledAtLocal ? new Date(data.scheduledAtLocal) : null }
+      : {}),
+    ...(data.courtId !== undefined ? { courtId: data.courtId } : {}),
+  });
   revalidatePath(`/${tenantSlug}/admin/tournaments/${tournamentId}`);
   revalidatePath(`/${tenantSlug}/torneos/${tournamentId}`);
   return { ok: true, data: { id: matchId } };

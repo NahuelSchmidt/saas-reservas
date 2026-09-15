@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
+import { withTenant } from "@/lib/db/tenant-context";
 import { getTournament, getAmericanoStandings } from "@/lib/tournaments/service";
 import { formatCentsARS } from "@/lib/availability/engine";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,17 @@ function groupByRound<T extends { round: number }>(matches: T[]): [number, T[]][
   return [...byRound.entries()].sort(([a], [b]) => a - b);
 }
 
-function MatchRow({ tenantSlug, tournamentId, match }: { tenantSlug: string; tournamentId: string; match: MatchData }) {
+function MatchRow({
+  tenantSlug,
+  tournamentId,
+  match,
+  courts,
+}: {
+  tenantSlug: string;
+  tournamentId: string;
+  match: MatchData;
+  courts: { id: string; name: string }[];
+}) {
   const played = match.status === "COMPLETED" || match.status === "WALKOVER";
   return (
     <div className="flex flex-col gap-1 rounded-lg border bg-card px-3 py-2 shadow-sm">
@@ -45,7 +56,14 @@ function MatchRow({ tenantSlug, tournamentId, match }: { tenantSlug: string; tou
         </div>
         <MatchResultDialog tenantSlug={tenantSlug} tournamentId={tournamentId} match={match} />
       </div>
-      <MatchScheduleInput tenantSlug={tenantSlug} tournamentId={tournamentId} matchId={match.id} scheduledAt={match.scheduledAt} />
+      <MatchScheduleInput
+        tenantSlug={tenantSlug}
+        tournamentId={tournamentId}
+        matchId={match.id}
+        scheduledAt={match.scheduledAt}
+        courtId={match.courtId}
+        courts={courts}
+      />
     </div>
   );
 }
@@ -57,7 +75,12 @@ export default async function TournamentDetailPage({
 }) {
   const { slug, tournamentId } = await params;
   const tenant = await resolveTenantBySlug(slug);
-  const tournament = await getTournament(tenant.id, tournamentId);
+  const [tournament, courts] = await Promise.all([
+    getTournament(tenant.id, tournamentId),
+    withTenant(tenant.id, (tx) =>
+      tx.court.findMany({ where: { tenantId: tenant.id, status: { not: "INACTIVE" } }, orderBy: { name: "asc" } }),
+    ),
+  ]);
   if (!tournament) notFound();
 
   const isAmericano = tournament.format === "AMERICANO";
@@ -169,7 +192,7 @@ export default async function TournamentDetailPage({
                           {category.matches
                             .filter((m) => m.groupId === group.id)
                             .map((m) => (
-                              <MatchRow key={m.id} tenantSlug={tenant.slug} tournamentId={tournament.id} match={m} />
+                              <MatchRow key={m.id} tenantSlug={tenant.slug} tournamentId={tournament.id} match={m} courts={courts} />
                             ))}
                         </div>
                       </div>
@@ -183,7 +206,7 @@ export default async function TournamentDetailPage({
                     {tournament.format === "GROUPS_KNOCKOUT" && <h4 className="text-sm font-semibold">Eliminación directa</h4>}
                     <BracketGrid
                       matches={knockoutMatches}
-                      renderMatch={(m) => <MatchRow tenantSlug={tenant.slug} tournamentId={tournament.id} match={m} />}
+                      renderMatch={(m) => <MatchRow tenantSlug={tenant.slug} tournamentId={tournament.id} match={m} courts={courts} />}
                     />
                   </div>
                 )}
@@ -196,7 +219,7 @@ export default async function TournamentDetailPage({
                           <div key={round} className="flex flex-col gap-1.5">
                             <span className="text-xs font-semibold text-muted-foreground">Ronda {round}</span>
                             {matches.map((m) => (
-                              <MatchRow key={m.id} tenantSlug={tenant.slug} tournamentId={tournament.id} match={m} />
+                              <MatchRow key={m.id} tenantSlug={tenant.slug} tournamentId={tournament.id} match={m} courts={courts} />
                             ))}
                           </div>
                         ))}

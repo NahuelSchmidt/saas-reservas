@@ -51,70 +51,119 @@ export function FixtureActions({
   }
 
   if (format === "SINGLE_ELIMINATION") {
-    if (hasSingleEliminationMatches) return null;
+    if (hasSingleEliminationMatches) {
+      return (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={isPending || teamsCount < 2}
+          onClick={() => {
+            if (!confirm("Esto borra el cuadro actual (y los resultados ya cargados) y sortea de nuevo. ¿Confirmás?")) return;
+            run(() => generateSingleEliminationFixtureAction(tenantSlug, tournamentId, categoryId));
+          }}
+        >
+          {isPending ? "Sorteando..." : "Rehacer sorteo"}
+        </Button>
+      );
+    }
     return (
       <Button
         size="sm"
         disabled={isPending || teamsCount < 2}
         onClick={() => run(() => generateSingleEliminationFixtureAction(tenantSlug, tournamentId, categoryId))}
       >
-        {isPending ? "Generando..." : "Generar cuadro"}
+        {isPending ? "Sorteando..." : "Sortear cuadro"}
       </Button>
     );
   }
 
   if (format === "GROUPS_KNOCKOUT") {
-    if (!hasGroups) {
-      return (
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            min={1}
-            placeholder="Cant. de grupos (auto)"
-            className="w-44"
-            value={numGroups}
-            onChange={(e) => setNumGroups(e.target.value)}
-          />
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        {!hasGroups ? (
+          <>
+            <Input
+              type="number"
+              min={1}
+              placeholder="Cant. de grupos (auto)"
+              className="w-44"
+              value={numGroups}
+              onChange={(e) => setNumGroups(e.target.value)}
+            />
+            <Button
+              size="sm"
+              disabled={isPending || teamsCount < 2}
+              onClick={() =>
+                run(() =>
+                  generateGroupStageAction(tenantSlug, tournamentId, categoryId, numGroups ? Number(numGroups) : undefined),
+                )
+              }
+            >
+              {isPending ? "Sorteando..." : "Sortear zonas"}
+            </Button>
+          </>
+        ) : (
           <Button
             size="sm"
+            variant="outline"
             disabled={isPending || teamsCount < 2}
-            onClick={() =>
+            onClick={() => {
+              if (
+                !confirm(
+                  "Esto borra las zonas y TODOS los partidos de la categoría (incluido el cuadro de eliminación si ya se generó) y sortea de nuevo. ¿Confirmás?",
+                )
+              )
+                return;
               run(() =>
                 generateGroupStageAction(tenantSlug, tournamentId, categoryId, numGroups ? Number(numGroups) : undefined),
-              )
-            }
+              );
+            }}
           >
-            {isPending ? "Armando..." : "Armar grupos"}
+            {isPending ? "Sorteando..." : "Rehacer sorteo de zonas"}
           </Button>
-        </div>
-      );
-    }
-    if (!hasKnockoutMatches) {
-      return (
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            min={1}
-            className="w-56"
-            value={qualifiersPerGroup}
-            onChange={(e) => setQualifiersPerGroup(e.target.value)}
-          />
-          <span className="text-xs text-muted-foreground">clasificados por grupo</span>
+        )}
+
+        {hasGroups && !hasKnockoutMatches && (
+          <>
+            <Input
+              type="number"
+              min={1}
+              className="w-56"
+              value={qualifiersPerGroup}
+              onChange={(e) => setQualifiersPerGroup(e.target.value)}
+            />
+            <span className="text-xs text-muted-foreground">clasificados por grupo</span>
+            <Button
+              size="sm"
+              disabled={isPending}
+              onClick={() =>
+                run(() =>
+                  generateKnockoutFromGroupsAction(tenantSlug, tournamentId, categoryId, Number(qualifiersPerGroup) || 2),
+                )
+              }
+            >
+              {isPending ? "Generando..." : "Generar cuadro de eliminación"}
+            </Button>
+          </>
+        )}
+
+        {hasKnockoutMatches && (
           <Button
             size="sm"
+            variant="outline"
             disabled={isPending}
-            onClick={() =>
+            onClick={() => {
+              if (!confirm("Esto borra el cuadro de eliminación actual (no toca las zonas) y lo arma de nuevo. ¿Confirmás?")) return;
               run(() =>
                 generateKnockoutFromGroupsAction(tenantSlug, tournamentId, categoryId, Number(qualifiersPerGroup) || 2),
-              )
-            }
+              );
+            }}
           >
-            {isPending ? "Generando..." : "Generar cuadro de eliminación"}
+            {isPending ? "Generando..." : "Rehacer cuadro de eliminación"}
           </Button>
-        </div>
-      );
-    }
-    return null;
+        )}
+      </div>
+    );
   }
 
   if (format === "AMERICANO") {

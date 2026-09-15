@@ -88,3 +88,14 @@ export function shuffle<T>(arr: T[]): T[] {
   }
   return copy;
 }
+
+/**
+ * Orden de siembra para armar zonas/cuadro: si algún equipo tiene `seed`
+ * asignado manualmente, se respeta ese orden; si no, se sortea al azar. Hoy
+ * no hay UI para cargar `seed` a mano, así que en la práctica esto siempre
+ * sortea — se deja la rama de `seed` por si en el futuro se agrega esa opción.
+ */
+export function drawOrder<T extends { seed: number | null }>(teams: T[]): T[] {
+  const hasManualSeeds = teams.some((t) => t.seed != null);
+  return hasManualSeeds ? [...teams].sort((a, b) => (a.seed ?? 999) - (b.seed ?? 999)) : shuffle(teams);
+}

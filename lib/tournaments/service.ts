@@ -6,6 +6,7 @@ import {
   stageLabelForRound,
   roundRobinSchedule,
   distributeIntoGroups,
+  drawOrder,
   shuffle,
 } from "./bracket";
 
@@ -220,6 +221,12 @@ async function buildSingleEliminationBracket(
   return matchesByRound.flat();
 }
 
+/**
+ * Genera (o re-genera) el cuadro de eliminación directa. Si ya había un
+ * cuadro armado, se borra entero primero — así el admin puede rehacer el
+ * sorteo si se cargó tarde un equipo o hubo un error, sin tener que tocar la
+ * base a mano.
+ */
 export async function generateSingleEliminationFixture(tenantId: string, categoryId: string) {
   return withTenant(tenantId, async (tx) => {
     const category = await tx.tournamentCategory.findUnique({
@@ -228,8 +235,9 @@ export async function generateSingleEliminationFixture(tenantId: string, categor
     });
     if (!category) throw new Error("Categoría no encontrada");
 
-    // Siembra: por `seed` si se asignó, sino por orden de inscripción.
-    const teams = [...category.teams].sort((a, b) => (a.seed ?? 999) - (b.seed ?? 999));
+    await tx.tournamentMatch.deleteMany({ where: { categoryId } });
+
+    const teams = drawOrder(category.teams);
     return buildSingleEliminationBracket(tx, {
       tenantId,
       tournamentId: category.tournamentId,
@@ -243,6 +251,12 @@ export async function generateSingleEliminationFixture(tenantId: string, categor
 // Fase de grupos (GROUPS_KNOCKOUT)
 // ---------------------------------------------------------------------------
 
+/**
+ * Sortea (o re-sortea) las zonas. Si ya había zonas armadas, se borran junto
+ * con TODOS los partidos de la categoría (zonas y, si ya se había generado,
+ * el cuadro de eliminación derivado de ellas) — quedaría inconsistente con
+ * las zonas nuevas. Así el admin puede rehacer el sorteo sin tocar la base.
+ */
 export async function generateGroupStage(tenantId: string, categoryId: string, numGroups?: number) {
   return withTenant(tenantId, async (tx) => {
     const category = await tx.tournamentCategory.findUnique({
@@ -251,7 +265,10 @@ export async function generateGroupStage(tenantId: string, categoryId: string, n
     });
     if (!category) throw new Error("Categoría no encontrada");
 
-    const teams = [...category.teams].sort((a, b) => (a.seed ?? 999) - (b.seed ?? 999));
+    await tx.tournamentMatch.deleteMany({ where: { categoryId } });
+    await tx.tournamentGroup.deleteMany({ where: { categoryId } });
+
+    const teams = drawOrder(category.teams);
     const groupCount = numGroups ?? Math.max(1, Math.ceil(teams.length / 4));
     const groups = distributeIntoGroups(teams, groupCount);
 
@@ -286,7 +303,12 @@ export async function generateGroupStage(tenantId: string, categoryId: string, n
   });
 }
 
-/** Toma los mejores `qualifiersPerGroup` de cada grupo (por puntos) y arma la llave de eliminación. */
+/**
+ * Toma los mejores `qualifiersPerGroup` de cada grupo (por puntos) y arma la
+ * llave de eliminación. Si ya había un cuadro armado, se borra primero (sin
+ * tocar la fase de grupos) — permite rehacerlo si cambiaron los resultados
+ * de grupos o se usó mal la cantidad de clasificados.
+ */
 export async function generateKnockoutFromGroups(
   tenantId: string,
   categoryId: string,
@@ -298,6 +320,8 @@ export async function generateKnockoutFromGroups(
       include: { groups: { include: { standings: { include: { team: true } } } } },
     });
     if (!category) throw new Error("Categoría no encontrada");
+
+    await tx.tournamentMatch.deleteMany({ where: { categoryId, groupId: null } });
 
     // Ranking por posición dentro del grupo (1ros, luego 2dos, ...), y dentro
     // de cada posición por puntos, para minimizar que dos del mismo grupo se
@@ -497,8 +521,12 @@ export async function recordMatchResult(
   });
 }
 
-export async function updateMatchSchedule(tenantId: string, matchId: string, scheduledAt: Date | null) {
-  return withTenant(tenantId, (tx) => tx.tournamentMatch.update({ where: { id: matchId }, data: { scheduledAt } }));
+export async function updateMatchSchedule(
+  tenantId: string,
+  matchId: string,
+  data: { scheduledAt?: Date | null; courtId?: string | null },
+) {
+  return withTenant(tenantId, (tx) => tx.tournamentMatch.update({ where: { id: matchId }, data }));
 }
 
 export async function getBracket(tenantId: string, categoryId: string) {
