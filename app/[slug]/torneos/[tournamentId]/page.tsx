@@ -174,7 +174,7 @@ export default async function PublicTournamentDetailPage({
                           <ArrowRight className="size-5 text-muted-foreground" />
                         </div>
 
-                        <div className="min-w-0 shrink-0">
+                        <div className="flex min-w-0 shrink-0 items-center">
                           {knockoutMatches.length > 0 ? (
                             <BracketGrid matches={knockoutMatches} renderMatch={(m) => <MatchRow match={m} />} />
                           ) : (
