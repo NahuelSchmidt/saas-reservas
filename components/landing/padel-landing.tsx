@@ -449,7 +449,7 @@ export function PadelLanding() {
                 S
               </div>
               <span style={css("font-weight: 800; font-size: 19px; letter-spacing: -0.02em; color: var(--land-text);")} className="sp-heading">
-                Sistema Padel
+                SportNex
               </span>
             </div>
             <div style={css("display: flex; align-items: center; gap: 26px; font-size: 14.5px; font-weight: 600;")}>
@@ -877,7 +877,7 @@ export function PadelLanding() {
                 <div style={css("padding: 22px 18px; border-right: 1px solid var(--land-line); background: var(--land-surface); display: grid; gap: 6px; align-content: start;")}>
                   <div style={css("display: flex; align-items: center; gap: 9px; margin-bottom: 18px;")}>
                     <div style={css("width: 26px; height: 26px; border-radius: 9px; background: linear-gradient(140deg, #CCFF33, #17C964);")} />
-                    <span className="sp-heading" style={css("font-weight: 800; font-size: 15px;")}>Sistema Padel</span>
+                    <span className="sp-heading" style={css("font-weight: 800; font-size: 15px;")}>SportNex</span>
                   </div>
                   <div style={css("padding: 10px 12px; border-radius: 10px; background: var(--land-accent-soft); color: var(--land-accent-ink); font-size: 13.5px; font-weight: 700;")}>Calendario</div>
                   {["Reservas", "Kiosco y stock", "Reportes", "Canchas", "Clientes"].map((label) => (
@@ -1104,7 +1104,7 @@ export function PadelLanding() {
             <div>
               <div style={css("display: flex; align-items: center; gap: 10px; margin-bottom: 14px;")}>
                 <div className="sp-heading" style={css("width: 30px; height: 30px; border-radius: 10px; background: linear-gradient(140deg, #CCFF33, #17C964); display: grid; place-items: center; font-weight: 900; color: #071008; font-size: 15px;")}>S</div>
-                <span className="sp-heading" style={css("font-weight: 800; font-size: 17px;")}>Sistema Padel</span>
+                <span className="sp-heading" style={css("font-weight: 800; font-size: 17px;")}>SportNex</span>
               </div>
               <p style={css("font-size: 14px; color: var(--land-muted2); line-height: 1.6; margin: 0 0 18px; max-width: 280px;")}>Reservas y gestión de canchas para complejos deportivos.</p>
               <div style={css("display: flex; gap: 9px;")}>
@@ -1127,13 +1127,13 @@ export function PadelLanding() {
             </div>
             <div style={css("display: grid; gap: 11px; align-content: start;")}>
               <div className="sp-heading" style={css("font-weight: 800; font-size: 13.5px; margin-bottom: 3px;")}>Contacto</div>
-              <span className="sp-footer-link" style={css("font-size: 14px;")}>hola@sistemapadel.com</span>
+              <span className="sp-footer-link" style={css("font-size: 14px;")}>hola@sportnex.com</span>
               <span className="sp-footer-link" style={css("font-size: 14px;")}>+54 9 11 5555-5555</span>
               <span className="sp-footer-link" style={css("font-size: 14px;")}>Soporte</span>
             </div>
           </div>
           <div style={css("max-width: 1240px; margin: 34px auto 0; padding-top: 22px; border-top: 1px solid var(--land-line); display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; font-size: 13px; color: var(--land-muted3);")}>
-            <span>© 2026 Sistema Padel. Hecho en Argentina.</span>
+            <span>© 2026 SportNex. Hecho en Argentina.</span>
             <div style={css("display: flex; gap: 20px;")}>
               <a href="#" className="sp-legal-link">Términos</a>
               <a href="#" className="sp-legal-link">Privacidad</a>

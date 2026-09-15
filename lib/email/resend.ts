@@ -6,7 +6,7 @@ function client() {
   return new Resend(apiKey);
 }
 
-const from = () => process.env.EMAIL_FROM ?? "Sistema Padel <no-reply@sistema-padel.com>";
+const from = () => process.env.EMAIL_FROM ?? "SportNex <no-reply@sportnex.com>";
 
 export async function sendBookingConfirmedEmail(params: {
   to: string;

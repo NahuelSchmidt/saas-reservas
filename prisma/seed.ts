@@ -19,10 +19,10 @@ async function main() {
 
   const superAdminPassword = await bcrypt.hash("changeme123", 10);
   const superAdmin = await prisma.user.upsert({
-    where: { email: "admin@sistema-padel.com" },
+    where: { email: "admin@sportnex.com" },
     update: {},
     create: {
-      email: "admin@sistema-padel.com",
+      email: "admin@sportnex.com",
       name: "Super Admin",
       passwordHash: superAdminPassword,
       globalRole: "SUPER_ADMIN",

@@ -15,8 +15,8 @@ const headingFont = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Sistema Padel",
-  description: "Plataforma de reservas para complejos de pádel",
+  title: "SportNex",
+  description: "Plataforma de gestión y reservas para complejos deportivos",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
