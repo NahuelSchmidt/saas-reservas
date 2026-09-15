@@ -473,7 +473,9 @@ export function PadelLanding() {
         <section
           ref={heroRef}
           data-screen-label="Hero"
-          style={css("position: relative; z-index: 2; padding: 132px 28px 110px; overflow: hidden; background: #10130c;")}
+          style={css(
+            "position: relative; z-index: 2; padding: 132px 28px 110px; overflow: hidden; background: #10130c; min-height: 100svh; display: flex; flex-direction: column; justify-content: center;",
+          )}
         >
           <div aria-hidden="true" style={css("position: absolute; inset: 0; z-index: 0;")}>
             {heroPhotos.map((url, i) => (
