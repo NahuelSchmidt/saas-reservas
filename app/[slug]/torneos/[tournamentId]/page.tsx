@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Clock, MapPin, CheckCircle2, Radio, ChevronDown } from "lucide-react";
+import { Clock, MapPin, CheckCircle2, Radio, ChevronDown, ArrowRight } from "lucide-react";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { getTournament, getAmericanoStandings } from "@/lib/tournaments/service";
 import { classifyMatchTimeStatus } from "@/lib/tournaments/match-status";
@@ -150,30 +150,39 @@ export default async function PublicTournamentDetailPage({
                   <CategoryViewTabs
                     defaultTab="bracket"
                     bracket={
-                      <div className="flex flex-col gap-6">
-                        <div className="flex flex-col gap-4">
+                      <div className="flex items-stretch gap-6 overflow-x-auto pb-2">
+                        <div className="flex shrink-0 flex-col justify-around gap-6">
                           {category.groups.map((group) => (
-                            <div key={group.id} className="flex flex-col gap-2">
-                              <h3 className="text-sm font-semibold">{group.name}</h3>
+                            <div
+                              key={group.id}
+                              className="relative flex w-64 flex-col gap-2 rounded-lg border bg-card p-3"
+                            >
+                              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                {group.name}
+                              </h3>
                               <div className="flex flex-col gap-1.5">
                                 {category.matches.filter((m) => m.groupId === group.id).map((m) => (
                                   <MatchRow key={m.id} match={m} />
                                 ))}
                               </div>
+                              <div className="absolute top-1/2 -right-6 hidden h-px w-6 bg-border/70 sm:block" />
                             </div>
                           ))}
                         </div>
 
-                        {knockoutMatches.length > 0 ? (
-                          <div className="flex flex-col gap-3">
-                            <h3 className="text-sm font-semibold">Eliminación directa</h3>
+                        <div className="hidden shrink-0 items-center sm:flex">
+                          <ArrowRight className="size-5 text-muted-foreground" />
+                        </div>
+
+                        <div className="min-w-0 shrink-0">
+                          {knockoutMatches.length > 0 ? (
                             <BracketGrid matches={knockoutMatches} renderMatch={(m) => <MatchRow match={m} />} />
-                          </div>
-                        ) : (
-                          <p className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
-                            El cuadro de eliminación se arma cuando termina la fase de grupos.
-                          </p>
-                        )}
+                          ) : (
+                            <p className="flex h-full min-w-64 items-center rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+                              El cuadro de eliminación se arma cuando termina la fase de grupos.
+                            </p>
+                          )}
+                        </div>
                       </div>
                     }
                     groups={
