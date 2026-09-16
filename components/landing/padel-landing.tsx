@@ -161,45 +161,6 @@ const functions = [
   },
 ];
 
-const testimonials = [
-  {
-    quote: "“Antes perdía turnos porque no llegaba a contestar los mensajes. Ahora la agenda se llena sola y yo miro el panel.”",
-    initials: "MG",
-    avatarBg: "rgba(204, 255, 51, 0.18)",
-    avatarColor: "var(--land-accent-ink)",
-    name: "Martín G.",
-    place: "Complejo Del Parque · Córdoba",
-    accent: true,
-  },
-  {
-    quote: "“La seña online nos cambió el fin de semana: bajamos las cancelaciones de último momento casi a cero.”",
-    initials: "LF",
-    avatarBg: "var(--land-green-soft)",
-    avatarColor: "var(--land-green-ink)",
-    name: "Luciana F.",
-    place: "Match Point · Rosario",
-    accent: false,
-  },
-  {
-    quote: "“Tengo todas las canchas en la misma grilla, y el kiosco cargado ahí mismo. Cierro caja en cinco minutos.”",
-    initials: "DR",
-    avatarBg: "rgba(204, 255, 51, 0.18)",
-    avatarColor: "var(--land-accent-ink)",
-    name: "Diego R.",
-    place: "Club Norte · Buenos Aires",
-    accent: false,
-  },
-];
-
-const clientNames = [
-  "Complejo Del Parque",
-  "La Bombonerita",
-  "Club Norte",
-  "Match Point",
-  "Sporting Rosario",
-  "Center Sur",
-];
-
 const bars = [32, 24, 46, 58, 72, 96, 88, 64, 40];
 
 export function PadelLanding() {
@@ -960,45 +921,6 @@ export function PadelLanding() {
           </div>
         </section>
 
-        <section style={css("position: relative; z-index: 2; padding: 90px 28px;")}>
-          <div style={css("max-width: 1240px; margin: 0 auto;")}>
-            <div data-rise="" style={css("text-align: center; font-size: 13px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--land-muted2); margin-bottom: 28px;")}>
-              Complejos que ya dejaron el cuaderno
-            </div>
-            <div style={css("overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); margin-bottom: 56px;")}>
-              <div style={css("display: flex; gap: 56px; width: max-content; animation: sp-marquee 26s linear infinite;")}>
-                {[...clientNames, ...clientNames].map((name, i) => (
-                  <span key={i} className="sp-heading" style={css("font-weight: 800; font-size: 22px; color: var(--land-marquee); letter-spacing: -0.02em; white-space: nowrap;")}>{name}</span>
-                ))}
-              </div>
-            </div>
-            <div style={css("display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;")}>
-              {testimonials.map((t) => (
-                <div
-                  key={t.name}
-                  data-rise=""
-                  style={css(
-                    t.accent
-                      ? "padding: 30px 28px; border-radius: 20px; background: var(--land-card-accent-bg); border: 1px solid var(--land-accent-line);"
-                      : "padding: 30px 28px; border-radius: 20px; background: var(--land-surface); border: 1px solid var(--land-line);",
-                  )}
-                >
-                  <p style={css("font-size: 17px; line-height: 1.55; margin: 0 0 22px; color: var(--land-text); text-wrap: pretty;")}>{t.quote}</p>
-                  <div style={css("display: flex; align-items: center; gap: 12px;")}>
-                    <div className="sp-heading" style={{ ...css("width: 38px; height: 38px; border-radius: 999px; display: grid; place-items: center; font-weight: 900; font-size: 14px;"), background: t.avatarBg, color: t.avatarColor }}>
-                      {t.initials}
-                    </div>
-                    <div>
-                      <div style={css("font-weight: 700; font-size: 14.5px;")}>{t.name}</div>
-                      <div style={css("font-size: 12.5px; color: var(--land-muted2);")}>{t.place}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         <section id="precios" style={css("position: relative; z-index: 2; padding: 96px 28px; background: var(--land-bg2); border-top: 1px solid var(--land-line);")}>
           <div style={css("max-width: 1240px; margin: 0 auto;")}>
             <div data-rise="" style={css("text-align: center; max-width: 600px; margin: 0 auto 50px;")}>
@@ -1122,7 +1044,6 @@ export function PadelLanding() {
             <div style={css("display: grid; gap: 11px; align-content: start;")}>
               <div className="sp-heading" style={css("font-weight: 800; font-size: 13.5px; margin-bottom: 3px;")}>Contacto</div>
               <span className="sp-footer-link" style={css("font-size: 14px;")}>hola@sportnex.com</span>
-              <span className="sp-footer-link" style={css("font-size: 14px;")}>+54 9 11 5555-5555</span>
               <span className="sp-footer-link" style={css("font-size: 14px;")}>Soporte</span>
             </div>
           </div>
