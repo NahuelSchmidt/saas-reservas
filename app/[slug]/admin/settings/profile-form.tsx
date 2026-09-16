@@ -48,8 +48,9 @@ export function ProfileForm({
             clientPayload: JSON.stringify({ tenantSlug }),
           });
           newCoverPhotoUrl = blob.url;
-        } catch {
-          toast.error("No se pudo subir la foto.");
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "No se pudo subir la foto.";
+          toast.error(message);
           return;
         }
       }
