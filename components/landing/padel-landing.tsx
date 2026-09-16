@@ -167,19 +167,19 @@ export function PadelLanding() {
   const rootRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const [heroPhotoIndex, setHeroPhotoIndex] = useState(0);
-  const [navSolid, setNavSolid] = useState(true);
+  const [navSolid, setNavSolid] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setHeroPhotoIndex((i) => (i + 1) % heroPhotos.length), 5000);
     return () => clearInterval(id);
   }, []);
 
-  // Barra opaca (crema) mientras se ve el hero oscuro de fondo, transparente
-  // una vez que se scrollea más allá de él (ahí el fondo de la página ya es
-  // del mismo crema, así que no hace falta la barra para que se lea bien).
+  // Transparente con texto blanco mientras se ve el hero oscuro de fondo;
+  // opaca (crema) una vez que se scrollea más allá de él, donde hace falta
+  // la barra para que el texto oscuro se siga leyendo sobre el fondo crema.
   useEffect(() => {
     const heroHeight = heroRef.current?.offsetHeight ?? 600;
-    const onScroll = () => setNavSolid(window.scrollY < heroHeight - 80);
+    const onScroll = () => setNavSolid(window.scrollY > heroHeight - 100);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -420,16 +420,20 @@ export function PadelLanding() {
         >
           <div style={css("max-width: 1240px; margin: 0 auto; padding: 16px 28px; display: flex; align-items: center; gap: 28px;")}>
             <div style={css("margin-right: auto;")} aria-label="SportNex — inicio">
-              <SportNexLogotype size={27} />
+              <SportNexLogotype size={27} onDark={!navSolid} />
             </div>
             <div className="sp-nav-links" style={css("display: flex; align-items: center; gap: 26px; font-size: 14.5px; font-weight: 600;")}>
-              <a href="#jugadores" className="sp-nav-link">Jugadores</a>
-              <a href="#duenos" className="sp-nav-link">Complejos</a>
-              <a href="#funciones" className="sp-nav-link">Funciones</a>
-              <a href="#precios" className="sp-nav-link">Precios</a>
+              <a href="#jugadores" className={navSolid ? "sp-nav-link" : "sp-nav-link-dark"}>Jugadores</a>
+              <a href="#duenos" className={navSolid ? "sp-nav-link" : "sp-nav-link-dark"}>Complejos</a>
+              <a href="#funciones" className={navSolid ? "sp-nav-link" : "sp-nav-link-dark"}>Funciones</a>
+              <a href="#precios" className={navSolid ? "sp-nav-link" : "sp-nav-link-dark"}>Precios</a>
             </div>
             <div style={css("display: flex; align-items: center; gap: 14px;")}>
-              <Link href="/login" className="sp-nav-link sp-nav-signin sp-heading" style={css("font-weight: 700; font-size: 14.5px;")}>
+              <Link
+                href="/login"
+                className={`${navSolid ? "sp-nav-link" : "sp-nav-link-dark"} sp-nav-signin sp-heading`}
+                style={css("font-weight: 700; font-size: 14.5px;")}
+              >
                 Iniciar sesión
               </Link>
               <Link
@@ -582,26 +586,89 @@ export function PadelLanding() {
           <div className="sp-grid-2" style={css("max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 64px; align-items: center;")}>
             <div data-rise="" style={css("display: flex; justify-content: center;")}>
               <div style={css("width: 260px; border-radius: 40px; border: 9px solid #0E1A11; background: #0E1A11; box-shadow: 0 40px 90px var(--land-shadow-strong);")}>
-                <div style={css("position: relative; aspect-ratio: 9 / 19; border-radius: 32px; overflow: hidden; background: linear-gradient(180deg, #17C964, #0B7A3C); padding: 24px 16px;")}>
-                  <div style={css("position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 84px; height: 18px; border-radius: 999px; background: #0E1A11;")} />
-                  <div style={css("margin-top: 44px; display: flex; flex-direction: column; align-items: center; gap: 8px;")}>
+                <div style={css("position: relative; aspect-ratio: 9 / 19; border-radius: 32px; overflow: hidden; background: #FFFFFF;")}>
+                  <div style={css("position: absolute; z-index: 2; top: 8px; left: 50%; transform: translateX(-50%); width: 84px; height: 18px; border-radius: 999px; background: #0E1A11;")} />
+
+                  <div style={css("background: linear-gradient(180deg, #17C964, #0B7A3C); padding: 40px 16px 34px; display: flex; flex-direction: column; align-items: center; gap: 8px; border-radius: 0 0 26px 26px;")}>
                     <div style={css("width: 48px; height: 48px; border-radius: 999px; background: #FFFFFF; display: grid; place-items: center; color: #17C964; font-size: 24px; font-weight: 900;")}>✓</div>
                     <div className="sp-heading" style={css("color: #FFFFFF; font-weight: 900; font-size: 17px; text-align: center;")}>¡Reserva confirmada!</div>
-                    <div style={css("color: rgba(255, 255, 255, 0.85); font-size: 12px; text-align: center;")}>Tu seña quedó acreditada</div>
+                    <div style={css("color: rgba(255, 255, 255, 0.85); font-size: 12px; text-align: center;")}>Tu pago se procesó con éxito</div>
                   </div>
-                  <div style={css("margin-top: 22px; background: #FFFFFF; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px;")}>
-                    <div style={css("display: flex; justify-content: space-between; font-size: 12px; color: var(--land-muted2);")}>
-                      <span>Cancha</span>
-                      <strong style={css("color: var(--land-text);")}>Cancha 3</strong>
+
+                  <div style={css("position: relative; z-index: 1; margin: -22px 14px 0; background: #FFFFFF; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 11px; box-shadow: 0 10px 24px rgba(14, 26, 17, 0.12);")}>
+                    <div style={css("display: flex; align-items: center; gap: 10px;")}>
+                      <div style={css("flex: none; width: 30px; height: 30px; border-radius: 9px; background: var(--land-green-soft); display: grid; place-items: center;")}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17C964" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z" />
+                          <circle cx="12" cy="9" r="2.5" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="sp-heading" style={css("font-weight: 800; font-size: 13px; color: var(--land-text);")}>Cancha 3 · Fútbol 5</div>
+                        <div style={css("font-size: 11px; color: var(--land-muted2);")}>Complejo de prueba</div>
+                      </div>
                     </div>
-                    <div style={css("display: flex; justify-content: space-between; font-size: 12px; color: var(--land-muted2);")}>
-                      <span>Fecha</span>
-                      <strong style={css("color: var(--land-text);")}>Hoy · 21:00</strong>
+                    <div style={css("height: 1px; background: var(--land-line);")} />
+                    <div style={css("display: flex; justify-content: space-between;")}>
+                      <div style={css("display: flex; align-items: center; gap: 8px;")}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--land-muted2)" strokeWidth={2} strokeLinecap="round">
+                          <rect x="3" y="5" width="18" height="16" rx="2.5" />
+                          <path d="M3 10h18" />
+                          <path d="M8 3v4M16 3v4" />
+                        </svg>
+                        <div>
+                          <div style={css("font-size: 10px; color: var(--land-muted2);")}>Fecha</div>
+                          <div className="sp-heading" style={css("font-weight: 700; font-size: 12px;")}>Hoy</div>
+                        </div>
+                      </div>
+                      <div style={css("display: flex; align-items: center; gap: 8px;")}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--land-muted2)" strokeWidth={2} strokeLinecap="round">
+                          <circle cx="12" cy="12" r="9" />
+                          <path d="M12 7v5l3.5 2" />
+                        </svg>
+                        <div>
+                          <div style={css("font-size: 10px; color: var(--land-muted2);")}>Hora</div>
+                          <div className="sp-heading" style={css("font-weight: 700; font-size: 12px;")}>21:00 hs</div>
+                        </div>
+                      </div>
                     </div>
-                    <div style={css("display: flex; justify-content: space-between; font-size: 12px; color: var(--land-muted2);")}>
-                      <span>Seña</span>
-                      <strong style={css("color: #05481F;")}>$6.000 pagada</strong>
+                    <div style={css("height: 1px; background: var(--land-line);")} />
+                    <div style={css("display: flex; justify-content: space-between; align-items: center;")}>
+                      <span style={css("font-size: 12px; color: var(--land-muted2); font-weight: 600;")}>Seña pagada</span>
+                      <span className="sp-heading" style={css("font-weight: 900; font-size: 15px; color: #05481F;")}>$6.000</span>
                     </div>
+                  </div>
+
+                  <div style={css("margin: 12px 14px 0; display: flex; flex-direction: column; gap: 8px;")}>
+                    <div style={css("display: flex; align-items: center; justify-content: center; gap: 7px; padding: 11px; border-radius: 12px; background: #17C964; color: #FFFFFF; font-size: 12.5px; font-weight: 800;")}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth={2} strokeLinecap="round">
+                        <rect x="3" y="5" width="18" height="16" rx="2.5" />
+                        <path d="M3 10h18" />
+                      </svg>
+                      Ver mis reservas
+                    </div>
+                    <div style={css("display: flex; gap: 8px;")}>
+                      <div style={css("flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 12px; border: 1px solid var(--land-line2); font-size: 11.5px; font-weight: 700; color: var(--land-text);")}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="18" cy="5" r="3" />
+                          <circle cx="6" cy="12" r="3" />
+                          <circle cx="18" cy="19" r="3" />
+                          <path d="M8.6 13.5l6.8 3.9M15.4 6.6L8.6 10.5" />
+                        </svg>
+                        Compartir
+                      </div>
+                      <div style={css("flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 12px; border: 1px solid var(--land-line2); font-size: 11.5px; font-weight: 700; color: var(--land-text);")}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 10.5 12 3l9 7.5" />
+                          <path d="M5 9.5V21h14V9.5" />
+                        </svg>
+                        Inicio
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={css("margin: 10px 14px 0; text-align: center; font-size: 9.5px; color: var(--land-muted2); line-height: 1.4;")}>
+                    Te llega un email con el comprobante de la reserva.
                   </div>
                 </div>
               </div>
@@ -842,7 +909,12 @@ export function PadelLanding() {
               </Link>
             </div>
 
-            <div data-rise="" className="sp-mockup-scroll" style={css("border-radius: 24px; border: 1px solid var(--land-line2); background: var(--land-panel); overflow: hidden; box-shadow: 0 50px 100px var(--land-shadow-strong);")}>
+            <div data-rise="" style={css("max-width: 960px; margin: 0 auto;")}>
+              <div style={css("border-radius: 16px 16px 0 0; background: #0E1A11; padding: 12px 12px 0; box-shadow: 0 50px 100px var(--land-shadow-strong);")}>
+                <div style={css("display: flex; justify-content: center; padding-bottom: 8px;")}>
+                  <div style={css("width: 6px; height: 6px; border-radius: 999px; background: #24382a;")} />
+                </div>
+                <div className="sp-mockup-scroll" style={css("border-radius: 8px 8px 0 0; background: var(--land-panel); overflow: hidden;")}>
               <div style={css("display: grid; grid-template-columns: 210px 1fr;")}>
                 <div style={css("padding: 22px 18px; border-right: 1px solid var(--land-line); background: var(--land-surface); display: grid; gap: 6px; align-content: start;")}>
                   <div style={css("margin-bottom: 18px;")}>
@@ -930,6 +1002,12 @@ export function PadelLanding() {
                   </div>
                 </div>
               </div>
+                </div>
+              </div>
+              <div style={css("height: 14px; background: linear-gradient(180deg, #16241b, #0E1A11); border-radius: 0 0 8px 8px; position: relative;")}>
+                <div style={css("position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 110px; height: 5px; background: #060a07; border-radius: 0 0 6px 6px;")} />
+              </div>
+              <div style={css("width: 72%; height: 10px; margin: 0 auto; background: linear-gradient(180deg, rgba(14, 26, 17, 0.35), rgba(14, 26, 17, 0)); border-radius: 0 0 60px 60px;")} />
             </div>
           </div>
         </section>
