@@ -1,4 +1,4 @@
-import { Clock, Users, MapPin } from "lucide-react";
+import { Clock, MapPin } from "lucide-react";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { withTenant } from "@/lib/db/tenant-context";
 import { formatCentsARS } from "@/lib/availability/engine";
@@ -7,7 +7,6 @@ import { PricingRuleForm } from "./pricing-rule-form";
 import { DeleteRuleButton } from "./delete-rule-button";
 
 const DAY_LABEL = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-const CLIENT_TYPE_LABEL: Record<string, string> = { ANY: "Todos", MEMBER: "Socios", NON_MEMBER: "No socios" };
 
 export default async function PricingPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -55,10 +54,6 @@ export default async function PricingPage({ params }: { params: Promise<{ slug: 
                   <span className="flex items-center gap-2">
                     <MapPin className="size-3.5 text-primary" />
                     {rule.courtId ? courtNameById.get(rule.courtId) : "Todas las canchas"}
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <Users className="size-3.5 text-primary" />
-                    {CLIENT_TYPE_LABEL[rule.clientType]}
                   </span>
                   {rule.cashQuarterPriceCents != null && (
                     <span className="text-xs">1/4 en efectivo: {formatCentsARS(rule.cashQuarterPriceCents)}</span>

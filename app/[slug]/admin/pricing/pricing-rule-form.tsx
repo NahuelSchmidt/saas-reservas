@@ -54,11 +54,9 @@ export function PricingRuleForm({
 
   const [courtId, setCourtId] = useState(rule?.courtId ?? "ALL");
   const [dayOfWeek, setDayOfWeek] = useState(rule?.dayOfWeek != null ? String(rule.dayOfWeek) : "ALL");
-  const [clientType, setClientType] = useState(rule?.clientType ?? "ANY");
 
   const courtLabel = courtId === "ALL" ? "Todas las canchas" : courts.find((c) => c.id === courtId)?.name ?? "Todas las canchas";
   const dayLabel = dayOfWeek === "ALL" ? "Todos los días" : DAY_LABEL[Number(dayOfWeek)];
-  const clientTypeLabel = clientType === "MEMBER" ? "Socios" : clientType === "NON_MEMBER" ? "No socios" : "Todos";
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -128,17 +126,6 @@ export function PricingRuleForm({
               <Label htmlFor="endTime">Hasta</Label>
               <Input id="endTime" name="endTime" type="time" required defaultValue={rule?.endTime ?? "23:00"} />
             </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="clientType">Tipo de cliente</Label>
-            <Select name="clientType" value={clientType} onValueChange={(v) => v && setClientType(v)}>
-              <SelectTrigger id="clientType"><SelectValue>{clientTypeLabel}</SelectValue></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ANY">Todos</SelectItem>
-                <SelectItem value="MEMBER">Socios</SelectItem>
-                <SelectItem value="NON_MEMBER">No socios</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="priceARS">Precio (ARS)</Label>

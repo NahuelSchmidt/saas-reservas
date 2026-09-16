@@ -99,3 +99,69 @@ export function drawOrder<T extends { seed: number | null }>(teams: T[]): T[] {
   const hasManualSeeds = teams.some((t) => t.seed != null);
   return hasManualSeeds ? [...teams].sort((a, b) => (a.seed ?? 999) - (b.seed ?? 999)) : shuffle(teams);
 }
+
+/**
+ * Reordena una lista de clasificados (agrupados por posición: todos los
+ * 1ros primero, luego todos los 2dos, etc. — ver generateKnockoutFromGroups)
+ * para que ningún cruce de primera ronda enfrente a dos equipos del mismo
+ * grupo, siempre que eso sea matemáticamente posible.
+ *
+ * Por qué hace falta esto además de separar por posición: el emparejamiento
+ * de primera ronda de `seedOrder` es una estructura fija sobre NÚMEROS de
+ * seed (para size 8: (1,8) (4,5) (2,7) (3,6)), no sabe nada de grupos. Con
+ * cantidades "raras" de grupos (ej. 3 grupos de 2 clasificados en un cuadro
+ * de 8), los seeds del último grupo procesado pueden caer justo en uno de
+ * esos pares fijos — ej. si el grupo C queda en los seeds 3 y 6, (3,6) es
+ * un cruce de primera ronda y los dos vienen del mismo grupo.
+ *
+ * La solución es un intercambio: para cada cruce real (sin bye) que colisiona,
+ * busca otro cruce real con el que se pueda intercambiar un equipo sin que
+ * ninguno de los dos cruces quede colisionando. El orden de entrada define
+ * el número de seed (índice + 1), así que intercambiar posiciones acá
+ * equivale a reasignar los seeds antes de pasarlos a `seedOrder`.
+ *
+ * Cada intercambio deja limpios a los dos cruces que tocó y nunca reabre uno
+ * ya resuelto, así que repetir el barrido completo hasta que una pasada no
+ * mueva nada converge (nunca puede empeorar) y resuelve casos que un único
+ * barrido se pierde por el orden en que visita los cruces.
+ */
+export function resolveGroupCollisions<T extends { groupId: string }>(qualifiers: T[], bracketSize: number): T[] {
+  const result = [...qualifiers];
+  const numTeams = result.length;
+  const order = seedOrder(bracketSize);
+  const pairs: [number, number][] = [];
+  for (let i = 0; i < order.length; i += 2) pairs.push([order[i], order[i + 1]]);
+  const realPairs = pairs.filter(([a, b]) => a <= numTeams && b <= numTeams);
+
+  for (let pass = 0; pass < realPairs.length; pass++) {
+    let swapped = false;
+
+    for (const [a, b] of realPairs) {
+      if (result[a - 1].groupId !== result[b - 1].groupId) continue;
+
+      for (const [c, d] of realPairs) {
+        if (c === a && d === b) continue;
+        const bVal = result[b - 1];
+        const cVal = result[c - 1];
+        const dVal = result[d - 1];
+
+        if (result[a - 1].groupId !== dVal.groupId && cVal.groupId !== bVal.groupId) {
+          result[b - 1] = dVal;
+          result[d - 1] = bVal;
+          swapped = true;
+          break;
+        }
+        if (result[a - 1].groupId !== cVal.groupId && dVal.groupId !== bVal.groupId) {
+          result[b - 1] = cVal;
+          result[c - 1] = bVal;
+          swapped = true;
+          break;
+        }
+      }
+    }
+
+    if (!swapped) break;
+  }
+
+  return result;
+}

@@ -8,6 +8,7 @@ import {
   distributeIntoGroups,
   drawOrder,
   shuffle,
+  resolveGroupCollisions,
 } from "./bracket";
 
 // ---------------------------------------------------------------------------
@@ -325,18 +326,19 @@ export async function generateKnockoutFromGroups(
 
     // Ranking por posición dentro del grupo (1ros, luego 2dos, ...), y dentro
     // de cada posición por puntos, para minimizar que dos del mismo grupo se
-    // cricen antes de tiempo.
-    const byRank: { id: string }[][] = [];
+    // crucen antes de tiempo. Igual, separar por posición no lo garantiza del
+    // todo (ver resolveGroupCollisions), así que se corrige después.
+    const byRank: { id: string; groupId: string }[][] = [];
     for (const group of category.groups) {
       const ranked = [...group.standings].sort(
         (a, b) => b.points - a.points || b.setsWon - b.setsLost - (a.setsWon - a.setsLost) || b.gamesWon - a.gamesWon,
       );
       ranked.slice(0, qualifiersPerGroup).forEach((standing, rank) => {
         byRank[rank] = byRank[rank] ?? [];
-        byRank[rank].push({ id: standing.teamId });
+        byRank[rank].push({ id: standing.teamId, groupId: group.id });
       });
     }
-    const qualifiers = byRank.flat();
+    const qualifiers = resolveGroupCollisions(byRank.flat(), nextPowerOfTwo(byRank.flat().length));
 
     return buildSingleEliminationBracket(tx, {
       tenantId,
