@@ -121,15 +121,15 @@ export function BookingBoard({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center justify-center gap-3">
         <button
           onClick={() => loadDate(addLocalDays(dateISO, -1))}
-          className="flex size-10 items-center justify-center rounded-full border bg-card transition-colors hover:bg-muted"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border/70 bg-card text-muted-foreground shadow-sm transition-colors hover:border-primary/40 hover:text-primary"
           aria-label="Día anterior"
         >
           <ChevronLeft className="size-4" />
         </button>
-        <span className="text-center font-heading text-base font-semibold capitalize sm:min-w-52 sm:text-lg">
+        <span className="min-w-40 text-center font-heading text-lg font-bold tracking-tight capitalize sm:min-w-56 sm:text-xl">
           <span className="sm:hidden">
             {parseLocalISODate(dateISO).toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" })}
           </span>
@@ -139,7 +139,7 @@ export function BookingBoard({
         </span>
         <button
           onClick={() => loadDate(addLocalDays(dateISO, 1))}
-          className="flex size-10 items-center justify-center rounded-full border bg-card transition-colors hover:bg-muted"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border/70 bg-card text-muted-foreground shadow-sm transition-colors hover:border-primary/40 hover:text-primary"
           aria-label="Día siguiente"
         >
           <ChevronRight className="size-4" />
@@ -154,14 +154,12 @@ export function BookingBoard({
       )}
 
       {times.length > 0 && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="mx-auto flex w-fit gap-1 rounded-full border border-border/70 bg-muted/40 p-1">
           <button
             onClick={() => setView("list")}
             className={cn(
-              "rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors",
-              view === "list"
-                ? "border-primary bg-primary text-primary-foreground"
-                : "bg-card text-muted-foreground hover:bg-muted",
+              "rounded-full px-4 py-1.5 text-sm font-semibold transition-colors",
+              view === "list" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
             )}
           >
             Horarios
@@ -169,10 +167,8 @@ export function BookingBoard({
           <button
             onClick={() => setView("grid")}
             className={cn(
-              "rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors",
-              view === "grid"
-                ? "border-primary bg-primary text-primary-foreground"
-                : "bg-card text-muted-foreground hover:bg-muted",
+              "rounded-full px-4 py-1.5 text-sm font-semibold transition-colors",
+              view === "grid" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
             )}
           >
             Canchas
@@ -219,7 +215,7 @@ export function BookingBoard({
                   onClick={() => setSelected(slot)}
                   className="flex items-center justify-between gap-3 px-4 py-4 text-left transition-colors hover:bg-muted active:bg-muted"
                 >
-                  <span className="text-sm font-semibold">{slot.courtName}</span>
+                  <span className="text-sm font-semibold capitalize">{slot.courtName}</span>
                   <span className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-primary">{formatCentsARS(slot.priceCents)}</span>
                     <ChevronRight className="size-4 text-muted-foreground" />
@@ -232,40 +228,52 @@ export function BookingBoard({
       )}
 
       {times.length > 0 && view === "grid" && (
-        <div className="overflow-x-auto rounded-2xl border shadow-sm">
-          <table className="w-full border-collapse text-sm">
+        <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card shadow-sm">
+          <table className="w-full border-separate border-spacing-0 text-sm">
             <thead>
-              <tr className="bg-muted/50">
-                <th className="border-b px-4 py-3 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              <tr>
+                <th className="sticky top-0 left-0 z-20 border-b border-border/60 bg-card px-4 py-3 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                   Hora
                 </th>
                 {courts.map((c) => (
-                  <th key={c.id} className="border-b px-3 py-3 text-left font-heading font-bold whitespace-nowrap">
+                  <th
+                    key={c.id}
+                    className="sticky top-0 z-10 min-w-32 border-b border-l border-border/50 bg-card px-3 py-3 text-center font-heading text-sm font-bold whitespace-nowrap capitalize"
+                  >
                     {c.name}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {times.map((t) => (
-                <tr key={t.getTime()} className="even:bg-muted/20">
-                  <td className="border-b px-4 py-2 text-sm font-medium whitespace-nowrap text-muted-foreground">
+              {times.map((t, i) => (
+                <tr key={t.getTime()}>
+                  <td
+                    className={cn(
+                      "sticky left-0 z-10 bg-card px-4 py-2.5 text-sm font-semibold whitespace-nowrap text-muted-foreground",
+                      i > 0 && "border-t border-border/40",
+                    )}
+                  >
                     {t.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
                   </td>
                   {courts.map((c) => {
                     const slot = findSlot(c.id, t);
                     return (
-                      <td key={c.id} className="border-b p-1.5">
+                      <td key={c.id} className={cn("border-l border-border/50 p-1.5", i > 0 && "border-t border-border/40")}>
                         {slot ? (
                           <button
                             onClick={() => setSelected(slot)}
-                            className="w-full rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-center transition-colors hover:border-primary/50 hover:bg-primary/10"
+                            className="group flex w-full flex-col items-center gap-0.5 rounded-xl border border-border/70 bg-background px-3 py-2.5 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md active:translate-y-0"
                           >
-                            <div className="text-sm font-bold tracking-wide text-primary uppercase">Libre</div>
-                            <div className="text-xs font-medium text-primary/70">{formatCentsARS(slot.priceCents)}</div>
+                            <span className="font-heading text-sm font-bold text-foreground">
+                              {formatCentsARS(slot.priceCents)}
+                            </span>
+                            <span className="text-[11px] font-medium text-primary/70 transition-colors group-hover:text-primary">
+                              Disponible
+                            </span>
                           </button>
                         ) : (
-                          <div className="py-2 text-center text-xs text-muted-foreground/40">—</div>
+                          <div className="flex items-center justify-center py-2.5 text-xs text-muted-foreground/30">—</div>
                         )}
                       </td>
                     );
@@ -283,7 +291,7 @@ export function BookingBoard({
             <>
               <DialogHeader>
                 <p className="text-xs font-medium text-muted-foreground uppercase">{tenantName}</p>
-                <DialogTitle>{selected.courtName}</DialogTitle>
+                <DialogTitle className="capitalize">{selected.courtName}</DialogTitle>
               </DialogHeader>
               <div className="flex flex-col gap-3">
                 <div className="flex flex-wrap gap-1.5">
