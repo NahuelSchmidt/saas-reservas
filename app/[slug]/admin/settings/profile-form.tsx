@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { upload } from "@vercel/blob/client";
 import { ImageIcon } from "lucide-react";
 import { updateTenantProfileAction } from "./actions";
 import { Button } from "@/components/ui/button";
@@ -10,10 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function ProfileForm({
+  tenantId,
   tenantSlug,
   coverPhotoUrl,
   address,
 }: {
+  tenantId: string;
   tenantSlug: string;
   coverPhotoUrl: string | null;
   address: string | null;
@@ -21,18 +24,44 @@ export function ProfileForm({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [preview, setPreview] = useState<string | null>(coverPhotoUrl);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setPendingFile(file);
     setPreview(URL.createObjectURL(file));
   }
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
-      const result = await updateTenantProfileAction(tenantSlug, formData);
+      let newCoverPhotoUrl: string | undefined;
+
+      // Sube directo desde el navegador a Vercel Blob (no pasa por esta
+      // Server Action, así no choca con el límite de 4.5MB de Vercel).
+      if (pendingFile) {
+        try {
+          const ext = pendingFile.name.split(".").pop() || "jpg";
+          const blob = await upload(`tenants/${tenantId}/cover-${Date.now()}.${ext}`, pendingFile, {
+            access: "public",
+            handleUploadUrl: "/api/blob/cover-photo",
+            clientPayload: JSON.stringify({ tenantSlug }),
+          });
+          newCoverPhotoUrl = blob.url;
+        } catch {
+          toast.error("No se pudo subir la foto.");
+          return;
+        }
+      }
+
+      const payload = new FormData();
+      payload.set("address", String(formData.get("address") ?? ""));
+      if (newCoverPhotoUrl) payload.set("coverPhotoUrl", newCoverPhotoUrl);
+
+      const result = await updateTenantProfileAction(tenantSlug, payload);
       if (result.ok) {
         toast.success("Perfil actualizado.");
+        setPendingFile(null);
         router.refresh();
       } else {
         toast.error(result.error);
@@ -54,7 +83,7 @@ export function ProfileForm({
             )}
           </div>
           <div className="flex flex-col gap-1">
-            <Input id="photo" name="photo" type="file" accept="image/*" onChange={handleFileChange} className="max-w-64" />
+            <Input type="file" accept="image/*" onChange={handleFileChange} className="max-w-64" />
             <p className="text-xs text-muted-foreground">Se muestra arriba de todo en la página pública de reservas.</p>
           </div>
         </div>
