@@ -89,7 +89,14 @@ export function BookingConfigForm({ tenantSlug, config }: { tenantSlug: string; 
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="depositValue">Valor de la seña {depositIsPercentage ? "(%)" : "($ ARS)"}</Label>
-          <Input id="depositValue" name="depositValue" type="number" min={1} defaultValue={initialDepositValue} />
+          <Input
+            id="depositValue"
+            name="depositValue"
+            type="number"
+            min={1}
+            max={depositIsPercentage ? 100 : undefined}
+            defaultValue={initialDepositValue}
+          />
         </div>
       </div>
 

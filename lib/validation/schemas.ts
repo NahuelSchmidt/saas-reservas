@@ -142,16 +142,25 @@ export const cancellationPolicySchema = z.object({
 });
 export type CancellationPolicyInput = z.infer<typeof cancellationPolicySchema>;
 
-export const bookingConfigSchema = z.object({
-  slotDurationMinutes: z.coerce.number().int().refine((v) => [60, 90, 120].includes(v), {
-    message: "Debe ser 60, 90 o 120 minutos",
-  }),
-  minAdvanceMinutes: z.coerce.number().int().min(0),
-  maxAdvanceDays: z.coerce.number().int().min(1).max(90),
-  depositRequired: z.boolean(),
-  depositIsPercentage: z.boolean(),
-  depositValue: z.coerce.number().int().positive(),
-});
+export const bookingConfigSchema = z
+  .object({
+    slotDurationMinutes: z.coerce.number().int().refine((v) => [60, 90, 120].includes(v), {
+      message: "Debe ser 60, 90 o 120 minutos",
+    }),
+    minAdvanceMinutes: z.coerce.number().int().min(0),
+    maxAdvanceDays: z.coerce.number().int().min(1).max(90),
+    depositRequired: z.boolean(),
+    depositIsPercentage: z.boolean(),
+    depositValue: z.coerce.number().int().positive(),
+  })
+  // Si es porcentaje, depositValue se multiplica directo contra el precio
+  // (config.depositValue / 100 en lib/booking/service.ts) — sin este tope,
+  // un error de tipeo (ej. 250 en vez de 25) cobraría una seña más cara que
+  // el turno entero.
+  .refine((c) => !c.depositIsPercentage || c.depositValue <= 100, {
+    message: "El porcentaje de seña no puede ser mayor a 100",
+    path: ["depositValue"],
+  });
 export type BookingConfigInput = z.infer<typeof bookingConfigSchema>;
 
 // ---------------------------------------------------------------------------
