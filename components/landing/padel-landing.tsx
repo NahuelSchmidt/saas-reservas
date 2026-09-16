@@ -491,13 +491,15 @@ export function PadelLanding() {
               Reservas online, torneos, clases y cobros. SportNex ordena la agenda de tus canchas y te muestra cuánto factura cada hora.
             </p>
             <div style={css("display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-bottom: 42px;")}>
-              <Link
-                href="/login"
+              <a
+                href="https://wa.me/5492216229441?text=Hola%2C%20quiero%20sumar%20mi%20complejo%20a%20SportNex"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="sp-btn-primary-lg sp-heading"
                 style={css("position: relative; overflow: hidden; font-weight: 800; font-size: 16.5px; color: #071008; background: #CCFF33; padding: 17px 30px; border-radius: 999px;")}
               >
-                Reservá ahora →
-              </Link>
+                Quiero sumar mi complejo →
+              </a>
               <a
                 href="#duenos"
                 className="sp-btn-outline-lg-dark sp-heading"
