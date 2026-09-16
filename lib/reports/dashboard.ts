@@ -75,6 +75,7 @@ export async function getDashboardStats(tenantId: string) {
       activeCourts,
       businessHoursToday,
       config,
+      upcomingBookings,
     ] = await Promise.all([
       tx.booking.findMany({
         where: { tenantId, startTime: { gte: todayStart, lt: tomorrowStart } },
@@ -93,6 +94,23 @@ export async function getDashboardStats(tenantId: string) {
         where: { tenantId_dayOfWeek: { tenantId, dayOfWeek: now.getDay() } },
       }),
       tx.bookingConfig.findUnique({ where: { tenantId } }),
+      tx.booking.findMany({
+        where: {
+          tenantId,
+          isBlock: false,
+          startTime: { gte: now, lt: tomorrowStart },
+          status: { in: ["CONFIRMED", "PENDING_PAYMENT"] },
+        },
+        select: {
+          id: true,
+          startTime: true,
+          status: true,
+          court: { select: { name: true } },
+          bookedBy: { select: { name: true } },
+        },
+        orderBy: { startTime: "asc" },
+        take: 5,
+      }),
     ]);
 
     let occupancyPct = 0;
@@ -117,6 +135,13 @@ export async function getDashboardStats(tenantId: string) {
       monthRevenueCents: monthRevenue.totalCents,
       occupancyPct,
       statusCounts: Object.fromEntries(statusCounts.map((s) => [s.status, s._count])) as Record<string, number>,
+      upcomingBookings: upcomingBookings.map((b) => ({
+        id: b.id,
+        startTime: b.startTime,
+        status: b.status,
+        courtName: b.court.name,
+        playerName: b.bookedBy.name,
+      })),
     };
   });
 }

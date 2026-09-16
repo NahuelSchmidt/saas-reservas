@@ -1,8 +1,14 @@
-import { Percent, Wallet, TrendingUp, CalendarClock } from "lucide-react";
+import { Percent, Wallet, TrendingUp, CalendarClock, Clock } from "lucide-react";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { getDashboardStats } from "@/lib/reports/dashboard";
 import { formatCentsARS } from "@/lib/availability/engine";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
+const BOOKING_STATUS_LABEL: Record<string, string> = {
+  CONFIRMED: "Confirmado",
+  PENDING_PAYMENT: "Pendiente",
+};
 
 const STATUS_META: Record<string, { label: string; dot: string }> = {
   PENDING_PAYMENT: { label: "Pendientes", dot: "bg-amber-500" },
@@ -83,54 +89,86 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="border-border/60 py-6 shadow-sm">
-          <CardContent className="flex flex-col gap-5">
-            <h2 className="font-heading text-base font-bold">Reservas de hoy</h2>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl bg-secondary/60 p-4 text-center">
-                <div className="font-heading text-2xl font-bold">{stats.todayTotal}</div>
-                <div className="text-xs text-muted-foreground">Total</div>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="border-border/60 py-6 shadow-sm lg:col-span-2">
+          <CardContent className="flex flex-col gap-4">
+            <h2 className="font-heading text-base font-bold">Próximos turnos</h2>
+            {stats.upcomingBookings.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No quedan turnos por jugar hoy.</p>
+            ) : (
+              <div className="flex flex-col divide-y">
+                {stats.upcomingBookings.map((b) => (
+                  <div key={b.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary/60 text-muted-foreground">
+                      <Clock className="size-4" />
+                    </div>
+                    <div className="flex flex-1 flex-col">
+                      <span className="text-sm font-semibold tabular-nums">
+                        {b.startTime.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                      <span className="text-xs text-muted-foreground capitalize">
+                        {b.courtName} · {b.playerName}
+                      </span>
+                    </div>
+                    <Badge variant={b.status === "CONFIRMED" ? "default" : "secondary"} className="shrink-0">
+                      {BOOKING_STATUS_LABEL[b.status] ?? b.status}
+                    </Badge>
+                  </div>
+                ))}
               </div>
-              <div className="rounded-xl bg-emerald-500/10 p-4 text-center">
-                <div className="font-heading text-2xl font-bold text-emerald-600">{stats.todayConfirmed}</div>
-                <div className="text-xs text-muted-foreground">Confirmadas</div>
-              </div>
-              <div className="rounded-xl bg-amber-500/10 p-4 text-center">
-                <div className="font-heading text-2xl font-bold text-amber-600">{stats.todayPending}</div>
-                <div className="text-xs text-muted-foreground">Pendientes</div>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 py-6 shadow-sm">
-          <CardContent className="flex flex-col gap-4">
-            <h2 className="font-heading text-base font-bold">Reservas del mes por estado</h2>
-            <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
-              {Object.entries(STATUS_META).map(([status, meta]) => {
-                const count = stats.statusCounts[status] ?? 0;
-                if (count === 0) return null;
-                return (
-                  <div
-                    key={status}
-                    className={meta.dot}
-                    style={{ width: `${(count / statusTotal) * 100}%` }}
-                  />
-                );
-              })}
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              {Object.entries(STATUS_META).map(([status, meta]) => (
-                <div key={status} className="flex items-center gap-2">
-                  <span className={`size-2 rounded-full ${meta.dot}`} />
-                  <span className="text-muted-foreground">{meta.label}</span>
-                  <span className="ml-auto font-medium">{stats.statusCounts[status] ?? 0}</span>
+        <div className="flex flex-col gap-4">
+          <Card className="border-border/60 py-6 shadow-sm">
+            <CardContent className="flex flex-col gap-5">
+              <h2 className="font-heading text-base font-bold">Reservas de hoy</h2>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-xl bg-secondary/60 p-4 text-center">
+                  <div className="font-heading text-2xl font-bold">{stats.todayTotal}</div>
+                  <div className="text-xs text-muted-foreground">Total</div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <div className="rounded-xl bg-emerald-500/10 p-4 text-center">
+                  <div className="font-heading text-2xl font-bold text-emerald-600">{stats.todayConfirmed}</div>
+                  <div className="text-xs text-muted-foreground">Confirmadas</div>
+                </div>
+                <div className="rounded-xl bg-amber-500/10 p-4 text-center">
+                  <div className="font-heading text-2xl font-bold text-amber-600">{stats.todayPending}</div>
+                  <div className="text-xs text-muted-foreground">Pendientes</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60 py-6 shadow-sm">
+            <CardContent className="flex flex-col gap-4">
+              <h2 className="font-heading text-base font-bold">Reservas del mes por estado</h2>
+              <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
+                {Object.entries(STATUS_META).map(([status, meta]) => {
+                  const count = stats.statusCounts[status] ?? 0;
+                  if (count === 0) return null;
+                  return (
+                    <div
+                      key={status}
+                      className={meta.dot}
+                      style={{ width: `${(count / statusTotal) * 100}%` }}
+                    />
+                  );
+                })}
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {Object.entries(STATUS_META).map(([status, meta]) => (
+                  <div key={status} className="flex items-center gap-2">
+                    <span className={`size-2 rounded-full ${meta.dot}`} />
+                    <span className="text-muted-foreground">{meta.label}</span>
+                    <span className="ml-auto font-medium">{stats.statusCounts[status] ?? 0}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

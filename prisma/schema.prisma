@@ -32,6 +32,8 @@ model Tenant {
   slug           String       @unique
   name           String
   logoUrl        String?
+  coverPhotoUrl  String?
+  address        String?
   primaryColor   String?      @default("#0f172a")
   secondaryColor String?      @default("#22c55e")
   status         TenantStatus @default(TRIAL)

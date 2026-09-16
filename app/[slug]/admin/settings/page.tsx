@@ -1,9 +1,10 @@
-import { Clock3, MessageCircle, Settings2, ShieldAlert, Wallet } from "lucide-react";
+import { Clock3, ImageIcon, MessageCircle, Settings2, ShieldAlert, Wallet } from "lucide-react";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { withTenant } from "@/lib/db/tenant-context";
 import { getMercadoPagoAccountStatus } from "@/lib/payments/mercadopago-connect";
 import { getWhatsAppInstanceStatus } from "@/lib/whatsapp/evolution-connect";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProfileForm } from "./profile-form";
 import { BookingConfigForm } from "./booking-config-form";
 import { CancellationPolicyForm } from "./cancellation-policy-form";
 import { BusinessHoursForm } from "./business-hours-form";
@@ -39,6 +40,15 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
         <h1 className="text-2xl font-semibold tracking-tight">Configuración</h1>
         <p className="text-sm text-muted-foreground">Horarios, reglas de reserva y política de cancelación del complejo.</p>
       </div>
+
+      <Card className="border-border/60 shadow-sm">
+        <CardHeader>
+          <SectionTitle icon={ImageIcon} color="bg-fuchsia-500/10 text-fuchsia-600">Foto y ubicación</SectionTitle>
+        </CardHeader>
+        <CardContent>
+          <ProfileForm tenantSlug={tenant.slug} coverPhotoUrl={tenant.coverPhotoUrl} address={tenant.address} />
+        </CardContent>
+      </Card>
 
       <Card className="border-border/60 shadow-sm">
         <CardHeader>

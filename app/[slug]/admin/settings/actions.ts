@@ -2,9 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { put } from "@vercel/blob";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { requireTenantRole } from "@/lib/auth/guards";
 import { withTenant } from "@/lib/db/tenant-context";
+import { prisma } from "@/lib/db/prisma";
 import { getAuthorizationUrl, disconnectMercadoPagoAccount } from "@/lib/payments/mercadopago-connect";
 import {
   connectWhatsApp,
@@ -155,6 +157,38 @@ export async function updateBusinessHoursAction(tenantSlug: string, formData: Fo
       ),
     ),
   );
+  revalidatePath(`/${tenantSlug}/admin/settings`);
+  return { ok: true, data: { ok: true } };
+}
+
+const MAX_COVER_PHOTO_BYTES = 8 * 1024 * 1024;
+
+/**
+ * Foto de portada + dirección del complejo, mostradas en la página pública
+ * de reservas. Tenant no es tenant-scoped (es la fila raíz, sin RLS), así
+ * que se actualiza con el cliente de Prisma normal, no `withTenant`.
+ */
+export async function updateTenantProfileAction(tenantSlug: string, formData: FormData): Promise<ActionResult<{ ok: true }>> {
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  await requireTenantRole(tenant.id, ["ADMIN"]);
+
+  const address = String(formData.get("address") ?? "").trim();
+  const photo = formData.get("photo");
+
+  let coverPhotoUrl: string | undefined;
+  if (photo instanceof File && photo.size > 0) {
+    if (!photo.type.startsWith("image/")) return { ok: false, error: "El archivo tiene que ser una imagen." };
+    if (photo.size > MAX_COVER_PHOTO_BYTES) return { ok: false, error: "La imagen no puede pesar más de 8MB." };
+    const ext = photo.name.split(".").pop() || "jpg";
+    const blob = await put(`tenants/${tenant.id}/cover-${Date.now()}.${ext}`, photo, { access: "public" });
+    coverPhotoUrl = blob.url;
+  }
+
+  await prisma.tenant.update({
+    where: { id: tenant.id },
+    data: { address: address || null, ...(coverPhotoUrl ? { coverPhotoUrl } : {}) },
+  });
+  revalidatePath(`/${tenantSlug}`);
   revalidatePath(`/${tenantSlug}/admin/settings`);
   return { ok: true, data: { ok: true } };
 }
