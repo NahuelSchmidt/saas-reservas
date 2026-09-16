@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { put } from "@vercel/blob";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { requireTenantRole } from "@/lib/auth/guards";
 import { withTenant } from "@/lib/db/tenant-context";
@@ -160,27 +161,34 @@ export async function updateBusinessHoursAction(tenantSlug: string, formData: Fo
   return { ok: true, data: { ok: true } };
 }
 
+// El navegador ya recomprime la foto antes de mandarla (ver
+// profile-form.tsx), así que a esta altura debería pesar poco — este tope
+// es solo una red de seguridad contra el límite real de 4.5MB que Vercel
+// les pone a las Server Actions.
+const MAX_COVER_PHOTO_BYTES = 4 * 1024 * 1024;
+
 /**
  * Foto de portada + dirección del complejo, mostradas en la página pública
- * de reservas. La foto ya se subió a Blob desde el navegador (ver
- * profile-form.tsx) antes de llamar a esta acción — evita el límite de
- * 4.5MB que Vercel les pone a las Server Actions. Tenant no es
- * tenant-scoped (es la fila raíz, sin RLS), así que se actualiza con el
- * cliente de Prisma normal, no `withTenant`.
+ * de reservas. Tenant no es tenant-scoped (es la fila raíz, sin RLS), así
+ * que se actualiza con el cliente de Prisma normal, no `withTenant`.
  */
 export async function updateTenantProfileAction(tenantSlug: string, formData: FormData): Promise<ActionResult<{ ok: true }>> {
   const tenant = await resolveTenantBySlug(tenantSlug);
   await requireTenantRole(tenant.id, ["ADMIN"]);
 
   const address = String(formData.get("address") ?? "").trim();
-  const coverPhotoUrl = formData.get("coverPhotoUrl");
+  const photo = formData.get("photo");
+
+  let coverPhotoUrl: string | undefined;
+  if (photo instanceof File && photo.size > 0) {
+    if (photo.size > MAX_COVER_PHOTO_BYTES) return { ok: false, error: "La imagen sigue pesando demasiado, probá con otra." };
+    const blob = await put(`tenants/${tenant.id}/cover-${Date.now()}.jpg`, photo, { access: "public" });
+    coverPhotoUrl = blob.url;
+  }
 
   await prisma.tenant.update({
     where: { id: tenant.id },
-    data: {
-      address: address || null,
-      ...(typeof coverPhotoUrl === "string" && coverPhotoUrl.startsWith("https://") ? { coverPhotoUrl } : {}),
-    },
+    data: { address: address || null, ...(coverPhotoUrl ? { coverPhotoUrl } : {}) },
   });
   revalidatePath(`/${tenantSlug}`);
   revalidatePath(`/${tenantSlug}/admin/settings`);

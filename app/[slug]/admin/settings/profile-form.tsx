@@ -3,20 +3,61 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { upload } from "@vercel/blob/client";
 import { ImageIcon } from "lucide-react";
 import { updateTenantProfileAction } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+/**
+ * Achica y recomprime la foto en el navegador antes de subirla: una foto de
+ * celular sin tocar (5-15MB) supera el límite de 4.5MB que Vercel les pone a
+ * las Server Actions. Bajándola a 1920px de lado más largo y recomprimiendo
+ * a JPEG calidad 0.82 el resultado casi siempre queda debajo de 1MB.
+ */
+function resizeImage(file: File, maxDimension = 1920, quality = 0.82): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxDimension / Math.max(img.width, img.height));
+      const width = Math.round(img.width * scale);
+      const height = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("No se pudo procesar la imagen."));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("No se pudo procesar la imagen."));
+            return;
+          }
+          resolve(new File([blob], "cover.jpg", { type: "image/jpeg" }));
+        },
+        "image/jpeg",
+        quality,
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("No se pudo leer la imagen."));
+    };
+    img.src = url;
+  });
+}
+
 export function ProfileForm({
-  tenantId,
   tenantSlug,
   coverPhotoUrl,
   address,
 }: {
-  tenantId: string;
   tenantSlug: string;
   coverPhotoUrl: string | null;
   address: string | null;
@@ -35,29 +76,18 @@ export function ProfileForm({
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
-      let newCoverPhotoUrl: string | undefined;
+      const payload = new FormData();
+      payload.set("address", String(formData.get("address") ?? ""));
 
-      // Sube directo desde el navegador a Vercel Blob (no pasa por esta
-      // Server Action, así no choca con el límite de 4.5MB de Vercel).
       if (pendingFile) {
         try {
-          const ext = pendingFile.name.split(".").pop() || "jpg";
-          const blob = await upload(`tenants/${tenantId}/cover-${Date.now()}.${ext}`, pendingFile, {
-            access: "public",
-            handleUploadUrl: "/api/blob/cover-photo",
-            clientPayload: JSON.stringify({ tenantSlug }),
-          });
-          newCoverPhotoUrl = blob.url;
+          const resized = await resizeImage(pendingFile);
+          payload.set("photo", resized);
         } catch (err) {
-          const message = err instanceof Error ? err.message : "No se pudo subir la foto.";
-          toast.error(message);
+          toast.error(err instanceof Error ? err.message : "No se pudo procesar la foto.");
           return;
         }
       }
-
-      const payload = new FormData();
-      payload.set("address", String(formData.get("address") ?? ""));
-      if (newCoverPhotoUrl) payload.set("coverPhotoUrl", newCoverPhotoUrl);
 
       const result = await updateTenantProfileAction(tenantSlug, payload);
       if (result.ok) {

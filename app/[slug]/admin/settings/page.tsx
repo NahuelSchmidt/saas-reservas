@@ -46,7 +46,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
           <SectionTitle icon={ImageIcon} color="bg-fuchsia-500/10 text-fuchsia-600">Foto y ubicación</SectionTitle>
         </CardHeader>
         <CardContent>
-          <ProfileForm tenantId={tenant.id} tenantSlug={tenant.slug} coverPhotoUrl={tenant.coverPhotoUrl} address={tenant.address} />
+          <ProfileForm tenantSlug={tenant.slug} coverPhotoUrl={tenant.coverPhotoUrl} address={tenant.address} />
         </CardContent>
       </Card>
 
