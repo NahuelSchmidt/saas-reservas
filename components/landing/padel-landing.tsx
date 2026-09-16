@@ -1038,48 +1038,26 @@ export function PadelLanding() {
           <div style={css("max-width: 1240px; margin: 0 auto;")}>
             <div data-rise="" style={css("text-align: center; max-width: 600px; margin: 0 auto 50px;")}>
               <div style={css("font-size: 13px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--land-accent-ink); margin-bottom: 14px;")}>Precios</div>
-              <h2 className="sp-heading" style={css("font-weight: 900; font-size: clamp(32px, 3.8vw, 50px); line-height: 1.02; letter-spacing: -0.03em; margin: 0 0 14px;")}>Planes simples, sin letra chica</h2>
-              <p style={css("font-size: 16.5px; color: var(--land-muted); line-height: 1.6; margin: 0;")}>Empezá gratis. Cambiás o cancelás cuando quieras.</p>
+              <h2 className="sp-heading" style={css("font-weight: 900; font-size: clamp(32px, 3.8vw, 50px); line-height: 1.02; letter-spacing: -0.03em; margin: 0 0 14px;")}>Un plan. Todo incluido.</h2>
+              <p style={css("font-size: 16.5px; color: var(--land-muted); line-height: 1.6; margin: 0;")}>Sin letra chica ni límite de canchas. 14 días gratis para probarlo.</p>
             </div>
-            <div className="sp-grid-3" style={css("display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: start;")}>
-              <div data-rise="" style={css("padding: 32px 28px; border-radius: 22px; background: var(--land-surface); border: 1px solid var(--land-line);")}>
-                <div className="sp-heading" style={css("font-weight: 800; font-size: 17px; margin-bottom: 8px;")}>Free</div>
+            <div style={css("max-width: 460px; margin: 0 auto;")}>
+              <div data-rise="" style={css("position: relative; padding: 40px 34px; border-radius: 26px; background: var(--land-card-price-bg); border: 1px solid var(--land-accent-line); box-shadow: 0 28px 70px var(--land-accent-glow); animation: sp-glow-pulse 3.6s ease-in-out infinite;")}>
+                <div className="sp-heading" style={css("font-weight: 800; font-size: 17px; margin-bottom: 8px; color: var(--land-accent-ink);")}>SportNex</div>
                 <div style={css("display: flex; align-items: flex-end; gap: 6px; margin-bottom: 6px;")}>
-                  <span className="sp-heading" style={css("font-weight: 900; font-size: 42px; letter-spacing: -0.04em;")}>$0</span>
-                  <span style={css("color: var(--land-muted2); font-size: 14px; font-weight: 600; padding-bottom: 8px;")}>/ mes</span>
+                  <span className="sp-heading" style={css("font-weight: 900; font-size: 48px; letter-spacing: -0.04em;")}>$40.000</span>
+                  <span style={css("color: var(--land-muted); font-size: 14px; font-weight: 600; padding-bottom: 10px;")}>/ mes</span>
                 </div>
-                <p style={css("font-size: 14px; color: var(--land-muted); margin: 0 0 24px; line-height: 1.55;")}>Para probar con una cancha y ver cómo funciona.</p>
-                <div style={css("display: grid; gap: 10px; margin-bottom: 26px; font-size: 14.5px; color: var(--land-text2);")}>
-                  <div>1 cancha</div>
-                  <div>Reservas online 24/7</div>
-                  <div>Confirmación automática</div>
-                </div>
-                <a
-                  href={waLink("Hola, quiero empezar gratis con SportNex")}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="sp-btn-outline-pill sp-heading"
-                  style={css("display: block; text-align: center; font-weight: 800; font-size: 15px; color: var(--land-text); border: 1px solid var(--land-line2); padding: 14px; border-radius: 999px;")}
-                >
-                  Empezar gratis
-                </a>
-              </div>
-
-              <div data-rise="" style={css("position: relative; padding: 34px 30px; border-radius: 22px; background: var(--land-card-price-bg); border: 1px solid var(--land-accent-line); box-shadow: 0 28px 70px var(--land-accent-glow); animation: sp-glow-pulse 3.6s ease-in-out infinite;")}>
-                <div className="sp-heading" style={css("position: absolute; top: -13px; left: 30px; padding: 5px 13px; border-radius: 999px; background: #CCFF33; color: #071008; font-weight: 900; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase;")}>
-                  El más elegido
-                </div>
-                <div className="sp-heading" style={css("font-weight: 800; font-size: 17px; margin-bottom: 8px; color: var(--land-accent-ink);")}>Starter</div>
-                <div style={css("display: flex; align-items: flex-end; gap: 6px; margin-bottom: 6px;")}>
-                  <span className="sp-heading" style={css("font-weight: 900; font-size: 42px; letter-spacing: -0.04em;")}>$29.900</span>
-                  <span style={css("color: var(--land-muted); font-size: 14px; font-weight: 600; padding-bottom: 8px;")}>/ mes</span>
-                </div>
-                <p style={css("font-size: 14px; color: var(--land-muted); margin: 0 0 24px; line-height: 1.55;")}>El complejo funcionando completo, con seña y recordatorios.</p>
-                <div style={css("display: grid; gap: 10px; margin-bottom: 26px; font-size: 14.5px; color: var(--land-text);")}>
-                  <div>Hasta 4 canchas</div>
-                  <div>Cobro de seña online</div>
-                  <div>Recordatorios automáticos</div>
-                  <div>Dashboard en tiempo real</div>
+                <p style={css("font-size: 14.5px; color: var(--land-muted); margin: 0 0 26px; line-height: 1.55;")}>
+                  El complejo funcionando completo: reservas, torneos, clases, kiosco y cobros — sin límite de canchas.
+                </p>
+                <div style={css("display: grid; gap: 10px; margin-bottom: 28px; font-size: 14.5px; color: var(--land-text);")}>
+                  <div>Canchas ilimitadas</div>
+                  <div>Reservas online 24/7 + seña con Mercado Pago</div>
+                  <div>Recordatorios y confirmaciones por WhatsApp</div>
+                  <div>Torneos y clases</div>
+                  <div>Stock y ventas del kiosco</div>
+                  <div>Dashboard con ingresos y ocupación en tiempo real</div>
                 </div>
                 <a
                   href={waLink("Hola, quiero probar SportNex 14 días gratis")}
@@ -1089,30 +1067,6 @@ export function PadelLanding() {
                   style={css("display: block; text-align: center; font-weight: 800; font-size: 15.5px; color: #071008; background: #CCFF33; padding: 15px; border-radius: 999px;")}
                 >
                   Probar 14 días gratis
-                </a>
-              </div>
-
-              <div data-rise="" style={css("padding: 32px 28px; border-radius: 22px; background: var(--land-surface); border: 1px solid var(--land-line);")}>
-                <div className="sp-heading" style={css("font-weight: 800; font-size: 17px; margin-bottom: 8px;")}>Pro</div>
-                <div style={css("display: flex; align-items: flex-end; gap: 6px; margin-bottom: 6px;")}>
-                  <span className="sp-heading" style={css("font-weight: 900; font-size: 42px; letter-spacing: -0.04em;")}>$54.900</span>
-                  <span style={css("color: var(--land-muted2); font-size: 14px; font-weight: 600; padding-bottom: 8px;")}>/ mes</span>
-                </div>
-                <p style={css("font-size: 14px; color: var(--land-muted); margin: 0 0 24px; line-height: 1.55;")}>Para complejos grandes, con kiosco y reportes finos.</p>
-                <div style={css("display: grid; gap: 10px; margin-bottom: 26px; font-size: 14.5px; color: var(--land-text2);")}>
-                  <div>Canchas ilimitadas</div>
-                  <div>Stock y ventas del kiosco</div>
-                  <div>Reportes y exportación</div>
-                  <div>Soporte prioritario</div>
-                </div>
-                <a
-                  href={waLink("Hola, quiero hablar con ventas de SportNex")}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="sp-btn-outline-pill sp-heading"
-                  style={css("display: block; text-align: center; font-weight: 800; font-size: 15px; color: var(--land-text); border: 1px solid var(--land-line2); padding: 14px; border-radius: 999px;")}
-                >
-                  Hablar con ventas
                 </a>
               </div>
             </div>
