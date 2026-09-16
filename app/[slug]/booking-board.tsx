@@ -263,12 +263,12 @@ export function BookingBoard({
                         {slot ? (
                           <button
                             onClick={() => setSelected(slot)}
-                            className="group flex w-full flex-col items-center gap-0.5 rounded-xl border border-border/70 bg-background px-3 py-2.5 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md active:translate-y-0"
+                            className="group flex w-full flex-col items-center gap-0.5 rounded-xl border border-emerald-200 bg-emerald-50/60 px-3 py-2.5 transition-all hover:-translate-y-0.5 hover:border-emerald-500 hover:bg-emerald-500/10 hover:shadow-md active:translate-y-0"
                           >
                             <span className="font-heading text-sm font-bold text-foreground">
                               {formatCentsARS(slot.priceCents)}
                             </span>
-                            <span className="text-[11px] font-medium text-primary/70 transition-colors group-hover:text-primary">
+                            <span className="text-[11px] font-medium text-emerald-700/70 transition-colors group-hover:text-emerald-700">
                               Disponible
                             </span>
                           </button>
