@@ -393,6 +393,19 @@ export function PadelLanding() {
         .sp-btn-primary-xl:hover { transform: translateY(-3px); box-shadow: 0 18px 40px var(--land-accent-line); color: #071008; }
         .sp-btn-outline-xl { transition: background 0.2s ease; }
         .sp-btn-outline-xl:hover { background: var(--land-surface2); color: var(--land-text); }
+
+        @media (max-width: 860px) {
+          .sp-nav-links, .sp-nav-signin { display: none !important; }
+          .sp-grid-2 { grid-template-columns: 1fr !important; gap: 40px !important; }
+          .sp-grid-3 { grid-template-columns: 1fr !important; }
+          .sp-connector-line { display: none !important; }
+          .sp-mockup-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+          .sp-mockup-scroll > div { min-width: 640px !important; }
+          .sp-footer-grid { grid-template-columns: 1fr 1fr !important; }
+        }
+        @media (max-width: 480px) {
+          .sp-footer-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       <div style={css("background: var(--land-bg); color: var(--land-text); overflow-x: hidden; position: relative;")}>
@@ -409,14 +422,14 @@ export function PadelLanding() {
             <div style={css("margin-right: auto;")} aria-label="SportNex — inicio">
               <SportNexLogotype size={27} />
             </div>
-            <div style={css("display: flex; align-items: center; gap: 26px; font-size: 14.5px; font-weight: 600;")}>
+            <div className="sp-nav-links" style={css("display: flex; align-items: center; gap: 26px; font-size: 14.5px; font-weight: 600;")}>
               <a href="#jugadores" className="sp-nav-link">Jugadores</a>
               <a href="#duenos" className="sp-nav-link">Complejos</a>
               <a href="#funciones" className="sp-nav-link">Funciones</a>
               <a href="#precios" className="sp-nav-link">Precios</a>
             </div>
             <div style={css("display: flex; align-items: center; gap: 14px;")}>
-              <Link href="/login" className="sp-nav-link sp-heading" style={css("font-weight: 700; font-size: 14.5px;")}>
+              <Link href="/login" className="sp-nav-link sp-nav-signin sp-heading" style={css("font-weight: 700; font-size: 14.5px;")}>
                 Iniciar sesión
               </Link>
               <Link
@@ -519,7 +532,7 @@ export function PadelLanding() {
                 Empezamos por pádel — el resto de los deportes se va sumando.
               </p>
             </div>
-            <div style={css("display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; align-items: stretch;")}>
+            <div className="sp-grid-2" style={css("display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; align-items: stretch;")}>
               <Link
                 href="/login"
                 className="sp-card-rise"
@@ -566,7 +579,7 @@ export function PadelLanding() {
         </div>
 
         <section id="jugadores" style={css("position: relative; z-index: 2; padding: 96px 28px; background: var(--land-bg2); overflow: hidden;")}>
-          <div style={css("max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 64px; align-items: center;")}>
+          <div className="sp-grid-2" style={css("max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 64px; align-items: center;")}>
             <div data-rise="" style={css("display: flex; justify-content: center;")}>
               <div style={css("width: 260px; border-radius: 40px; border: 9px solid #0E1A11; background: #0E1A11; box-shadow: 0 40px 90px var(--land-shadow-strong);")}>
                 <div style={css("position: relative; aspect-ratio: 9 / 19; border-radius: 32px; overflow: hidden; background: linear-gradient(180deg, #17C964, #0B7A3C); padding: 24px 16px;")}>
@@ -618,7 +631,7 @@ export function PadelLanding() {
 
         <section id="duenos" style={css("position: relative; z-index: 2; padding: 100px 28px; overflow: hidden;")}>
           <div style={css("position: absolute; inset: 0; background: radial-gradient(760px 480px at 88% 30%, var(--land-green-soft), transparent 72%);")} />
-          <div style={css("position: relative; max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 60px; align-items: center;")}>
+          <div className="sp-grid-2" style={css("position: relative; max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 60px; align-items: center;")}>
             <div data-rise="">
               <div style={css("font-size: 13px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--land-accent-ink); margin-bottom: 14px;")}>Para dueños de complejos</div>
               <h2 className="sp-heading" style={css("font-weight: 900; font-size: clamp(32px, 3.8vw, 50px); line-height: 1.02; letter-spacing: -0.03em; margin: 0 0 18px;")}>
@@ -651,7 +664,7 @@ export function PadelLanding() {
                 <div style={css("width: 9px; height: 9px; border-radius: 999px; background: var(--land-dot);")} />
                 <div style={css("width: 9px; height: 9px; border-radius: 999px; background: var(--land-dot);")} />
                 <div style={css("width: 9px; height: 9px; border-radius: 999px; background: var(--land-dot);")} />
-                <div style={css("margin-left: 12px; font-size: 12.5px; color: var(--land-muted2); font-weight: 600;")}>Panel · Complejo Del Parque · Hoy</div>
+                <div style={css("margin-left: 12px; font-size: 12.5px; color: var(--land-muted2); font-weight: 600;")}>Panel · Hoy</div>
                 <div style={css("margin-left: auto; display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: var(--land-green-ink);")}>
                   <span style={css("width: 7px; height: 7px; border-radius: 999px; background: #17C964; animation: sp-blink 1.8s ease-in-out infinite;")} />En vivo
                 </div>
@@ -757,7 +770,7 @@ export function PadelLanding() {
                 Todo lo que necesita el complejo, sin vueltas
               </h2>
             </div>
-            <div style={css("display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;")}>
+            <div className="sp-grid-3" style={css("display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;")}>
               {functions.map((f, i) => (
                 <div key={f.title} data-rise="" className="sp-card-fn" style={css("padding: 28px; border-radius: 20px; background: var(--land-panel-soft); border: 1px solid var(--land-line);")}>
                   <div className={`sp-icon-fn sp-icon-fn-${i + 1}`} style={css("margin-bottom: 16px;")}>{f.icon}</div>
@@ -775,8 +788,8 @@ export function PadelLanding() {
               <div style={css("font-size: 13px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--land-accent-ink); margin-bottom: 14px;")}>Cómo funciona</div>
               <h2 className="sp-heading" style={css("font-weight: 900; font-size: clamp(32px, 3.8vw, 50px); line-height: 1.02; letter-spacing: -0.03em; margin: 0;")}>Tres pasos y estás en la cancha</h2>
             </div>
-            <div style={css("position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px;")}>
-              <div style={css("position: absolute; left: 8%; right: 8%; top: 44px; height: 2px; background: repeating-linear-gradient(90deg, var(--land-accent-line) 0 12px, transparent 12px 26px);")} />
+            <div className="sp-grid-3" style={css("position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px;")}>
+              <div className="sp-connector-line" style={css("position: absolute; left: 8%; right: 8%; top: 44px; height: 2px; background: repeating-linear-gradient(90deg, var(--land-accent-line) 0 12px, transparent 12px 26px);")} />
 
               <div data-rise="" className="sp-step-card" style={css("position: relative; padding: 30px 26px; border-radius: 20px; background: var(--land-card-bg); border: 1px solid var(--land-line);")}>
                 <div className="sp-heading" style={css("position: relative; width: 54px; height: 54px; border-radius: 999px; background: #CCFF33; color: #071008; display: grid; place-items: center; font-weight: 900; font-size: 22px; margin-bottom: 22px;")}>
@@ -829,7 +842,7 @@ export function PadelLanding() {
               </Link>
             </div>
 
-            <div data-rise="" style={css("border-radius: 24px; border: 1px solid var(--land-line2); background: var(--land-panel); overflow: hidden; box-shadow: 0 50px 100px var(--land-shadow-strong);")}>
+            <div data-rise="" className="sp-mockup-scroll" style={css("border-radius: 24px; border: 1px solid var(--land-line2); background: var(--land-panel); overflow: hidden; box-shadow: 0 50px 100px var(--land-shadow-strong);")}>
               <div style={css("display: grid; grid-template-columns: 210px 1fr;")}>
                 <div style={css("padding: 22px 18px; border-right: 1px solid var(--land-line); background: var(--land-surface); display: grid; gap: 6px; align-content: start;")}>
                   <div style={css("margin-bottom: 18px;")}>
@@ -928,7 +941,7 @@ export function PadelLanding() {
               <h2 className="sp-heading" style={css("font-weight: 900; font-size: clamp(32px, 3.8vw, 50px); line-height: 1.02; letter-spacing: -0.03em; margin: 0 0 14px;")}>Planes simples, sin letra chica</h2>
               <p style={css("font-size: 16.5px; color: var(--land-muted); line-height: 1.6; margin: 0;")}>Empezá gratis. Cambiás o cancelás cuando quieras.</p>
             </div>
-            <div style={css("display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: start;")}>
+            <div className="sp-grid-3" style={css("display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: start;")}>
               <div data-rise="" style={css("padding: 32px 28px; border-radius: 22px; background: var(--land-surface); border: 1px solid var(--land-line);")}>
                 <div className="sp-heading" style={css("font-weight: 800; font-size: 17px; margin-bottom: 8px;")}>Free</div>
                 <div style={css("display: flex; align-items: flex-end; gap: 6px; margin-bottom: 6px;")}>
@@ -1017,7 +1030,7 @@ export function PadelLanding() {
         </section>
 
         <footer style={css("position: relative; z-index: 2; border-top: 1px solid var(--land-line); background: var(--land-bg2); padding: 54px 28px 34px;")}>
-          <div style={css("max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 40px;")}>
+          <div className="sp-footer-grid" style={css("max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 40px;")}>
             <div>
               <div style={css("margin-bottom: 14px;")}>
                 <SportNexLogotype size={18} />
