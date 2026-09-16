@@ -410,6 +410,7 @@ export function PadelLanding() {
           .sp-mockup-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
           .sp-mockup-scroll > div { min-width: 640px !important; }
           .sp-footer-grid { grid-template-columns: 1fr 1fr !important; }
+          .sp-stat-num { font-size: 20px !important; }
         }
         @media (max-width: 480px) {
           .sp-footer-grid { grid-template-columns: 1fr !important; }
@@ -751,18 +752,18 @@ export function PadelLanding() {
                 </div>
               </div>
               <div style={css("padding: 20px; display: grid; gap: 16px;")}>
-                <div style={css("display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;")}>
-                  <div style={css("padding: 15px 16px; border-radius: 14px; background: var(--land-accent-soft); border: 1px solid var(--land-accent-line);")}>
+                <div style={css("display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;")}>
+                  <div style={css("min-width: 0; overflow: hidden; padding: 15px 16px; border-radius: 14px; background: var(--land-accent-soft); border: 1px solid var(--land-accent-line);")}>
                     <div style={css("font-size: 11.5px; font-weight: 700; color: var(--land-muted); letter-spacing: 0.04em; text-transform: uppercase;")}>Ocupación hoy</div>
-                    <div data-count="87" data-suffix="%" className="sp-heading" style={css("font-weight: 900; font-size: 30px; letter-spacing: -0.03em; color: var(--land-accent-ink);")}>87%</div>
+                    <div data-count="87" data-suffix="%" className="sp-heading sp-stat-num" style={css("font-weight: 900; font-size: 30px; letter-spacing: -0.03em; color: var(--land-accent-ink);")}>87%</div>
                   </div>
-                  <div style={css("padding: 15px 16px; border-radius: 14px; background: var(--land-surface); border: 1px solid var(--land-line);")}>
+                  <div style={css("min-width: 0; overflow: hidden; padding: 15px 16px; border-radius: 14px; background: var(--land-surface); border: 1px solid var(--land-line);")}>
                     <div style={css("font-size: 11.5px; font-weight: 700; color: var(--land-muted2); letter-spacing: 0.04em; text-transform: uppercase;")}>Ingresos</div>
-                    <div data-count="412" data-prefix="$" data-suffix="k" className="sp-heading" style={css("font-weight: 900; font-size: 30px; letter-spacing: -0.03em;")}>$412k</div>
+                    <div data-count="412" data-prefix="$" data-suffix="k" className="sp-heading sp-stat-num" style={css("font-weight: 900; font-size: 30px; letter-spacing: -0.03em;")}>$412k</div>
                   </div>
-                  <div style={css("padding: 15px 16px; border-radius: 14px; background: var(--land-surface); border: 1px solid var(--land-line);")}>
+                  <div style={css("min-width: 0; overflow: hidden; padding: 15px 16px; border-radius: 14px; background: var(--land-surface); border: 1px solid var(--land-line);")}>
                     <div style={css("font-size: 11.5px; font-weight: 700; color: var(--land-muted2); letter-spacing: 0.04em; text-transform: uppercase;")}>Turnos</div>
-                    <div className="sp-heading" style={css("font-weight: 900; font-size: 30px; letter-spacing: -0.03em;")}>
+                    <div className="sp-heading sp-stat-num" style={css("font-weight: 900; font-size: 30px; letter-spacing: -0.03em;")}>
                       <span data-count="31">31</span>
                       <span style={css("font-size: 16px; color: var(--land-muted2);")}>/36</span>
                     </div>
