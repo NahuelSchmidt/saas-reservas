@@ -39,6 +39,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json(jsonResponse);
   } catch (err) {
+    // El SDK de Blob del lado del cliente ignora este `error` y siempre
+    // muestra "Failed to retrieve the client token" sin importar la causa,
+    // así que el motivo real solo queda visible acá, en los logs del server.
+    console.error("[/api/blob/cover-photo]", err);
     if (err instanceof UnauthorizedError) return NextResponse.json({ error: err.message }, { status: 401 });
     if (err instanceof ForbiddenError) return NextResponse.json({ error: err.message }, { status: 403 });
     const message = err instanceof Error ? err.message : "Error al procesar la subida.";
