@@ -724,8 +724,11 @@ export function PadelLanding() {
             </div>
 
             <div data-rise="">
-              <div style={css("border-radius: 18px; border: 1px solid rgba(14, 26, 17, 0.9); background: #0E1A11; padding: 12px 12px 16px; box-shadow: 0 40px 90px var(--land-shadow-strong);")}>
-                <div style={css("border-radius: 8px; background: var(--land-panel); overflow: hidden;")}>
+              <div style={css("border-radius: 16px 16px 0 0; background: #0E1A11; padding: 12px 12px 0; box-shadow: 0 40px 90px var(--land-shadow-strong);")}>
+                <div style={css("display: flex; justify-content: center; padding-bottom: 8px;")}>
+                  <div style={css("width: 6px; height: 6px; border-radius: 999px; background: #24382a;")} />
+                </div>
+                <div style={css("border-radius: 8px 8px 0 0; background: var(--land-panel); overflow: hidden;")}>
                   <div style={css("display: flex; align-items: center; gap: 8px; padding: 13px 18px; border-bottom: 1px solid var(--land-line); background: var(--land-surface);")}>
                 <div style={css("width: 9px; height: 9px; border-radius: 999px; background: var(--land-dot);")} />
                 <div style={css("width: 9px; height: 9px; border-radius: 999px; background: var(--land-dot);")} />
@@ -814,8 +817,10 @@ export function PadelLanding() {
               </div>
               </div>
               </div>
-              <div style={css("width: 130px; height: 20px; margin: 0 auto; background: linear-gradient(180deg, #0E1A11, #0A130C); border-radius: 0 0 10px 10px;")} />
-              <div style={css("width: 220px; height: 10px; margin: 6px auto 0; background: #0A130C; border-radius: 999px;")} />
+              <div style={css("height: 14px; background: linear-gradient(180deg, #16241b, #0E1A11); border-radius: 0 0 8px 8px; position: relative;")}>
+                <div style={css("position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 110px; height: 5px; background: #060a07; border-radius: 0 0 6px 6px;")} />
+              </div>
+              <div style={css("width: 72%; height: 10px; margin: 0 auto; background: linear-gradient(180deg, rgba(14, 26, 17, 0.35), rgba(14, 26, 17, 0)); border-radius: 0 0 60px 60px;")} />
             </div>
           </div>
         </section>
