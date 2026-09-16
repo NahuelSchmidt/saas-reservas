@@ -58,6 +58,16 @@ async function getRevenueBreakdown(
   return { bookingsCents, productsCents, classesCents, totalCents: bookingsCents + productsCents + classesCents };
 }
 
+/**
+ * % de cambio contra el período anterior. `null` cuando el período anterior
+ * está en $0 — no hay base para expresar un porcentaje (evita mostrar
+ * "+∞%" o un "0%" que en realidad es "sin datos todavía en ningún lado").
+ */
+function pctChange(current: number, previous: number): number | null {
+  if (previous === 0) return null;
+  return Math.round(((current - previous) / previous) * 100);
+}
+
 export async function getDashboardStats(tenantId: string) {
   const now = new Date();
   const todayStart = startOfDay(now);
@@ -65,12 +75,28 @@ export async function getDashboardStats(tenantId: string) {
   const weekStart = startOfWeek(now);
   const monthStart = startOfMonth(now);
 
+  // Comparaciones "a la misma altura": hoy/esta semana/este mes están
+  // siempre a mitad de andar, así que comparar contra el período anterior
+  // COMPLETO (ayer entero, semana pasada entera) siempre da una caída
+  // artificial. En cambio, se compara contra el mismo tramo transcurrido
+  // del período anterior (mismas horas de ayer, mismos días de la semana
+  // pasada, etc.).
+  const yesterdayStart = new Date(todayStart.getTime() - 86_400_000);
+  const yesterdayComparableEnd = new Date(yesterdayStart.getTime() + (now.getTime() - todayStart.getTime()));
+  const lastWeekStart = new Date(weekStart.getTime() - 7 * 86_400_000);
+  const lastWeekComparableEnd = new Date(lastWeekStart.getTime() + (now.getTime() - weekStart.getTime()));
+  const lastMonthStart = startOfMonth(new Date(monthStart.getTime() - 1));
+  const lastMonthComparableEnd = new Date(lastMonthStart.getTime() + (now.getTime() - monthStart.getTime()));
+
   return withTenant(tenantId, async (tx) => {
     const [
       todayBookings,
       todayRevenue,
+      yesterdayRevenue,
       weekRevenue,
+      lastWeekRevenue,
       monthRevenue,
+      lastMonthRevenue,
       statusCounts,
       activeCourts,
       businessHoursToday,
@@ -82,8 +108,11 @@ export async function getDashboardStats(tenantId: string) {
         select: { status: true, totalPriceCents: true, courtId: true },
       }),
       getRevenueBreakdown(tx, tenantId, { from: todayStart, to: tomorrowStart }),
+      getRevenueBreakdown(tx, tenantId, { from: yesterdayStart, to: yesterdayComparableEnd }),
       getRevenueBreakdown(tx, tenantId, { from: weekStart }),
+      getRevenueBreakdown(tx, tenantId, { from: lastWeekStart, to: lastWeekComparableEnd }),
       getRevenueBreakdown(tx, tenantId, { from: monthStart }),
+      getRevenueBreakdown(tx, tenantId, { from: lastMonthStart, to: lastMonthComparableEnd }),
       tx.booking.groupBy({
         by: ["status"],
         where: { tenantId, startTime: { gte: monthStart } },
@@ -131,8 +160,11 @@ export async function getDashboardStats(tenantId: string) {
       todayRevenueBookingsCents: todayRevenue.bookingsCents,
       todayRevenueProductsCents: todayRevenue.productsCents,
       todayRevenueClassesCents: todayRevenue.classesCents,
+      todayRevenueChangePct: pctChange(todayRevenue.totalCents, yesterdayRevenue.totalCents),
       weekRevenueCents: weekRevenue.totalCents,
+      weekRevenueChangePct: pctChange(weekRevenue.totalCents, lastWeekRevenue.totalCents),
       monthRevenueCents: monthRevenue.totalCents,
+      monthRevenueChangePct: pctChange(monthRevenue.totalCents, lastMonthRevenue.totalCents),
       occupancyPct,
       statusCounts: Object.fromEntries(statusCounts.map((s) => [s.status, s._count])) as Record<string, number>,
       upcomingBookings: upcomingBookings.map((b) => ({

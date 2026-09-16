@@ -1,4 +1,4 @@
-import { Percent, Wallet, TrendingUp, CalendarClock, Clock } from "lucide-react";
+import { Percent, Wallet, TrendingUp, TrendingDown, CalendarClock, Clock } from "lucide-react";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { getDashboardStats } from "@/lib/reports/dashboard";
 import { formatCentsARS } from "@/lib/availability/engine";
@@ -28,6 +28,8 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
       label: "Ocupación de hoy",
       value: `${stats.occupancyPct}%`,
       sublabel: undefined as string | undefined,
+      changePct: null as number | null,
+      changeVsLabel: "",
       icon: Percent,
       color: "text-violet-600 bg-violet-500/10",
     },
@@ -44,6 +46,8 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
               .filter(Boolean)
               .join(" · ")
           : undefined,
+      changePct: stats.todayRevenueChangePct,
+      changeVsLabel: "vs. ayer",
       icon: Wallet,
       color: "text-emerald-600 bg-emerald-500/10",
     },
@@ -51,6 +55,8 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
       label: "Ingresos de la semana",
       value: formatCentsARS(stats.weekRevenueCents),
       sublabel: undefined as string | undefined,
+      changePct: stats.weekRevenueChangePct,
+      changeVsLabel: "vs. semana pasada",
       icon: TrendingUp,
       color: "text-blue-600 bg-blue-500/10",
     },
@@ -58,6 +64,8 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
       label: "Ingresos del mes",
       value: formatCentsARS(stats.monthRevenueCents),
       sublabel: undefined as string | undefined,
+      changePct: stats.monthRevenueChangePct,
+      changeVsLabel: "vs. mes pasado",
       icon: CalendarClock,
       color: "text-amber-600 bg-amber-500/10",
     },
@@ -80,8 +88,24 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
                 <s.icon className="size-5" />
               </div>
               <div>
-                <div className="font-heading text-2xl font-bold">{s.value}</div>
-                <div className="text-sm text-muted-foreground">{s.label}</div>
+                <div className="flex items-center gap-2">
+                  <span className="font-heading text-2xl font-bold">{s.value}</span>
+                  {s.changePct != null && (
+                    <span
+                      className={`flex items-center gap-0.5 text-xs font-semibold ${
+                        s.changePct >= 0 ? "text-emerald-600" : "text-red-600"
+                      }`}
+                    >
+                      {s.changePct >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+                      {s.changePct >= 0 ? "+" : ""}
+                      {s.changePct}%
+                    </span>
+                  )}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {s.label}
+                  {s.changePct != null && <span className="text-muted-foreground/70"> {s.changeVsLabel}</span>}
+                </div>
                 {s.sublabel && <div className="text-xs text-muted-foreground">{s.sublabel}</div>}
               </div>
             </CardContent>
