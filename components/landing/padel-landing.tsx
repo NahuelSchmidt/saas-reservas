@@ -446,7 +446,6 @@ export function PadelLanding() {
             </div>
           </div>
         </nav>
-        <div aria-hidden="true" style={css("height: 66px;")} />
 
         <section
           ref={heroRef}
