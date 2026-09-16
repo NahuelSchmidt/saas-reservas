@@ -18,6 +18,14 @@ const manrope = Manrope({
   variable: "--font-landing-body",
 });
 
+// No hay alta propia todavía (cada club se carga a mano desde /plataforma),
+// así que todos los CTA de "empezar"/"probar"/"agendar demo" abren WhatsApp
+// en vez de mandar a /login, que no tiene nada para un visitante sin cuenta.
+const WHATSAPP_NUMBER = "5492216229441";
+function waLink(message: string) {
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
+
 /** Parses an inline CSS declaration string into a React style object, so the
  * landing markup below can carry its styles as plain CSS text (ported
  * verbatim from the source design) instead of hand-transcribed camelCase
@@ -436,13 +444,15 @@ export function PadelLanding() {
               >
                 Iniciar sesión
               </Link>
-              <Link
-                href="/login"
+              <a
+                href={waLink("Hola, quiero probar SportNex")}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="sp-nav-cta sp-heading"
                 style={css("font-weight: 800; font-size: 14.5px; color: #071008; background: #CCFF33; padding: 11px 20px; border-radius: 999px; letter-spacing: -0.01em;")}
               >
                 Probá gratis
-              </Link>
+              </a>
             </div>
           </div>
         </nav>
@@ -492,7 +502,7 @@ export function PadelLanding() {
             </p>
             <div style={css("display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-bottom: 42px;")}>
               <a
-                href="https://wa.me/5492216229441?text=Hola%2C%20quiero%20sumar%20mi%20complejo%20a%20SportNex"
+                href={waLink("Hola, quiero sumar mi complejo a SportNex")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="sp-btn-primary-lg sp-heading"
@@ -910,9 +920,15 @@ export function PadelLanding() {
                 <h2 className="sp-heading" style={css("font-weight: 900; font-size: clamp(32px, 3.8vw, 50px); line-height: 1.02; letter-spacing: -0.03em; margin: 0 0 14px;")}>Calendario, kiosco y reportes en un solo panel</h2>
                 <p style={css("font-size: 17px; color: var(--land-muted); line-height: 1.6; margin: 0;")}>Lo que antes eran tres planillas y un cuaderno.</p>
               </div>
-              <Link href="/login" className="sp-link-pill sp-heading" style={css("font-weight: 800; font-size: 15px; color: var(--land-accent-ink); border: 1px solid var(--land-accent-line); padding: 14px 22px; border-radius: 999px;")}>
+              <a
+                href={waLink("Hola, quiero ver el panel de SportNex en vivo")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sp-link-pill sp-heading"
+                style={css("font-weight: 800; font-size: 15px; color: var(--land-accent-ink); border: 1px solid var(--land-accent-line); padding: 14px 22px; border-radius: 999px;")}
+              >
                 Ver el panel en vivo
-              </Link>
+              </a>
             </div>
 
             <div data-rise="" style={css("max-width: 960px; margin: 0 auto;")}>
@@ -1038,9 +1054,15 @@ export function PadelLanding() {
                   <div>Reservas online 24/7</div>
                   <div>Confirmación automática</div>
                 </div>
-                <Link href="/login" className="sp-btn-outline-pill sp-heading" style={css("display: block; text-align: center; font-weight: 800; font-size: 15px; color: var(--land-text); border: 1px solid var(--land-line2); padding: 14px; border-radius: 999px;")}>
+                <a
+                  href={waLink("Hola, quiero empezar gratis con SportNex")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="sp-btn-outline-pill sp-heading"
+                  style={css("display: block; text-align: center; font-weight: 800; font-size: 15px; color: var(--land-text); border: 1px solid var(--land-line2); padding: 14px; border-radius: 999px;")}
+                >
                   Empezar gratis
-                </Link>
+                </a>
               </div>
 
               <div data-rise="" style={css("position: relative; padding: 34px 30px; border-radius: 22px; background: var(--land-card-price-bg); border: 1px solid var(--land-accent-line); box-shadow: 0 28px 70px var(--land-accent-glow); animation: sp-glow-pulse 3.6s ease-in-out infinite;")}>
@@ -1059,9 +1081,15 @@ export function PadelLanding() {
                   <div>Recordatorios automáticos</div>
                   <div>Dashboard en tiempo real</div>
                 </div>
-                <Link href="/login" className="sp-btn-primary-pill sp-heading" style={css("display: block; text-align: center; font-weight: 800; font-size: 15.5px; color: #071008; background: #CCFF33; padding: 15px; border-radius: 999px;")}>
+                <a
+                  href={waLink("Hola, quiero probar SportNex 14 días gratis")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="sp-btn-primary-pill sp-heading"
+                  style={css("display: block; text-align: center; font-weight: 800; font-size: 15.5px; color: #071008; background: #CCFF33; padding: 15px; border-radius: 999px;")}
+                >
                   Probar 14 días gratis
-                </Link>
+                </a>
               </div>
 
               <div data-rise="" style={css("padding: 32px 28px; border-radius: 22px; background: var(--land-surface); border: 1px solid var(--land-line);")}>
@@ -1077,9 +1105,15 @@ export function PadelLanding() {
                   <div>Reportes y exportación</div>
                   <div>Soporte prioritario</div>
                 </div>
-                <Link href="/login" className="sp-btn-outline-pill sp-heading" style={css("display: block; text-align: center; font-weight: 800; font-size: 15px; color: var(--land-text); border: 1px solid var(--land-line2); padding: 14px; border-radius: 999px;")}>
+                <a
+                  href={waLink("Hola, quiero hablar con ventas de SportNex")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="sp-btn-outline-pill sp-heading"
+                  style={css("display: block; text-align: center; font-weight: 800; font-size: 15px; color: var(--land-text); border: 1px solid var(--land-line2); padding: 14px; border-radius: 999px;")}
+                >
                   Hablar con ventas
-                </Link>
+                </a>
               </div>
             </div>
           </div>
@@ -1103,12 +1137,24 @@ export function PadelLanding() {
               14 días gratis, sin tarjeta. Cargamos tus canchas y horarios con vos: en una tarde estás recibiendo turnos.
             </p>
             <div style={css("display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;")}>
-              <Link href="/login" className="sp-btn-primary-xl sp-heading" style={css("font-weight: 800; font-size: 17px; color: #071008; background: #CCFF33; padding: 18px 34px; border-radius: 999px;")}>
+              <a
+                href={waLink("Hola, quiero probar SportNex gratis")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sp-btn-primary-xl sp-heading"
+                style={css("font-weight: 800; font-size: 17px; color: #071008; background: #CCFF33; padding: 18px 34px; border-radius: 999px;")}
+              >
                 Probar gratis →
-              </Link>
-              <Link href="/login" className="sp-btn-outline-xl sp-heading" style={css("font-weight: 800; font-size: 17px; color: var(--land-text); border: 1px solid var(--land-line2); padding: 18px 30px; border-radius: 999px;")}>
+              </a>
+              <a
+                href={waLink("Hola, quiero agendar una demo de SportNex")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sp-btn-outline-xl sp-heading"
+                style={css("font-weight: 800; font-size: 17px; color: var(--land-text); border: 1px solid var(--land-line2); padding: 18px 30px; border-radius: 999px;")}
+              >
                 Agendar una demo
-              </Link>
+              </a>
             </div>
           </div>
         </section>
@@ -1134,9 +1180,9 @@ export function PadelLanding() {
             </div>
             <div style={css("display: grid; gap: 11px; align-content: start;")}>
               <div className="sp-heading" style={css("font-weight: 800; font-size: 13.5px; margin-bottom: 3px;")}>Complejos</div>
-              <Link href="/login" className="sp-footer-link" style={css("font-size: 14px;")}>Sumá tu complejo</Link>
+              <a href={waLink("Hola, quiero sumar mi complejo a SportNex")} target="_blank" rel="noopener noreferrer" className="sp-footer-link" style={css("font-size: 14px;")}>Sumá tu complejo</a>
               <a href="#duenos" className="sp-footer-link" style={css("font-size: 14px;")}>Casos de éxito</a>
-              <Link href="/login" className="sp-footer-link" style={css("font-size: 14px;")}>Agendar demo</Link>
+              <a href={waLink("Hola, quiero agendar una demo de SportNex")} target="_blank" rel="noopener noreferrer" className="sp-footer-link" style={css("font-size: 14px;")}>Agendar demo</a>
             </div>
             <div style={css("display: grid; gap: 11px; align-content: start;")}>
               <div className="sp-heading" style={css("font-weight: 800; font-size: 13.5px; margin-bottom: 3px;")}>Contacto</div>
