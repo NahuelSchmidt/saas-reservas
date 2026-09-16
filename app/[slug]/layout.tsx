@@ -55,7 +55,7 @@ export default async function TenantLayout({
                 Torneos
               </Link>
             )}
-            {session?.user ? (
+            {session?.user && (
               <>
                 {isInstructor && (
                   <Link
@@ -75,13 +75,6 @@ export default async function TenantLayout({
                   </button>
                 </form>
               </>
-            ) : (
-              <Link
-                href={`/login?callbackUrl=/${tenant.slug}`}
-                className="rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-white/90"
-              >
-                Ingresar
-              </Link>
             )}
           </nav>
         </div>
